@@ -41,7 +41,7 @@ const HowItWorks = () => {
 
   return (
     <section id="howitworks" className="py-16 bg-gray-50">
-      <div className="max-w-screen-lg mx-auto px-4">
+  <div className="w-full px-4">
         <div className="window">
           <div className="title-bar">
             <div className="title-bar-text">⚙️ How It Works - Simple as 1-2-3</div>

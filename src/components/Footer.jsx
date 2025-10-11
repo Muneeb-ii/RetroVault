@@ -2,7 +2,7 @@
 const Footer = () => {
   return (
     <footer className="bg-gray-200 border-t-2 border-gray-400">
-      <div className="max-w-screen-lg mx-auto px-4 py-8">
+      <div className="w-full px-4 py-8">
         <div className="window">
           <div className="title-bar">
             <div className="title-bar-text">📧 Contact & Information</div>
