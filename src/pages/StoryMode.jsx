@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react'
 import TopNav from '../components/TopNav'
 import SideBar from '../components/SideBar'
-import useFinancialStore from '../store/useFinancialStore'
+import { useFinancialData } from '../contexts/FinancialDataContext'
 import { generateFinancialStory, generateStoryMetadata } from '../api/storyService'
 
 const StoryMode = () => {
-  const { data } = useFinancialStore()
+  const { financialData, isLoading, error } = useFinancialData()
   const [story, setStory] = useState('')
   const [metadata, setMetadata] = useState(null)
   const [isGenerating, setIsGenerating] = useState(false)
@@ -14,10 +14,14 @@ const StoryMode = () => {
 
   // Generate story when component mounts
   useEffect(() => {
-    generateStory()
-  }, [data])
+    if (financialData && !story) {
+      generateStory()
+    }
+  }, [financialData])
 
   const generateStory = async () => {
+    if (!financialData) return
+    
     setIsGenerating(true)
     setLoadingProgress(0)
     
@@ -37,14 +41,14 @@ const StoryMode = () => {
     
     try {
       const storyText = await generateFinancialStory(
-        data.transactions,
-        data.savings,
-        data.aiInsight,
-        data.balance
+        financialData.transactions,
+        financialData.savings,
+        financialData.aiInsight,
+        financialData.balance
       )
       setStory(storyText)
       
-      const storyMeta = generateStoryMetadata(data.transactions, data.savings, data.balance)
+      const storyMeta = generateStoryMetadata(financialData.transactions, financialData.savings, financialData.balance)
       setMetadata(storyMeta)
     } catch (error) {
       console.error('Error generating story:', error)
@@ -61,6 +65,57 @@ const StoryMode = () => {
     setTimeout(() => {
       setIsPlaying(false)
     }, 5000) // 5 second simulation
+  }
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center retro-auth-bg">
+        <div className="window max-w-md">
+          <div className="title-bar">
+            <div className="title-bar-text">📖 Story Mode</div>
+          </div>
+          <div className="window-body text-center">
+            <div className="text-lg font-bold mb-4">Loading financial data... Please Wait 💾</div>
+            <div className="text-sm text-gray-600">Preparing your financial story</div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center retro-auth-bg">
+        <div className="window max-w-md">
+          <div className="title-bar">
+            <div className="title-bar-text">❌ Error</div>
+          </div>
+          <div className="window-body text-center">
+            <div className="text-lg font-bold mb-4 text-red-600">Failed to load data</div>
+            <div className="text-sm text-gray-600 mb-4">{error}</div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // No data state
+  if (!financialData) {
+    return (
+      <div className="min-h-screen flex items-center justify-center retro-auth-bg">
+        <div className="window max-w-md">
+          <div className="title-bar">
+            <div className="title-bar-text">📖 Story Mode</div>
+          </div>
+          <div className="window-body text-center">
+            <div className="text-lg font-bold mb-4">No financial data available</div>
+            <div className="text-sm text-gray-600">Please ensure your data is properly loaded</div>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (

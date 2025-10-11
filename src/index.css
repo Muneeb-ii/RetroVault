@@ -392,3 +392,387 @@ body {
   );
   pointer-events: none;
 }
+
+/* ===== RETRO ANIMATIONS ===== */
+
+/* Retro window animations */
+.retro-window-animate {
+  animation: retroWindowSlide 0.6s ease-out;
+}
+
+@keyframes retroWindowSlide {
+  0% {
+    opacity: 0;
+    transform: translateY(-20px) scale(0.95);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Retro button animations */
+.retro-button-animate {
+  animation: retroButtonPulse 0.3s ease-out;
+}
+
+@keyframes retroButtonPulse {
+  0% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* Retro card hover animations */
+.retro-card-hover {
+  transition: all 0.3s ease;
+}
+
+.retro-card-hover:hover {
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 4px 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+/* Retro typing animation for text */
+.retro-typing {
+  overflow: hidden;
+  border-right: 2px solid #4A90E2;
+  white-space: nowrap;
+  animation: retroTyping 3s steps(40, end), retroBlink 0.75s step-end infinite;
+}
+
+@keyframes retroTyping {
+  from { width: 0; }
+  to { width: 100%; }
+}
+
+@keyframes retroBlink {
+  from, to { border-color: transparent; }
+  50% { border-color: #4A90E2; }
+}
+
+/* Retro fade in animations */
+.retro-fade-in {
+  animation: retroFadeIn 0.8s ease-out;
+}
+
+.retro-fade-in-delay-1 {
+  animation: retroFadeIn 0.8s ease-out 0.2s both;
+}
+
+.retro-fade-in-delay-2 {
+  animation: retroFadeIn 0.8s ease-out 0.4s both;
+}
+
+.retro-fade-in-delay-3 {
+  animation: retroFadeIn 0.8s ease-out 0.6s both;
+}
+
+@keyframes retroFadeIn {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Retro slide animations */
+.retro-slide-left {
+  animation: retroSlideLeft 0.6s ease-out;
+}
+
+.retro-slide-right {
+  animation: retroSlideRight 0.6s ease-out;
+}
+
+@keyframes retroSlideLeft {
+  0% {
+    opacity: 0;
+    transform: translateX(-30px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes retroSlideRight {
+  0% {
+    opacity: 0;
+    transform: translateX(30px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Retro bounce animation */
+.retro-bounce {
+  animation: retroBounce 0.6s ease-out;
+}
+
+@keyframes retroBounce {
+  0%, 20%, 50%, 80%, 100% {
+    transform: translateY(0);
+  }
+  40% {
+    transform: translateY(-10px);
+  }
+  60% {
+    transform: translateY(-5px);
+  }
+}
+
+/* Retro glow animation */
+.retro-glow {
+  animation: retroGlow 2s ease-in-out infinite alternate;
+}
+
+@keyframes retroGlow {
+  from {
+    box-shadow: 0 0 5px #4A90E2, 0 0 10px #4A90E2, 0 0 15px #4A90E2;
+  }
+  to {
+    box-shadow: 0 0 10px #4A90E2, 0 0 20px #4A90E2, 0 0 30px #4A90E2;
+  }
+}
+
+/* Retro loading animation */
+.retro-loading {
+  animation: retroLoading 1.5s linear infinite;
+}
+
+@keyframes retroLoading {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* Retro progress bar animation */
+.retro-progress-animate {
+  animation: retroProgress 2s ease-in-out;
+}
+
+@keyframes retroProgress {
+  0% {
+    width: 0%;
+  }
+  100% {
+    width: 100%;
+  }
+}
+
+/* Retro chart animations */
+.retro-chart-animate {
+  animation: retroChartGrow 0.8s ease-out;
+}
+
+@keyframes retroChartGrow {
+  0% {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Retro icon animations */
+.retro-icon-spin {
+  animation: retroIconSpin 2s linear infinite;
+}
+
+@keyframes retroIconSpin {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+.retro-icon-bounce {
+  animation: retroIconBounce 1s ease-in-out infinite;
+}
+
+@keyframes retroIconBounce {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+/* Retro window minimize/maximize animations */
+.retro-window-minimize {
+  animation: retroWindowMinimize 0.3s ease-in;
+}
+
+@keyframes retroWindowMinimize {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(0.1);
+    opacity: 0;
+  }
+}
+
+.retro-window-maximize {
+  animation: retroWindowMaximize 0.3s ease-out;
+}
+
+@keyframes retroWindowMaximize {
+  0% {
+    transform: scale(0.1);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+/* Retro text reveal animation */
+.retro-text-reveal {
+  animation: retroTextReveal 1s ease-out;
+}
+
+@keyframes retroTextReveal {
+  0% {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Retro feature card animations */
+.retro-feature-card-animate {
+  animation: retroFeatureCard 0.6s ease-out;
+}
+
+@keyframes retroFeatureCard {
+  0% {
+    opacity: 0;
+    transform: translateY(30px) rotateX(10deg);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) rotateX(0deg);
+  }
+}
+
+/* Retro step animation */
+.retro-step-animate {
+  animation: retroStep 0.8s ease-out;
+}
+
+@keyframes retroStep {
+  0% {
+    opacity: 0;
+    transform: translateX(-50px) scale(0.8);
+  }
+  50% {
+    transform: translateX(10px) scale(1.05);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0) scale(1);
+  }
+}
+
+/* Retro dashboard animations */
+.retro-dashboard-fade {
+  animation: retroDashboardFade 1s ease-out;
+}
+
+@keyframes retroDashboardFade {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Retro sidebar animation */
+.retro-sidebar-slide {
+  animation: retroSidebarSlide 0.5s ease-out;
+}
+
+@keyframes retroSidebarSlide {
+  0% {
+    opacity: 0;
+    transform: translateX(-100%);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Retro chart data animation */
+.retro-chart-data {
+  animation: retroChartData 1.2s ease-out;
+}
+
+@keyframes retroChartData {
+  0% {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Retro transaction animation */
+.retro-transaction-slide {
+  animation: retroTransactionSlide 0.4s ease-out;
+}
+
+@keyframes retroTransactionSlide {
+  0% {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+/* Retro status indicator animation */
+.retro-status-pulse {
+  animation: retroStatusPulse 2s ease-in-out infinite;
+}
+
+@keyframes retroStatusPulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}

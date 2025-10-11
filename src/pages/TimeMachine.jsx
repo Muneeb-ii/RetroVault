@@ -2,11 +2,11 @@ import { useState, useEffect } from 'react'
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 import TopNav from '../components/TopNav'
 import SideBar from '../components/SideBar'
-import useFinancialStore from '../store/useFinancialStore'
+import { useFinancialData } from '../contexts/FinancialDataContext'
 import { generateTimeMachineForecast, calculateCompoundProjections, generateMilestones } from '../api/timeMachineService'
 
 const TimeMachine = () => {
-  const { data } = useFinancialStore()
+  const { financialData, isLoading, error } = useFinancialData()
   const [savingsIncrease, setSavingsIncrease] = useState(0) // Percentage increase
   const [projections, setProjections] = useState(null)
   const [aiForecast, setAiForecast] = useState('')
@@ -16,16 +16,20 @@ const TimeMachine = () => {
 
   // Calculate projections when savings increase changes
   useEffect(() => {
-    calculateProjections()
-  }, [savingsIncrease, data])
+    if (financialData) {
+      calculateProjections()
+    }
+  }, [savingsIncrease, financialData])
 
   const calculateProjections = () => {
-    const currentBalance = data.balance || 0
-    const currentMonthlyIncome = data.transactions
+    if (!financialData) return
+    
+    const currentBalance = financialData.balance || 0
+    const currentMonthlyIncome = financialData.transactions
       .filter(t => t.type === 'income')
       .reduce((sum, t) => sum + t.amount, 0) / 6 // Average monthly income
     
-    const currentMonthlyExpenses = data.transactions
+    const currentMonthlyExpenses = financialData.transactions
       .filter(t => t.type === 'expense')
       .reduce((sum, t) => sum + t.amount, 0) / 6 // Average monthly expenses
     
@@ -61,11 +65,11 @@ const TimeMachine = () => {
   }
 
   const generateAiForecast = async () => {
-    if (!projections) return
+    if (!projections || !financialData) return
     
     setIsGeneratingForecast(true)
     try {
-      const forecast = await generateTimeMachineForecast(projections, data.balance, savingsIncrease)
+      const forecast = await generateTimeMachineForecast(projections, financialData.balance, savingsIncrease)
       setAiForecast(forecast)
       setShowAiForecast(true)
     } catch (error) {
@@ -79,6 +83,57 @@ const TimeMachine = () => {
 
   const closeAiForecast = () => {
     setShowAiForecast(false)
+  }
+
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center retro-auth-bg">
+        <div className="window max-w-md">
+          <div className="title-bar">
+            <div className="title-bar-text">⏰ Time Machine</div>
+          </div>
+          <div className="window-body text-center">
+            <div className="text-lg font-bold mb-4">Loading financial data... Please Wait 💾</div>
+            <div className="text-sm text-gray-600">Preparing your time machine projections</div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center retro-auth-bg">
+        <div className="window max-w-md">
+          <div className="title-bar">
+            <div className="title-bar-text">❌ Error</div>
+          </div>
+          <div className="window-body text-center">
+            <div className="text-lg font-bold mb-4 text-red-600">Failed to load data</div>
+            <div className="text-sm text-gray-600 mb-4">{error}</div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // No data state
+  if (!financialData) {
+    return (
+      <div className="min-h-screen flex items-center justify-center retro-auth-bg">
+        <div className="window max-w-md">
+          <div className="title-bar">
+            <div className="title-bar-text">⏰ Time Machine</div>
+          </div>
+          <div className="window-body text-center">
+            <div className="text-lg font-bold mb-4">No financial data available</div>
+            <div className="text-sm text-gray-600">Please ensure your data is properly loaded</div>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -138,7 +193,7 @@ const TimeMachine = () => {
                     ${projections.sixMonth.toLocaleString()}
                   </div>
                   <div className="text-xs text-gray-600">
-                    vs Current: ${data.balance.toLocaleString()}
+                    vs Current: ${financialData.balance.toLocaleString()}
                   </div>
                 </div>
                 
@@ -148,7 +203,7 @@ const TimeMachine = () => {
                     ${projections.oneYear.toLocaleString()}
                   </div>
                   <div className="text-xs text-gray-600">
-                    vs Current: ${data.balance.toLocaleString()}
+                    vs Current: ${financialData.balance.toLocaleString()}
                   </div>
                 </div>
               </div>

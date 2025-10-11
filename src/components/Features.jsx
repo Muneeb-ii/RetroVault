@@ -54,7 +54,7 @@ const Features = () => {
   return (
     <section id="features" className="py-16 bg-white">
   <div className="w-full px-4">
-        <div className="window">
+        <div className="window retro-window-animate">
           <div className="title-bar">
             <div className="title-bar-text">📊 Features - Why RetroVault is Revolutionary</div>
             <div className="title-bar-controls">
@@ -64,11 +64,11 @@ const Features = () => {
             </div>
           </div>
           <div className="window-body">
-            <div className="text-center mb-12">
-              <h2 className="text-3xl md:text-4xl font-bold text-gray-800 mb-4">
+            <div className="text-center mb-12 retro-fade-in">
+              <h2 className="text-3xl md:text-4xl font-bold text-gray-800 mb-4 retro-text-reveal">
                 Built for the Future, Styled for the Past
               </h2>
-              <p className="text-lg text-gray-600 max-w-3xl mx-auto">
+              <p className="text-lg text-gray-600 max-w-3xl mx-auto retro-fade-in-delay-1">
                 RetroVault combines cutting-edge AI technology with nostalgic design to create 
                 the most engaging financial management experience ever built.
               </p>
@@ -76,11 +76,15 @@ const Features = () => {
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {features.map((feature, index) => (
-                <div key={index} className={`retro-info p-6 ${getColorClasses(feature.color)}`}>
+                <div 
+                  key={index} 
+                  className={`retro-info p-6 ${getColorClasses(feature.color)} retro-feature-card-animate retro-card-hover`}
+                  style={{animationDelay: `${index * 0.1}s`}}
+                >
                   <div className="text-center">
-                    <div className="text-4xl mb-4">{feature.icon}</div>
-                    <h3 className="text-xl font-bold mb-3">{feature.title}</h3>
-                    <p className="text-sm leading-relaxed">{feature.description}</p>
+                    <div className="text-4xl mb-4 retro-icon-bounce" style={{animationDelay: `${index * 0.1 + 0.3}s`}}>{feature.icon}</div>
+                    <h3 className="text-xl font-bold mb-3 retro-text-reveal" style={{animationDelay: `${index * 0.1 + 0.5}s`}}>{feature.title}</h3>
+                    <p className="text-sm leading-relaxed retro-fade-in-delay-1" style={{animationDelay: `${index * 0.1 + 0.7}s`}}>{feature.description}</p>
                   </div>
                 </div>
               ))}
@@ -88,25 +92,25 @@ const Features = () => {
 
             {/* Feature Highlights */}
             <div className="mt-12 grid grid-cols-1 md:grid-cols-2 gap-8">
-              <div className="retro-chart p-6">
-                <h3 className="text-lg font-bold mb-4 text-center">🎯 Perfect for Hackathons</h3>
+              <div className="retro-chart p-6 retro-chart-animate retro-card-hover">
+                <h3 className="text-lg font-bold mb-4 text-center retro-text-reveal">🎯 Perfect for Hackathons</h3>
                 <ul className="text-sm space-y-2">
-                  <li>• Complete full-stack implementation</li>
-                  <li>• Real API integrations (Capital One + AI)</li>
-                  <li>• Production-ready architecture</li>
-                  <li>• Impressive demo capabilities</li>
-                  <li>• Unique retro aesthetic</li>
+                  <li className="retro-fade-in-delay-1">• Complete full-stack implementation</li>
+                  <li className="retro-fade-in-delay-2">• Real API integrations (Capital One + AI)</li>
+                  <li className="retro-fade-in-delay-3">• Production-ready architecture</li>
+                  <li className="retro-fade-in-delay-1" style={{animationDelay: '0.4s'}}>• Impressive demo capabilities</li>
+                  <li className="retro-fade-in-delay-2" style={{animationDelay: '0.5s'}}>• Unique retro aesthetic</li>
                 </ul>
               </div>
               
-              <div className="retro-chart p-6">
-                <h3 className="text-lg font-bold mb-4 text-center">🚀 Technical Excellence</h3>
+              <div className="retro-chart p-6 retro-chart-animate retro-card-hover" style={{animationDelay: '0.2s'}}>
+                <h3 className="text-lg font-bold mb-4 text-center retro-text-reveal" style={{animationDelay: '0.3s'}}>🚀 Technical Excellence</h3>
                 <ul className="text-sm space-y-2">
-                  <li>• React + Vite + TailwindCSS</li>
-                  <li>• Firebase Auth + Firestore</li>
-                  <li>• Vercel serverless functions</li>
-                  <li>• Multiple AI model support</li>
-                  <li>• Responsive retro design</li>
+                  <li className="retro-fade-in-delay-1" style={{animationDelay: '0.4s'}}>• React + Vite + TailwindCSS</li>
+                  <li className="retro-fade-in-delay-2" style={{animationDelay: '0.5s'}}>• Firebase Auth + Firestore</li>
+                  <li className="retro-fade-in-delay-3" style={{animationDelay: '0.6s'}}>• Vercel serverless functions</li>
+                  <li className="retro-fade-in-delay-1" style={{animationDelay: '0.7s'}}>• Multiple AI model support</li>
+                  <li className="retro-fade-in-delay-2" style={{animationDelay: '0.8s'}}>• Responsive retro design</li>
                 </ul>
               </div>
             </div>
