@@ -95,12 +95,19 @@ const MainPanel = () => {
         </ResponsiveContainer>
       </div>
 
-      {/* Gemini AI Insight */}
+      {/* AI Insight */}
       <div className="retro-info bg-gradient-to-r from-blue-50 to-green-50">
         <div className="flex items-start space-x-3">
           <div className="text-2xl">🤖</div>
-          <div>
-            <div className="font-bold text-sm mb-1">GEMINI INSIGHT</div>
+          <div className="flex-1">
+            <div className="flex items-center justify-between mb-1">
+              <div className="font-bold text-sm">
+                {data.aiGenerated ? 'AI INSIGHT' : 'GEMINI INSIGHT'}
+              </div>
+              {data.aiGenerated && (
+                <div className="text-xs text-green-600 font-bold">✨ AI Generated</div>
+              )}
+            </div>
             <div className="text-sm">
               {data.aiInsight}
             </div>

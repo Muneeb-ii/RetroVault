@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import { generateMockData } from '../data/mockData'
+import { getFinancialInsights } from '../api/aiService'
 
 const useFinancialStore = create((set, get) => ({
   // Initial state
@@ -10,10 +11,19 @@ const useFinancialStore = create((set, get) => ({
   refreshData: async () => {
     set({ isLoading: true })
     
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 1000))
-    
+    // Generate new mock data
     const newData = generateMockData()
+    
+    // Generate AI insights
+    try {
+      const aiInsights = await getFinancialInsights(newData.transactions, newData.savings)
+      newData.aiInsight = aiInsights.join(' ')
+      newData.aiGenerated = true
+    } catch (error) {
+      console.error('Failed to generate AI insights:', error)
+      newData.aiGenerated = false
+    }
+    
     set({ 
       data: newData,
       isLoading: false 

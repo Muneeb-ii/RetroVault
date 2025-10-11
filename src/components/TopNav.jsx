@@ -1,9 +1,11 @@
 import { useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import useFinancialStore from '../store/useFinancialStore'
+import AIModelSelector from './AIModelSelector'
 
 const TopNav = () => {
   const [isMuted, setIsMuted] = useState(false)
+  const [selectedModel, setSelectedModel] = useState('google/gemini-1.5-pro')
   const location = useLocation()
   const { refreshData, isLoading } = useFinancialStore()
 
@@ -35,8 +37,16 @@ const TopNav = () => {
           </Link>
         ))}
         
-        {/* Refresh Data Button */}
+        {/* AI Model Selector */}
         <div className="ml-auto p-2">
+          <AIModelSelector 
+            selectedModel={selectedModel}
+            onModelChange={setSelectedModel}
+          />
+        </div>
+        
+        {/* Refresh Data Button */}
+        <div className="p-2">
           <button
             className="sound-button mr-2"
             onClick={refreshData}

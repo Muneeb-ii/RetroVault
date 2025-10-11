@@ -36,12 +36,19 @@ RetroVault combines the nostalgic charm of Windows 98-era financial software wit
    npm install
    ```
 
-2. **Start Development Server**
+2. **Configure AI Integration (Optional)**
+   - Copy `.env` file and add your OpenRouter API key:
+   ```bash
+   cp .env .env.local
+   # Edit .env.local and add your OpenRouter API key
+   ```
+
+3. **Start Development Server**
    ```bash
    npm run dev
    ```
 
-3. **Open in Browser**
+4. **Open in Browser**
    Navigate to `http://localhost:5173`
 
 ## 📁 Project Structure
@@ -51,12 +58,19 @@ src/
 ├── components/
 │   ├── TopNav.jsx          # Navigation bar with tabs
 │   ├── SideBar.jsx         # Left sidebar with toolbar
-│   └── MainPanel.jsx       # Main content area with charts
+│   ├── MainPanel.jsx       # Main content area with charts
+│   └── AIModelSelector.jsx # AI model selection dropdown
 ├── pages/
 │   ├── RetroDashboard.jsx  # Main dashboard page
 │   ├── TimeMachine.jsx     # Time travel interface
 │   ├── Insights.jsx        # AI insights page
 │   └── StoryMode.jsx       # Story mode interface
+├── api/
+│   └── aiService.js        # OpenRouter AI integration
+├── data/
+│   └── mockData.js         # Mock financial data generator
+├── store/
+│   └── useFinancialStore.js # Zustand state management
 ├── App.jsx                 # Main app component with routing
 ├── main.jsx               # Entry point
 └── index.css              # Global styles + 98.css imports
@@ -72,14 +86,38 @@ This project is designed to be hackathon-ready with:
 - ✅ Modular component structure
 - ✅ Ready for API integration
 
+## 🤖 AI Integration
+
+RetroVault includes dynamic AI insights powered by OpenRouter:
+
+### **Supported AI Models:**
+- **Google Gemini 1.5 Pro** (default)
+- **Claude 3.5 Sonnet**
+- **GPT-4o**
+- **Llama 3.1 8B**
+
+### **AI Features:**
+- **Dynamic Insights**: AI analyzes your financial data and provides personalized advice
+- **Model Selection**: Choose between different AI models in the top navigation
+- **Fallback System**: Graceful degradation to static insights if AI is unavailable
+- **Real-time Analysis**: Insights update when you refresh your financial data
+
+### **Setup AI Integration:**
+1. Get an API key from [OpenRouter](https://openrouter.ai/)
+2. Add it to your `.env.local` file:
+   ```
+   VITE_OPENROUTER_API_KEY=your_api_key_here
+   ```
+3. Restart the development server
+
 ## 🔮 Future Enhancements
 
 - [ ] Capital One Nessie API integration
-- [ ] Google Gemini AI integration
 - [ ] Real-time data synchronization
 - [ ] Advanced financial forecasting
 - [ ] Interactive time travel features
 - [ ] Sound effects and animations
+- [ ] Custom AI prompt templates
 
 ## 🎨 Color Palette
 
