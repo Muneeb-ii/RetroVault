@@ -4,22 +4,28 @@ import admin from 'firebase-admin'
 // Initialize Firebase Admin SDK
 if (!admin.apps.length) {
   try {
-    // For production, use environment variables
-    if (process.env.FIREBASE_PROJECT_ID) {
-      admin.initializeApp({
-        credential: admin.credential.cert({
-          projectId: process.env.FIREBASE_PROJECT_ID,
-          clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-          privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
-        }),
-        projectId: process.env.FIREBASE_PROJECT_ID,
-      })
-    } else {
-      // For development, use service account key file
+    // First, try to use service account key file (for development)
+    try {
       const serviceAccount = await import('../serviceAccountKey.json', { assert: { type: 'json' } })
       admin.initializeApp({
         credential: admin.credential.cert(serviceAccount.default),
       })
+      console.log('Firebase Admin initialized with serviceAccountKey.json')
+    } catch (jsonError) {
+      // If JSON file not found, fall back to environment variables (for production)
+      if (process.env.FIREBASE_PROJECT_ID && process.env.FIREBASE_CLIENT_EMAIL && process.env.FIREBASE_PRIVATE_KEY) {
+        admin.initializeApp({
+          credential: admin.credential.cert({
+            projectId: process.env.FIREBASE_PROJECT_ID,
+            clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+            privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+          }),
+          projectId: process.env.FIREBASE_PROJECT_ID,
+        })
+        console.log('Firebase Admin initialized with environment variables')
+      } else {
+        throw new Error('No Firebase credentials found. Either provide serviceAccountKey.json or set FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, and FIREBASE_PRIVATE_KEY environment variables.')
+      }
     }
   } catch (error) {
     console.error('Error initializing Firebase Admin:', error)
