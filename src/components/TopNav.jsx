@@ -1,9 +1,11 @@
 import { useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
+import useFinancialStore from '../store/useFinancialStore'
 
 const TopNav = () => {
   const [isMuted, setIsMuted] = useState(false)
   const location = useLocation()
+  const { refreshData, isLoading } = useFinancialStore()
 
   const tabs = [
     { name: 'Dashboard', path: '/dashboard' },
@@ -33,8 +35,19 @@ const TopNav = () => {
           </Link>
         ))}
         
-        {/* Sound Toggle */}
+        {/* Refresh Data Button */}
         <div className="ml-auto p-2">
+          <button
+            className="sound-button mr-2"
+            onClick={refreshData}
+            disabled={isLoading}
+          >
+            {isLoading ? '⏳ Loading...' : '🔄 Refresh Data'}
+          </button>
+        </div>
+        
+        {/* Sound Toggle */}
+        <div className="p-2">
           <button
             className="sound-button"
             onClick={() => setIsMuted(!isMuted)}

@@ -1,33 +1,28 @@
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts'
+import useFinancialStore from '../store/useFinancialStore'
 
 const MainPanel = () => {
-  // Mock data for charts
-  const spendingData = [
-    { name: 'Food', value: 400, color: '#FF6B6B' },
-    { name: 'Transport', value: 300, color: '#4ECDC4' },
-    { name: 'Entertainment', value: 200, color: '#45B7D1' },
-    { name: 'Shopping', value: 150, color: '#96CEB4' },
-    { name: 'Bills', value: 250, color: '#FFEAA7' }
-  ]
+  const { data, isLoading, getTotalIncome, getTotalExpenses, getRecentTransactions } = useFinancialStore()
+  
+  // Use real data from store
+  const spendingData = data.spendingBreakdown
+  const savingsData = data.savings
+  const balanceData = data.weeklyBalance
+  const totalIncome = getTotalIncome()
+  const totalExpenses = getTotalExpenses()
+  const recentTransactions = getRecentTransactions(5)
 
-  const savingsData = [
-    { month: 'Jan', amount: 1200 },
-    { month: 'Feb', amount: 1350 },
-    { month: 'Mar', amount: 1500 },
-    { month: 'Apr', amount: 1650 },
-    { month: 'May', amount: 1800 },
-    { month: 'Jun', amount: 1950 }
-  ]
-
-  const balanceData = [
-    { day: 'Mon', balance: 2450 },
-    { day: 'Tue', balance: 2380 },
-    { day: 'Wed', balance: 2520 },
-    { day: 'Thu', balance: 2480 },
-    { day: 'Fri', balance: 2600 },
-    { day: 'Sat', balance: 2550 },
-    { day: 'Sun', balance: 2450 }
-  ]
+  if (isLoading) {
+    return (
+      <div className="flex-1 flex items-center justify-center">
+        <div className="retro-info text-center">
+          <div className="text-4xl mb-4">⏳</div>
+          <div className="text-lg">Loading financial data...</div>
+          <div className="text-sm text-gray-600 mt-2">Please wait while we refresh your data</div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="flex-1 space-y-4">
@@ -35,10 +30,14 @@ const MainPanel = () => {
       <div className="retro-info">
         <div className="text-center">
           <div className="text-2xl font-bold text-green-600 mb-2">
-            Balance: $2,450.00
+            Balance: ${data.balance.toLocaleString()}
           </div>
-          <div className="text-sm text-gray-600">
-            Last updated: {new Date().toLocaleString()}
+          <div className="text-sm text-gray-600 mb-2">
+            Last updated: {data.lastUpdated}
+          </div>
+          <div className="flex justify-center space-x-4 text-xs">
+            <span className="text-green-600">Income: ${totalIncome.toLocaleString()}</span>
+            <span className="text-red-600">Expenses: ${totalExpenses.toLocaleString()}</span>
           </div>
         </div>
       </div>
@@ -103,11 +102,34 @@ const MainPanel = () => {
           <div>
             <div className="font-bold text-sm mb-1">GEMINI INSIGHT</div>
             <div className="text-sm">
-              "You've saved 12% more than last month. Keep it up! Your spending on entertainment 
-              decreased by $45, which shows great discipline. Consider setting up an automatic 
-              transfer to your savings account."
+              {data.aiInsight}
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* Recent Transactions */}
+      <div className="retro-chart">
+        <div className="text-center font-bold mb-2 text-sm">RECENT TRANSACTIONS</div>
+        <div className="space-y-2">
+          {recentTransactions.map((transaction, index) => (
+            <div key={index} className="flex justify-between items-center p-2 bg-gray-50 border border-gray-300">
+              <div className="flex items-center space-x-2">
+                <span className="text-lg">
+                  {transaction.type === 'income' ? '💰' : '💸'}
+                </span>
+                <div>
+                  <div className="text-sm font-medium">{transaction.description}</div>
+                  <div className="text-xs text-gray-600">{transaction.category} • {transaction.date}</div>
+                </div>
+              </div>
+              <div className={`text-sm font-bold ${
+                transaction.type === 'income' ? 'text-green-600' : 'text-red-600'
+              }`}>
+                {transaction.type === 'income' ? '+' : '-'}${transaction.amount}
+              </div>
+            </div>
+          ))}
         </div>
       </div>
 
