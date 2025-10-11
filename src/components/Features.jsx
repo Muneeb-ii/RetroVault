@@ -32,11 +32,11 @@ const Features = () => {
       color: 'indigo'
     },
     {
-  icon: '💠',
-  title: 'Retro Crypto Terminal',
-  description: 'Trade, track, and simulate cryptocurrencies inside a vintage command-line interface. Watch pixelated candlestick charts update in real time, execute mock trades, and explore how blockchain assets would’ve looked on a 90s desktop.',
-  color: 'cyan'
-}
+      icon: '💠',
+      title: 'Retro Crypto Terminal',
+      description: 'Trade, track, and simulate cryptocurrencies inside a vintage command-line interface. Watch pixelated candlestick charts update in real time, execute mock trades, and explore how blockchain assets would\'ve looked on a 90s desktop.',
+      color: 'cyan'
+    }
   ]
 
   const getColorClasses = (color) => {

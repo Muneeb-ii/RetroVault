@@ -3,7 +3,7 @@ import TopNav from '../components/TopNav'
 import SideBar from '../components/SideBar'
 import { useFinancialData } from '../contexts/FinancialDataContext'
 import { generateFinancialStory, generateStoryMetadata } from '../api/storyService'
-import { ElevenLabsClient, play } from '@elevenlabs/elevenlabs-js';
+// import { ElevenLabsClient, play } from '@elevenlabs/elevenlabs-js';
 
 const StoryMode = () => {
   const { financialData, isLoading, error } = useFinancialData()
@@ -12,33 +12,37 @@ const StoryMode = () => {
   const [isGenerating, setIsGenerating] = useState(false)
   const [isPlaying, setIsPlaying] = useState(false)
   const [loadingProgress, setLoadingProgress] = useState(0)
-  const elevenlabs = new ElevenLabsClient({
-    apiKey: import.meta.env.VITE_ELEVENLABS_API_KEY,
-  });
+  // const elevenlabs = new ElevenLabsClient({
+  //   apiKey: import.meta.env.VITE_ELEVENLABS_API_KEY,
+  // });
 
 const playStoryAudio = async (story) => {
   console.log(story)
   try {
-    const audio = await elevenlabs.textToSpeech.convert("EXAVITQu4vr4xnSDxMaL", {
-      text: story.join(''),
-      modelId: "eleven_multilingual_v2",
-    });
-
-    const chunks= [];
-    for await (const chunk of audio) {
-      chunks.push(chunk);
-    }
-
-    const blob = new Blob(chunks, { type: 'audio/mpeg' });
-    const audioUrl = URL.createObjectURL(blob);
+    // ElevenLabs functionality temporarily disabled
+    console.log('Audio playback temporarily disabled - ElevenLabs not available');
+    return;
     
-    const audioElement = new Audio(audioUrl);
-    await audioElement.play();
+    // const audio = await elevenlabs.textToSpeech.convert("EXAVITQu4vr4xnSDxMaL", {
+    //   text: story.join(''),
+    //   modelId: "eleven_multilingual_v2",
+    // });
+
+    // const chunks= [];
+    // for await (const chunk of audio) {
+    //   chunks.push(chunk);
+    // }
+
+    // const blob = new Blob(chunks, { type: 'audio/mpeg' });
+    // const audioUrl = URL.createObjectURL(blob);
     
-    // Optional: cleanup
-    audioElement.addEventListener('ended', () => {
-      URL.revokeObjectURL(audioUrl);
-    });
+    // const audioElement = new Audio(audioUrl);
+    // await audioElement.play();
+    
+    // // Optional: cleanup
+    // audioElement.addEventListener('ended', () => {
+    //   URL.revokeObjectURL(audioUrl);
+    // });
     
   } catch (error) {
     console.error('Error playing audio:', error);
