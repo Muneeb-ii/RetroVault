@@ -1,8 +1,17 @@
+import { useEffect } from 'react'
 import TopNav from '../components/TopNav'
 import SideBar from '../components/SideBar'
 import MainPanel from '../components/MainPanel'
+import useFinancialStore from '../store/useFinancialStore'
 
 const RetroDashboard = () => {
+  const { refreshData, dataSource } = useFinancialStore()
+
+  // Load data on component mount
+  useEffect(() => {
+    refreshData()
+  }, [refreshData])
+
   return (
     <div className="min-h-screen p-4">
       {/* Top Navigation */}

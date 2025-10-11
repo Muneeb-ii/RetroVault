@@ -2,7 +2,7 @@ import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Toolti
 import useFinancialStore from '../store/useFinancialStore'
 
 const MainPanel = () => {
-  const { data, isLoading, getTotalIncome, getTotalExpenses, getRecentTransactions } = useFinancialStore()
+  const { data, isLoading, dataSource, accounts, getTotalIncome, getTotalExpenses, getRecentTransactions } = useFinancialStore()
   
   // Use real data from store
   const spendingData = data.spendingBreakdown
@@ -39,6 +39,19 @@ const MainPanel = () => {
             <span className="text-green-600">Income: ${totalIncome.toLocaleString()}</span>
             <span className="text-red-600">Expenses: ${totalExpenses.toLocaleString()}</span>
           </div>
+          {/* Data Source Indicator */}
+          <div className="mt-2 text-xs">
+            {dataSource === 'nessie' ? (
+              <span className="text-blue-600 font-bold">💾 Data Source: Capital One Nessie API</span>
+            ) : (
+              <span className="text-orange-600 font-bold">🧪 Data Source: Mock Mode</span>
+            )}
+          </div>
+          {dataSource === 'nessie' && data.accountInfo && (
+            <div className="mt-1 text-xs text-gray-500">
+              Account: {data.accountInfo.accountName} ({data.accountInfo.accountType})
+            </div>
+          )}
         </div>
       </div>
 

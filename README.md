@@ -102,17 +102,44 @@ RetroVault includes dynamic AI insights powered by OpenRouter:
 - **Fallback System**: Graceful degradation to static insights if AI is unavailable
 - **Real-time Analysis**: Insights update when you refresh your financial data
 
-### **Setup AI Integration:**
+### **Setup API Integration:**
+
+#### **AI Integration (OpenRouter):**
 1. Get an API key from [OpenRouter](https://openrouter.ai/)
 2. Add it to your `.env.local` file:
    ```
    VITE_OPENROUTER_API_KEY=your_api_key_here
    ```
+
+#### **Real Financial Data (Capital One Nessie):**
+1. Get an API key from [Capital One Developer](https://developer.capitalone.com/)
+2. Add it to your `.env.local` file:
+   ```
+   VITE_NESSIE_API_KEY=your_api_key_here
+   ```
 3. Restart the development server
+
+**Note:** The app works with mock data if no API keys are configured!
+
+## 💾 Real Financial Data Integration
+
+RetroVault integrates with Capital One's Nessie API for real financial data:
+
+### **Nessie API Features:**
+- **Real Account Data**: Fetches actual account balances and information
+- **Transaction History**: Shows real transactions from the last 30 days
+- **Smart Categorization**: Automatically categorizes transactions (Food, Transport, Entertainment, etc.)
+- **Data Source Indicator**: Shows whether you're viewing real or mock data
+- **Graceful Fallback**: Automatically falls back to mock data if API is unavailable
+
+### **Data Processing:**
+- **Transaction Analysis**: Real spending patterns and trends
+- **Savings Calculation**: Derived from actual income vs expenses
+- **Chart Generation**: All charts use real transaction data
+- **AI Insights**: AI analyzes your actual financial behavior
 
 ## 🔮 Future Enhancements
 
-- [ ] Capital One Nessie API integration
 - [ ] Real-time data synchronization
 - [ ] Advanced financial forecasting
 - [ ] Interactive time travel features

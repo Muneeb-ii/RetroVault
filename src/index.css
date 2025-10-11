@@ -124,3 +124,83 @@ body {
 .sound-button:active {
   border: 2px inset #c0c0c0;
 }
+
+/* Retro slider styling */
+.retro-slider {
+  -webkit-appearance: none;
+  appearance: none;
+  height: 20px;
+  background: #c0c0c0;
+  border: 2px inset #c0c0c0;
+  border-radius: 0;
+  outline: none;
+  cursor: pointer;
+}
+
+.retro-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 24px;
+  height: 24px;
+  background: #4A90E2;
+  border: 2px outset #4A90E2;
+  border-radius: 0;
+  cursor: pointer;
+}
+
+.retro-slider::-webkit-slider-thumb:hover {
+  background: #357ABD;
+}
+
+.retro-slider::-webkit-slider-thumb:active {
+  border: 2px inset #4A90E2;
+}
+
+.retro-slider::-moz-range-thumb {
+  width: 24px;
+  height: 24px;
+  background: #4A90E2;
+  border: 2px outset #4A90E2;
+  border-radius: 0;
+  cursor: pointer;
+}
+
+.retro-slider::-moz-range-thumb:hover {
+  background: #357ABD;
+}
+
+.retro-slider::-moz-range-thumb:active {
+  border: 2px inset #4A90E2;
+}
+
+/* Retro popup window */
+.retro-popup {
+  background: #c0c0c0;
+  border: 2px outset #c0c0c0;
+  box-shadow: 2px 2px 0px #000000;
+  font-family: 'Courier New', monospace;
+}
+
+/* Retro forecast button */
+.retro-button {
+  background: #c0c0c0;
+  border: 2px outset #c0c0c0;
+  padding: 8px 16px;
+  font-family: 'Courier New', monospace;
+  font-weight: bold;
+  cursor: pointer;
+}
+
+.retro-button:hover {
+  background: #e0e0e0;
+}
+
+.retro-button:active {
+  border: 2px inset #c0c0c0;
+}
+
+.retro-button:disabled {
+  background: #a0a0a0;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
