@@ -105,47 +105,6 @@ const HowItWorks = () => {
               ))}
             </div>
 
-            {/* Process Flow Diagram */}
-            <div className="mt-12">
-              <div className="retro-chart p-6 retro-chart-animate retro-card-hover">
-                <h3 className="text-lg font-bold text-center mb-6 retro-text-reveal">🔄 Data Flow Process</h3>
-                <div className="flex flex-col md:flex-row items-center justify-between space-y-4 md:space-y-0">
-                  <div className="text-center retro-fade-in">
-                    <div className="retro-info w-16 h-16 flex items-center justify-center mx-auto mb-2 retro-bounce">
-                      <span className="text-2xl">👤</span>
-                    </div>
-                    <div className="text-sm font-bold retro-text-reveal">User Signs In</div>
-                  </div>
-                  
-                  <div className="text-2xl text-gray-400 retro-icon-bounce">→</div>
-                  
-                  <div className="text-center retro-fade-in-delay-1">
-                    <div className="retro-info w-16 h-16 flex items-center justify-center mx-auto mb-2 retro-bounce" style={{animationDelay: '0.3s'}}>
-                      <span className="text-2xl">🔍</span>
-                    </div>
-                    <div className="text-sm font-bold retro-text-reveal" style={{animationDelay: '0.5s'}}>Check Firestore</div>
-                  </div>
-                  
-                  <div className="text-2xl text-gray-400 retro-icon-bounce" style={{animationDelay: '0.2s'}}>→</div>
-                  
-                  <div className="text-center retro-fade-in-delay-2">
-                    <div className="retro-info w-16 h-16 flex items-center justify-center mx-auto mb-2 retro-bounce" style={{animationDelay: '0.6s'}}>
-                      <span className="text-2xl">🏦</span>
-                    </div>
-                    <div className="text-sm font-bold retro-text-reveal" style={{animationDelay: '0.8s'}}>Fetch Nessie Data</div>
-                  </div>
-                  
-                  <div className="text-2xl text-gray-400 retro-icon-bounce" style={{animationDelay: '0.4s'}}>→</div>
-                  
-                  <div className="text-center retro-fade-in-delay-3">
-                    <div className="retro-info w-16 h-16 flex items-center justify-center mx-auto mb-2 retro-bounce" style={{animationDelay: '0.9s'}}>
-                      <span className="text-2xl">💾</span>
-                    </div>
-                    <div className="text-sm font-bold retro-text-reveal" style={{animationDelay: '1.1s'}}>Store & Display</div>
-                  </div>
-                </div>
-              </div>
-            </div>
           </div>
           <div className="status-bar">
             <div className="status-bar-field">3 simple steps</div>

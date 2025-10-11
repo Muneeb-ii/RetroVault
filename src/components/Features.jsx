@@ -26,17 +26,17 @@ const Features = () => {
       color: 'orange'
     },
     {
-      icon: '🏦',
-      title: 'Realistic Data via Capital One Nessie',
-      description: 'Connect to Capital One\'s Nessie API for authentic financial data. No more mock data - experience real transaction patterns and spending insights.',
-      color: 'red'
-    },
-    {
       icon: '🔐',
       title: 'Persistent Profiles with Firestore',
       description: 'Your financial data is securely stored and consistent across all sessions. Sign in from anywhere and pick up exactly where you left off.',
       color: 'indigo'
-    }
+    },
+    {
+  icon: '💠',
+  title: 'Retro Crypto Terminal',
+  description: 'Trade, track, and simulate cryptocurrencies inside a vintage command-line interface. Watch pixelated candlestick charts update in real time, execute mock trades, and explore how blockchain assets would’ve looked on a 90s desktop.',
+  color: 'cyan'
+}
   ]
 
   const getColorClasses = (color) => {
@@ -90,30 +90,6 @@ const Features = () => {
               ))}
             </div>
 
-            {/* Feature Highlights */}
-            <div className="mt-12 grid grid-cols-1 md:grid-cols-2 gap-8">
-              <div className="retro-chart p-6 retro-chart-animate retro-card-hover">
-                <h3 className="text-lg font-bold mb-4 text-center retro-text-reveal">🎯 Perfect for Hackathons</h3>
-                <ul className="text-sm space-y-2">
-                  <li className="retro-fade-in-delay-1">• Complete full-stack implementation</li>
-                  <li className="retro-fade-in-delay-2">• Real API integrations (Capital One + AI)</li>
-                  <li className="retro-fade-in-delay-3">• Production-ready architecture</li>
-                  <li className="retro-fade-in-delay-1" style={{animationDelay: '0.4s'}}>• Impressive demo capabilities</li>
-                  <li className="retro-fade-in-delay-2" style={{animationDelay: '0.5s'}}>• Unique retro aesthetic</li>
-                </ul>
-              </div>
-              
-              <div className="retro-chart p-6 retro-chart-animate retro-card-hover" style={{animationDelay: '0.2s'}}>
-                <h3 className="text-lg font-bold mb-4 text-center retro-text-reveal" style={{animationDelay: '0.3s'}}>🚀 Technical Excellence</h3>
-                <ul className="text-sm space-y-2">
-                  <li className="retro-fade-in-delay-1" style={{animationDelay: '0.4s'}}>• React + Vite + TailwindCSS</li>
-                  <li className="retro-fade-in-delay-2" style={{animationDelay: '0.5s'}}>• Firebase Auth + Firestore</li>
-                  <li className="retro-fade-in-delay-3" style={{animationDelay: '0.6s'}}>• Vercel serverless functions</li>
-                  <li className="retro-fade-in-delay-1" style={{animationDelay: '0.7s'}}>• Multiple AI model support</li>
-                  <li className="retro-fade-in-delay-2" style={{animationDelay: '0.8s'}}>• Responsive retro design</li>
-                </ul>
-              </div>
-            </div>
           </div>
           <div className="status-bar">
             <div className="status-bar-field">6 revolutionary features</div>
