@@ -34,22 +34,6 @@ export const db = getFirestore(app)
 console.log('🔧 [FIRESTORE] Database initialized:', db.app.name)
 console.log('🔧 [FIRESTORE] Database settings:', db.settings)
 
-// Test Firestore connection
-const testFirestoreConnection = async () => {
-  try {
-    console.log('🔧 [FIRESTORE] Testing connection...')
-    const testDoc = doc(db, 'test', 'connection')
-    await getDoc(testDoc)
-    console.log('✅ [FIRESTORE] Connection test successful')
-  } catch (error) {
-    console.error('❌ [FIRESTORE] Connection test failed:', error)
-    console.error('❌ [FIRESTORE] Error code:', error.code)
-    console.error('❌ [FIRESTORE] Error message:', error.message)
-  }
-}
-
-// Run connection test
-testFirestoreConnection()
 
 // Google Auth Provider
 const googleProvider = new GoogleAuthProvider()

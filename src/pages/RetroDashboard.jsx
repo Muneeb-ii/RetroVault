@@ -4,7 +4,6 @@ import { useNavigate } from 'react-router-dom'
 import { onAuthStateChanged, signOut } from 'firebase/auth'
 import { auth } from '../firebaseClient'
 import { getUserData, getUserTransactions, getUserAccounts } from '../firebaseClient'
-import { handleOfflineError, checkFirestoreConnection } from '../utils/offlineHandler'
 import TopNav from '../components/TopNav'
 import SideBar from '../components/SideBar'
 import MainPanel from '../components/MainPanel'
@@ -100,30 +99,15 @@ const RetroDashboard = () => {
       setFinancialData(transformedData)
       console.log('✅ [DASHBOARD] User data loaded successfully from Firestore')
       
-    } catch (error) {
-      console.error('❌ [DASHBOARD] Error loading user data:', error)
-      console.error('❌ [DASHBOARD] Error details:', {
-        message: error.message,
-        stack: error.stack
-      })
-      
-      // Handle offline errors specifically
-      if (error.code === 'unavailable') {
-        console.log('🔄 [DASHBOARD] Attempting to handle offline error...')
-        const offlineResult = await handleOfflineError(error)
-        
-        if (offlineResult.success) {
-          console.log('✅ [DASHBOARD] Offline error resolved, retrying...')
-          // Retry loading data
-          setTimeout(() => loadUserData(userId), 2000)
-          return
-        } else {
-          setError(`Connection issue: ${offlineResult.message}. Please check your internet connection and try again.`)
-        }
-      } else {
-        setError(error.message)
-      }
-    } finally {
+            } catch (error) {
+              console.error('❌ [DASHBOARD] Error loading user data:', error)
+              console.error('❌ [DASHBOARD] Error details:', {
+                message: error.message,
+                stack: error.stack
+              })
+              
+              setError(error.message)
+            } finally {
       setIsLoading(false)
     }
   }

@@ -6,8 +6,6 @@ import TimeMachine from './pages/TimeMachine'
 import Insights from './pages/Insights'
 import StoryMode from './pages/StoryMode'
 import ProtectedRoute from './routes/ProtectedRoute'
-import './utils/firebaseDiagnostics' // Run Firebase diagnostics
-import './utils/connectionDiagnostics' // Run connection diagnostics
 
 function App() {
   return (
