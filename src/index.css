@@ -1,0 +1,126 @@
+@import 'tailwindcss/base';
+@import 'tailwindcss/components';
+@import 'tailwindcss/utilities';
+@import '98.css';
+
+/* Global retro styling */
+body {
+  font-family: 'Courier New', monospace;
+  background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+}
+
+/* CRT monitor effect */
+.crt-effect {
+  background: #000;
+  border: 2px solid #333;
+  box-shadow: 
+    0 0 20px rgba(0, 255, 0, 0.3),
+    inset 0 0 20px rgba(0, 255, 0, 0.1);
+}
+
+/* Retro button hover effects */
+.retro-button:hover {
+  transform: translate(1px, 1px);
+  box-shadow: 1px 1px 0px #000000;
+}
+
+/* Custom scrollbar for retro feel */
+::-webkit-scrollbar {
+  width: 16px;
+}
+
+::-webkit-scrollbar-track {
+  background: #c0c0c0;
+  border: 1px solid #808080;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #808080;
+  border: 1px solid #000;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #404040;
+}
+
+/* Retro window styling */
+.retro-window {
+  background: #c0c0c0;
+  border: 2px outset #c0c0c0;
+  box-shadow: 2px 2px 0px #000000;
+}
+
+/* Retro input styling */
+.retro-input {
+  background: #ffffff;
+  border: 2px inset #c0c0c0;
+  font-family: 'Courier New', monospace;
+}
+
+/* Retro tab styling */
+.retro-tab {
+  background: #c0c0c0;
+  border: 1px outset #c0c0c0;
+  border-bottom: none;
+}
+
+.retro-tab.active {
+  background: #ffffff;
+  border: 1px inset #c0c0c0;
+  border-bottom: 1px solid #ffffff;
+}
+
+/* Retro chart container */
+.retro-chart {
+  background: #ffffff;
+  border: 2px inset #c0c0c0;
+  padding: 8px;
+}
+
+/* Retro info box */
+.retro-info {
+  background: #ffffff;
+  border: 2px inset #c0c0c0;
+  padding: 12px;
+  font-weight: bold;
+}
+
+/* Retro sidebar button */
+.sidebar-button {
+  background: #c0c0c0;
+  border: 2px outset #c0c0c0;
+  padding: 8px 12px;
+  margin: 2px 0;
+  width: 100%;
+  text-align: left;
+  font-family: 'Courier New', monospace;
+  font-size: 12px;
+}
+
+.sidebar-button:hover {
+  background: #e0e0e0;
+}
+
+.sidebar-button:active {
+  border: 2px inset #c0c0c0;
+}
+
+/* Retro sound button */
+.sound-button {
+  background: #c0c0c0;
+  border: 2px outset #c0c0c0;
+  padding: 4px 8px;
+  font-size: 10px;
+  font-family: 'Courier New', monospace;
+}
+
+.sound-button:hover {
+  background: #e0e0e0;
+}
+
+.sound-button:active {
+  border: 2px inset #c0c0c0;
+}
