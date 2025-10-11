@@ -20,16 +20,16 @@ export default async function handler(req, res) {
   }
   
   try {
-    const { userId, userInfo } = req.body
+    const { userId, userInfo, forceRefresh = false } = req.body
     
     if (!userId) {
       res.status(400).json({ error: 'User ID is required' })
       return
     }
     
-    console.log(`Processing sync request for user: ${userId}`)
+    console.log(`Processing sync request for user: ${userId}, forceRefresh: ${forceRefresh}`)
     
-    const result = await syncNessieToFirestore(userId, userInfo || {})
+    const result = await syncNessieToFirestore(userId, userInfo || {}, forceRefresh)
     
     res.status(200).json({
       success: true,

@@ -126,7 +126,7 @@ export const getUserTransactions = async (userId, limitCount = 50) => {
 /**
  * Sync Nessie data to Firestore via backend API
  */
-export const syncNessieData = async (userId, userInfo) => {
+export const syncNessieData = async (userId, userInfo, forceRefresh = false) => {
   try {
     const response = await fetch('/api/syncNessieToFirestore', {
       method: 'POST',
@@ -135,7 +135,8 @@ export const syncNessieData = async (userId, userInfo) => {
       },
       body: JSON.stringify({
         userId,
-        userInfo
+        userInfo,
+        forceRefresh
       })
     })
     

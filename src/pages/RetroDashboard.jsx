@@ -43,30 +43,38 @@ const RetroDashboard = () => {
     try {
       setIsLoading(true)
       const userData = await getUserData(userId)
-      const transactions = await getUserTransactions(userId)
-      const accounts = await getUserAccounts(userId)
       
-      if (userData && transactions.length > 0) {
-        // Transform Firestore data to match our store format
-        const transformedData = {
-          transactions: transactions,
-          savings: calculateSavingsFromTransactions(transactions),
-          spendingBreakdown: calculateSpendingBreakdown(transactions),
-          weeklyBalance: generateWeeklyBalance(transactions),
-          balance: userData.balance || 0,
-          aiInsight: 'Your financial data has been loaded from the cloud!',
-          aiGenerated: false,
-          lastUpdated: userData.lastSync?.toDate?.()?.toLocaleString() || new Date().toLocaleString(),
-          accountInfo: userData.accountInfo || {},
-          dataSource: userData.dataSource || 'Firestore'
-        }
+      if (userData && userData.dataConsistency?.isConsistent) {
+        // User has consistent data, load from Firestore
+        const transactions = await getUserTransactions(userId)
+        const accounts = await getUserAccounts(userId)
         
-        setData(transformedData)
-        console.log('User data loaded from Firestore')
-      } else {
-        // No user data, use mock data
-        refreshData()
+        if (transactions.length > 0) {
+          // Transform Firestore data to match our store format
+          const transformedData = {
+            transactions: transactions,
+            savings: calculateSavingsFromTransactions(transactions),
+            spendingBreakdown: calculateSpendingBreakdown(transactions),
+            weeklyBalance: generateWeeklyBalance(transactions),
+            balance: userData.balance || 0,
+            aiInsight: `Welcome back! Your consistent financial data (${userData.dataConsistency?.accountsCount || 0} accounts, ${userData.dataConsistency?.transactionsCount || 0} transactions)`,
+            aiGenerated: false,
+            lastUpdated: userData.dataConsistency?.lastSync || new Date().toLocaleString(),
+            accountInfo: userData.accountInfo || {},
+            dataSource: userData.dataSource || 'Firestore',
+            isConsistent: true
+          }
+          
+          setData(transformedData)
+          console.log(`Consistent user data loaded for ${userId}`)
+          return
+        }
       }
+      
+      // No consistent data found, use mock data
+      console.log('No consistent user data found, using mock data')
+      refreshData()
+      
     } catch (error) {
       console.error('Error loading user data:', error)
       refreshData() // Fallback to mock data
@@ -105,7 +113,7 @@ const RetroDashboard = () => {
     }
   }
 
-  const handleSyncData = async () => {
+  const handleSyncData = async (forceRefresh = false) => {
     if (!user) {
       setSyncMessage('❌ Please sign in first!')
       setTimeout(() => setSyncMessage(''), 3000)
@@ -114,15 +122,19 @@ const RetroDashboard = () => {
 
     try {
       setIsSyncing(true)
-      setSyncMessage('🔄 Syncing your data...')
+      setSyncMessage(forceRefresh ? '🔄 Refreshing your data...' : '🔄 Syncing your data...')
       
       const result = await syncNessieData(user.uid, {
         name: user.displayName,
         email: user.email
-      })
+      }, forceRefresh)
       
       if (result.success) {
-        setSyncMessage(`✅ ${result.message} (${result.dataSource})`)
+        if (result.isExistingData) {
+          setSyncMessage(`✅ ${result.message}`)
+        } else {
+          setSyncMessage(`✅ ${result.message} (${result.dataSource})`)
+        }
         // Reload user data after sync
         await loadUserData(user.uid)
       } else {
@@ -268,10 +280,17 @@ const RetroDashboard = () => {
             <div className="flex space-x-2">
               <button
                 className="retro-button px-4 py-2 text-sm"
-                onClick={handleSyncData}
+                onClick={() => handleSyncData(false)}
                 disabled={isSyncing}
               >
                 {isSyncing ? '⏳ Syncing...' : '🔄 Sync My Data'}
+              </button>
+              <button
+                className="retro-button px-4 py-2 text-sm"
+                onClick={() => handleSyncData(true)}
+                disabled={isSyncing}
+              >
+                🔄 Refresh Data
               </button>
               <button
                 className="retro-button px-4 py-2 text-sm"

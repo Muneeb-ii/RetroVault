@@ -20,18 +20,26 @@ import {
  * Sync Nessie API data to Firestore for a specific user
  * @param {string} userId - Firebase user ID
  * @param {Object} userInfo - User information (name, email)
+ * @param {boolean} forceRefresh - Force refresh even if data exists
  * @returns {Promise<Object>} Sync result
  */
-export const syncNessieToFirestore = async (userId, userInfo) => {
+export const syncNessieToFirestore = async (userId, userInfo, forceRefresh = false) => {
   try {
     console.log(`Starting Nessie sync for user: ${userId}`)
     
-    // Check if user already exists
+    // Check if user already exists and has data
     const existingUser = await getUserData(userId)
     
-    if (existingUser && existingUser.dataSource === 'Nessie') {
-      console.log('User already has Nessie data, updating...')
-      return await updateExistingUserData(userId)
+    if (existingUser && existingUser.dataSource === 'Nessie' && !forceRefresh) {
+      console.log('User already has consistent Nessie data, skipping sync...')
+      return {
+        success: true,
+        message: 'Your financial data is already up to date',
+        dataSource: 'Nessie',
+        accountsCount: existingUser.accountsCount || 0,
+        transactionsCount: existingUser.transactionsCount || 0,
+        isExistingData: true
+      }
     }
     
     // Try to fetch from Nessie API first
@@ -88,7 +96,7 @@ const fetchNessieData = async () => {
 }
 
 /**
- * Store Nessie data in Firestore
+ * Store Nessie data in Firestore with user-specific consistency
  */
 const storeNessieData = async (userId, userInfo, nessieData) => {
   try {
@@ -99,7 +107,7 @@ const storeNessieData = async (userId, userInfo, nessieData) => {
     const spendingBreakdown = calculateSpendingBreakdown(transactions)
     const balance = primaryAccount.balance || 0
     
-    // Create user document
+    // Create user document with consistency markers
     await createUserDocument(userId, {
       name: userInfo.name || 'Nessie User',
       email: userInfo.email || '',
@@ -109,6 +117,15 @@ const storeNessieData = async (userId, userInfo, nessieData) => {
         accountId: primaryAccount._id,
         accountType: primaryAccount.type,
         accountName: primaryAccount.nickname || 'Primary Account'
+      },
+      // Consistency markers
+      accountsCount: accounts.length,
+      transactionsCount: transactions.length,
+      dataConsistency: {
+        userId: userId,
+        createdAt: new Date().toISOString(),
+        lastSync: new Date().toISOString(),
+        isConsistent: true
       }
     })
     
@@ -141,10 +158,12 @@ const storeNessieData = async (userId, userInfo, nessieData) => {
     console.log(`Successfully synced Nessie data for user ${userId}`)
     return {
       success: true,
-      message: 'Nessie data synced successfully',
+      message: 'Your financial data has been synced and will remain consistent across all logins',
       dataSource: 'Nessie',
       accountsCount: accounts.length,
-      transactionsCount: transactions.length
+      transactionsCount: transactions.length,
+      isConsistent: true,
+      userId: userId
     }
     
   } catch (error) {
