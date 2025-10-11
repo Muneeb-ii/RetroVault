@@ -12,6 +12,8 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@elevenlabs/client": "^0.8.0",
+    "@elevenlabs/elevenlabs-js": "^2.18.0",
     "98.css": "^0.1.18",
     "concurrently": "^9.2.1",
     "cors": "^2.8.5",

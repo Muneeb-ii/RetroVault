@@ -14,21 +14,11 @@ export const generateFinancialStory = async (transactions, savings, aiInsight, b
     // Analyze the data for story elements
     const storyData = analyzeFinancialData(transactions, savings, balance)
     
-    const prompt = `Write a short, engaging 100-word story about a person's financial journey. Make it sound like a nostalgic simulation game narrative. Use the following data:
-
-Financial Data:
-- Current Balance: $${balance.toLocaleString()}
-- Recent Insight: "${aiInsight}"
-- Top Spending Category: ${storyData.topCategory}
-- Savings Trend: ${storyData.savingsTrend}
-- Recent Achievement: ${storyData.recentAchievement}
-
-Write in second person ("You") and make it sound like a retro computer game story. Include specific details about their financial habits, achievements, and future potential. Keep it encouraging and nostalgic, like reading a save file from an old RPG game.`
-
+  
     try {
       // Try to get AI-generated story
       const insights = await getFinancialInsights(transactions, savings)
-      return generateStaticStory(storyData, balance, aiInsight)
+      return generateStaticStory(storyData, balance, insights)
     } catch (error) {
       console.error('AI service unavailable, using static story:', error)
       return generateStaticStory(storyData, balance, aiInsight)
@@ -98,30 +88,7 @@ const getRecentAchievement = (transactions, savings, balance) => {
  * Generate static story when AI is unavailable
  */
 const generateStaticStory = (storyData, balance, aiInsight) => {
-  const stories = [
-    `In the digital realm of RetroVault, your financial journey unfolds like an epic quest. You've mastered the art of budgeting, with ${storyData.topCategory.toLowerCase()} being your primary challenge. Your savings trend is ${storyData.savingsTrend}, and you've ${storyData.recentAchievement}. With a balance of $${balance.toLocaleString()}, you're building wealth one transaction at a time. The future holds promise as you continue your disciplined approach to financial growth.`,
-    
-    `Welcome to your financial adventure! You've navigated the complex world of personal finance with wisdom and determination. Your spending patterns show discipline in ${storyData.topCategory.toLowerCase()}, while your savings continue to ${storyData.savingsTrend}. You've ${storyData.recentAchievement}, proving your commitment to financial success. At $${balance.toLocaleString()}, you're well on your way to achieving your financial goals.`,
-    
-    `Your financial story reads like a classic simulation game. You've learned to balance income and expenses, with ${storyData.topCategory.toLowerCase()} requiring the most attention. Your savings strategy is ${storyData.savingsTrend}, and you've ${storyData.recentAchievement}. With $${balance.toLocaleString()} in your account, you're building the foundation for long-term financial security. The journey continues with each smart financial decision.`,
-    
-    `In the RetroVault universe, you've become a financial hero. Your spending habits show maturity, especially in managing ${storyData.topCategory.toLowerCase()}. Your savings are ${storyData.savingsTrend}, and you've ${storyData.recentAchievement}. At $${balance.toLocaleString()}, you're not just saving money—you're investing in your future. Every dollar saved is a step closer to financial freedom.`,
-    
-    `Your financial narrative unfolds with the precision of a well-crafted RPG. You've optimized your spending across all categories, with ${storyData.topCategory.toLowerCase()} being your focus area. Your savings trajectory is ${storyData.savingsTrend}, and you've ${storyData.recentAchievement}. With $${balance.toLocaleString()} accumulated, you're writing your own success story, one transaction at a time.`
-  ]
-  
-  // Select story based on balance and achievements
-  if (balance > 20000) {
-    return stories[0] // Most optimistic for high balances
-  } else if (balance > 10000) {
-    return stories[1]
-  } else if (balance > 5000) {
-    return stories[2]
-  } else if (balance > 1000) {
-    return stories[3]
-  } else {
-    return stories[4] // Encouraging for lower balances
-  }
+  return aiInsight
 }
 
 /**
