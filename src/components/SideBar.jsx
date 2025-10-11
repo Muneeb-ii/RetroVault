@@ -62,7 +62,7 @@ const SideBar = () => {
             style={{animationDelay: `${index * 0.1}s`}}
             onClick={() => handleToolClick(item)}
           >
-            <span className="text-lg retro-icon-bounce" style={{animationDelay: `${index * 0.1 + 0.2}s`}}>{item.icon}</span>
+            <span className="text-lg">{item.icon}</span>
             <span className="retro-text-reveal" style={{animationDelay: `${index * 0.1 + 0.3}s`}}>{item.label}</span>
           </button>
         ))}

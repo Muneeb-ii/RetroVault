@@ -68,9 +68,9 @@ const HowItWorks = () => {
                   <div className="flex flex-col md:flex-row items-center gap-6">
                     {/* Step Number and Icon */}
                     <div className="flex-shrink-0">
-                      <div className="retro-info w-24 h-24 flex flex-col items-center justify-center text-center retro-bounce">
+                      <div className="retro-info w-24 h-24 flex flex-col items-center justify-center text-center">
                         <div className="text-2xl font-bold text-blue-600 mb-1 retro-text-reveal">{step.number}</div>
-                        <div className="text-2xl retro-icon-bounce">{step.icon}</div>
+                        <div className="text-2xl">{step.icon}</div>
                       </div>
                     </div>
 
@@ -83,7 +83,7 @@ const HowItWorks = () => {
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                           {step.details.map((detail, detailIndex) => (
                             <div key={detailIndex} className="flex items-center text-sm text-gray-700 retro-fade-in-delay-2" style={{animationDelay: `${detailIndex * 0.1}s`}}>
-                              <span className="text-green-600 mr-2 retro-icon-bounce">✓</span>
+                              <span className="text-green-600 mr-2">✓</span>
                               {detail}
                             </div>
                           ))}
@@ -95,8 +95,8 @@ const HowItWorks = () => {
                   {/* ASCII Arrow Separator (except for last step) */}
                   {index < steps.length - 1 && (
                     <div className="flex justify-center my-6">
-                      <div className="retro-info px-4 py-2 text-center retro-bounce">
-                        <div className="text-2xl text-gray-600 retro-icon-bounce">↓</div>
+                      <div className="retro-info px-4 py-2 text-center">
+                        <div className="text-2xl text-gray-600">↓</div>
                         <div className="text-xs text-gray-500 retro-text-reveal">Next Step</div>
                       </div>
                     </div>

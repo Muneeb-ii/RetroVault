@@ -24,7 +24,7 @@ const Hero = () => {
             <div className="text-center">
               {/* Retro ASCII Art Header */}
               <div className="mb-6 retro-fade-in">
-                <div className="text-6xl font-bold text-gray-800 mb-2 retro-bounce">💾</div>
+                <div className="text-6xl font-bold text-gray-800 mb-2">💾</div>
                 <div className="text-2xl font-bold text-blue-600 mb-4 retro-text-reveal">RetroVault</div>
               </div>
               
@@ -61,15 +61,15 @@ const Hero = () => {
               {/* Demo Stats */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-12">
                 <div className="retro-info text-center p-4 retro-feature-card-animate retro-card-hover">
-                  <div className="text-2xl font-bold text-blue-600 mb-2 retro-icon-bounce">🤖 AI-Powered</div>
+                  <div className="text-2xl font-bold text-blue-600 mb-2">🤖 AI-Powered</div>
                   <div className="text-sm text-gray-600">Smart insights from multiple AI models</div>
                 </div>
                 <div className="retro-info text-center p-4 retro-feature-card-animate retro-card-hover" style={{animationDelay: '0.2s'}}>
-                  <div className="text-2xl font-bold text-green-600 mb-2 retro-icon-bounce" style={{animationDelay: '0.5s'}}>⏰ Time Machine</div>
+                  <div className="text-2xl font-bold text-green-600 mb-2">⏰ Time Machine</div>
                   <div className="text-sm text-gray-600">Navigate past, present, and future finances</div>
                 </div>
                 <div className="retro-info text-center p-4 retro-feature-card-animate retro-card-hover" style={{animationDelay: '0.4s'}}>
-                  <div className="text-2xl font-bold text-purple-600 mb-2 retro-icon-bounce" style={{animationDelay: '1s'}}>📚 Story Mode</div>
+                  <div className="text-2xl font-bold text-purple-600 mb-2">📚 Story Mode</div>
                   <div className="text-sm text-gray-600">Turn your data into engaging narratives</div>
                 </div>
               </div>

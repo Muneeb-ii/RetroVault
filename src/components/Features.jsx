@@ -82,7 +82,7 @@ const Features = () => {
                   style={{animationDelay: `${index * 0.1}s`}}
                 >
                   <div className="text-center">
-                    <div className="text-4xl mb-4 retro-icon-bounce" style={{animationDelay: `${index * 0.1 + 0.3}s`}}>{feature.icon}</div>
+                    <div className="text-4xl mb-4">{feature.icon}</div>
                     <h3 className="text-xl font-bold mb-3 retro-text-reveal" style={{animationDelay: `${index * 0.1 + 0.5}s`}}>{feature.title}</h3>
                     <p className="text-sm leading-relaxed retro-fade-in-delay-1" style={{animationDelay: `${index * 0.1 + 0.7}s`}}>{feature.description}</p>
                   </div>

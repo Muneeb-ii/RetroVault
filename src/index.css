@@ -572,22 +572,6 @@ body {
   }
 }
 
-/* Retro bounce animation */
-.retro-bounce {
-  animation: retroBounce 0.6s ease-out;
-}
-
-@keyframes retroBounce {
-  0%, 20%, 50%, 80%, 100% {
-    transform: translateY(0);
-  }
-  40% {
-    transform: translateY(-10px);
-  }
-  60% {
-    transform: translateY(-5px);
-  }
-}
 
 /* Retro glow animation */
 .retro-glow {
@@ -661,18 +645,6 @@ body {
   }
 }
 
-.retro-icon-bounce {
-  animation: retroIconBounce 1s ease-in-out infinite;
-}
-
-@keyframes retroIconBounce {
-  0%, 100% {
-    transform: translateY(0);
-  }
-  50% {
-    transform: translateY(-5px);
-  }
-}
 
 /* Retro window minimize/maximize animations */
 .retro-window-minimize {

@@ -118,7 +118,7 @@ const MainPanel = ({ data, dataSource = 'Firestore' }) => {
       {/* AI Insight */}
       <div className="retro-info bg-gradient-to-r from-blue-50 to-green-50 retro-fade-in-delay-1 retro-card-hover">
         <div className="flex items-start space-x-3">
-          <div className="text-2xl retro-icon-bounce">🤖</div>
+          <div className="text-2xl">🤖</div>
           <div className="flex-1">
             <div className="flex items-center justify-between mb-1">
               <div className="font-bold text-sm retro-text-reveal">
@@ -142,7 +142,7 @@ const MainPanel = ({ data, dataSource = 'Firestore' }) => {
           {recentTransactions.map((transaction, index) => (
             <div key={index} className="flex justify-between items-center p-2 bg-gray-50 border border-gray-300 retro-transaction-slide retro-card-hover" style={{animationDelay: `${index * 0.1}s`}}>
               <div className="flex items-center space-x-2">
-                <span className="text-lg retro-icon-bounce" style={{animationDelay: `${index * 0.1 + 0.2}s`}}>
+                <span className="text-lg">
                   {transaction.type === 'income' ? '💰' : '💸'}
                 </span>
                 <div>
@@ -163,11 +163,11 @@ const MainPanel = ({ data, dataSource = 'Firestore' }) => {
       {/* Quick Actions */}
       <div className="grid grid-cols-2 gap-4">
         <button className="retro-button p-3 text-center hover:bg-gray-100 retro-fade-in-delay-1 retro-card-hover">
-          <div className="text-2xl mb-1 retro-icon-bounce">💸</div>
+          <div className="text-2xl mb-1">💸</div>
           <div className="text-xs retro-text-reveal">Add Expense</div>
         </button>
         <button className="retro-button p-3 text-center hover:bg-gray-100 retro-fade-in-delay-2 retro-card-hover">
-          <div className="text-2xl mb-1 retro-icon-bounce" style={{animationDelay: '0.3s'}}>💰</div>
+          <div className="text-2xl mb-1">💰</div>
           <div className="text-xs retro-text-reveal" style={{animationDelay: '0.4s'}}>Add Income</div>
         </button>
       </div>
