@@ -30,15 +30,38 @@ export const syncNessieToFirestore = async (userId, userInfo, forceRefresh = fal
     // Check if user already exists and has data
     const existingUser = await getUserData(userId)
     
-    if (existingUser && existingUser.dataSource === 'Nessie' && !forceRefresh) {
-      console.log('User already has consistent Nessie data, skipping sync...')
-      return {
-        success: true,
-        message: 'Your financial data is already up to date',
-        dataSource: 'Nessie',
-        accountsCount: existingUser.accountsCount || 0,
-        transactionsCount: existingUser.transactionsCount || 0,
-        isExistingData: true
+    // Enhanced consistency checks
+    if (existingUser && !forceRefresh) {
+      // Check if user has been properly seeded
+      if (existingUser.dataSource && existingUser.dataSource !== 'Pending' && !existingUser.needsSeeding) {
+        console.log('User already has consistent data, skipping sync...')
+        return {
+          success: true,
+          message: 'Your financial data is already up to date',
+          dataSource: existingUser.dataSource,
+          accountsCount: existingUser.accountsCount || 0,
+          transactionsCount: existingUser.transactionsCount || 0,
+          isExistingData: true,
+          lastSeeded: existingUser.lastSeeded
+        }
+      }
+      
+      // Check if user was recently seeded (within last 5 minutes)
+      if (existingUser.lastSeeded) {
+        const lastSeededTime = new Date(existingUser.lastSeeded)
+        const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000)
+        if (lastSeededTime > fiveMinutesAgo) {
+          console.log('User was recently seeded, skipping sync to prevent duplicate data...')
+          return {
+            success: true,
+            message: 'Data was recently synced, skipping to prevent duplicates',
+            dataSource: existingUser.dataSource,
+            accountsCount: existingUser.accountsCount || 0,
+            transactionsCount: existingUser.transactionsCount || 0,
+            isExistingData: true,
+            lastSeeded: existingUser.lastSeeded
+          }
+        }
       }
     }
     
@@ -113,6 +136,7 @@ const storeNessieData = async (userId, userInfo, nessieData) => {
       email: userInfo.email || '',
       balance: balance,
       dataSource: 'Nessie',
+      needsSeeding: false, // Mark as seeded
       accountInfo: {
         accountId: primaryAccount._id,
         accountType: primaryAccount.type,
@@ -121,6 +145,7 @@ const storeNessieData = async (userId, userInfo, nessieData) => {
       // Consistency markers
       accountsCount: accounts.length,
       transactionsCount: transactions.length,
+      lastSeeded: new Date().toISOString(),
       dataConsistency: {
         userId: userId,
         createdAt: new Date().toISOString(),

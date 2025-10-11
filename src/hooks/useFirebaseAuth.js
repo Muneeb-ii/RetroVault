@@ -39,50 +39,25 @@ export function useFirebaseAuth() {
       console.log('📄 [FIRESTORE] User document exists:', snap.exists())
 
       if (!snap.exists()) {
-        console.log('🆕 [FIRESTORE] New user detected, creating Firestore document...')
+        console.log('🆕 [FIRESTORE] New user detected, creating basic Firestore document...')
         const userData = {
           email: user.email,
           name: user.displayName || user.email,
           createdAt: serverTimestamp(),
-          dataSource: "Nessie",
+          dataSource: "Pending", // Mark as pending - will be seeded by dashboard
           balance: 0,
-          accountInfo: {}
+          accountInfo: {},
+          needsSeeding: true // Flag to indicate data needs to be seeded
         }
         console.log('💾 [FIRESTORE] User data to store:', userData)
         
         await setDoc(userDoc, userData)
         console.log('✅ [FIRESTORE] User document created successfully')
-        
-        // Seed with Nessie data for new users
-        console.log('🌱 [NESSIE] Starting data seeding process...')
-        const seedPayload = {
-          userId: user.uid,
-          userInfo: {
-            name: user.displayName || user.email,
-            email: user.email
-          }
-        }
-        console.log('📤 [NESSIE] Seeding payload:', seedPayload)
-        
-        const response = await fetch("/api/syncNessieToFirestore", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(seedPayload),
-        })
-        
-        console.log('📡 [NESSIE] Response status:', response.status)
-        console.log('📡 [NESSIE] Response ok:', response.ok)
-        
-        if (!response.ok) {
-          const errorText = await response.text()
-          console.error('❌ [NESSIE] Seeding failed:', response.status, errorText)
-          throw new Error(`Nessie seeding failed: ${response.status}`)
-        }
-        
-        const result = await response.json()
-        console.log('✅ [NESSIE] Data seeded successfully:', result)
+        console.log('📝 [FIRESTORE] Data seeding will be handled by dashboard')
       } else {
-        console.log('👤 [FIRESTORE] Existing user found, skipping Nessie seeding')
+        console.log('👤 [FIRESTORE] Existing user found, skipping data seeding')
+        const existingData = snap.data()
+        console.log('📊 [FIRESTORE] Existing user data:', existingData)
       }
 
       console.log('🎉 [AUTH] Email sign-up process completed successfully')
@@ -136,52 +111,24 @@ export function useFirebaseAuth() {
       console.log('📄 [FIRESTORE] User document exists:', snap.exists())
       
       if (!snap.exists()) {
-        console.log('🆕 [FIRESTORE] New user detected, creating Firestore document...')
+        console.log('🆕 [FIRESTORE] New user detected, creating basic Firestore document...')
         const userData = {
           email: user.email,
           name: user.displayName,
           photoURL: user.photoURL,
           createdAt: serverTimestamp(),
-          dataSource: "Nessie",
+          dataSource: "Pending", // Mark as pending - will be seeded by dashboard
           balance: 0,
-          accountInfo: {}
+          accountInfo: {},
+          needsSeeding: true // Flag to indicate data needs to be seeded
         }
         console.log('💾 [FIRESTORE] User data to store:', userData)
         
         await setDoc(userDoc, userData)
         console.log('✅ [FIRESTORE] User document created successfully')
-        
-        // Seed with Nessie data for new users
-        console.log('🌱 [NESSIE] Starting data seeding process...')
-        const seedPayload = {
-          userId: user.uid,
-          userInfo: {
-            name: user.displayName,
-            email: user.email,
-            photoURL: user.photoURL
-          }
-        }
-        console.log('📤 [NESSIE] Seeding payload:', seedPayload)
-        
-        const response = await fetch("/api/syncNessieToFirestore", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(seedPayload),
-        })
-        
-        console.log('📡 [NESSIE] Response status:', response.status)
-        console.log('📡 [NESSIE] Response ok:', response.ok)
-        
-        if (!response.ok) {
-          const errorText = await response.text()
-          console.error('❌ [NESSIE] Seeding failed:', response.status, errorText)
-          throw new Error(`Nessie seeding failed: ${response.status}`)
-        }
-        
-        const result = await response.json()
-        console.log('✅ [NESSIE] Data seeded successfully:', result)
+        console.log('📝 [FIRESTORE] Data seeding will be handled by dashboard')
       } else {
-        console.log('👤 [FIRESTORE] Existing user found, skipping Nessie seeding')
+        console.log('👤 [FIRESTORE] Existing user found, skipping data seeding')
         const existingData = snap.data()
         console.log('📊 [FIRESTORE] Existing user data:', existingData)
       }

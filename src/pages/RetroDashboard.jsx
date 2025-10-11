@@ -52,10 +52,18 @@ const RetroDashboard = () => {
         email: userData.email,
         dataSource: userData.dataSource,
         balance: userData.balance,
-        hasAccountInfo: !!userData.accountInfo
+        hasAccountInfo: !!userData.accountInfo,
+        needsSeeding: userData.needsSeeding
       })
 
-      // Load transactions and accounts
+      // Check if user needs data seeding (only for truly new users)
+      if (userData.needsSeeding || userData.dataSource === 'Pending') {
+        console.log('🌱 [DASHBOARD] User needs data seeding - triggering Nessie sync')
+        await handleNewUser(userId)
+        return
+      }
+
+      // Load transactions and accounts for existing users
       console.log('🔍 [FIRESTORE] Loading transactions and accounts...')
       const [transactions, accounts] = await Promise.all([
         getUserTransactions(userId),
@@ -67,9 +75,10 @@ const RetroDashboard = () => {
         accountsCount: accounts.length
       })
 
-      if (transactions.length === 0) {
-        console.log('🆕 [DASHBOARD] User exists but no transaction data - triggering data seeding')
-        await handleNewUser(userId)
+      // Only show error if user has been seeded but has no data (data corruption)
+      if (transactions.length === 0 && userData.dataSource !== 'Pending') {
+        console.log('⚠️ [DASHBOARD] User has been seeded but no transaction data found - this may indicate data corruption')
+        setError('No financial data found. Please contact support or try refreshing the page.')
         return
       }
 
@@ -158,6 +167,22 @@ const RetroDashboard = () => {
         accountsCount: result.accountsCount,
         transactionsCount: result.transactionsCount
       })
+      
+      // Mark user as seeded to prevent future re-seeding
+      console.log('🔒 [NEW_USER] Marking user as seeded to prevent future re-seeding...')
+      try {
+        const { doc, updateDoc } = await import('firebase/firestore')
+        const { db } = await import('../firebaseClient')
+        const userDocRef = doc(db, 'users', userId)
+        await updateDoc(userDocRef, {
+          needsSeeding: false,
+          dataSource: result.dataSource || 'Nessie',
+          lastSeeded: new Date().toISOString()
+        })
+        console.log('✅ [NEW_USER] User marked as seeded successfully')
+      } catch (updateError) {
+        console.warn('⚠️ [NEW_USER] Could not update user seeding status:', updateError)
+      }
       
       // Reload data after seeding
       console.log('🔄 [NEW_USER] Reloading data after seeding...')
