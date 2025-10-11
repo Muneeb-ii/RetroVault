@@ -19,7 +19,7 @@ const Footer = () => {
                 <h3 className="text-lg font-bold text-gray-800 mb-4">💾 About RetroVault</h3>
                 <p className="text-sm text-gray-600 mb-4">
                   A nostalgic reimagining of early-2000s personal finance software with modern AI capabilities. 
-                  Built for hackathons and financial enthusiasts who appreciate both retro aesthetics and cutting-edge technology.
+                  Built for financial enthusiasts who appreciate both retro aesthetics and cutting-edge technology.
                 </p>
                 <div className="text-xs text-gray-500">
                   <div>Built at BostonHacks 2025</div>
