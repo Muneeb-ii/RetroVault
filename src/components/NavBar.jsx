@@ -39,7 +39,7 @@ const NavBar = () => {
 
   return (
     <nav className="bg-gray-200 border-b-2 border-gray-400 shadow-lg">
-      <div className="max-w-screen-lg mx-auto px-4 py-2">
+  <div className="w-full px-4 py-2">
         <div className="flex items-center justify-between">
           {/* Left: Brand */}
           <Link to="/" className="flex items-center space-x-2 text-lg font-bold text-gray-800 hover:text-blue-600 transition-colors">

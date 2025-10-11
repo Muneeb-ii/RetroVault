@@ -10,7 +10,7 @@ const Hero = () => {
 
   return (
     <section className="py-16 bg-gradient-to-b from-blue-50 to-gray-100">
-      <div className="max-w-screen-lg mx-auto px-4">
+  <div className="w-full px-4">
         <div className="window">
           <div className="title-bar">
             <div className="title-bar-text">💾 RetroVault - The AI Time Machine for Your Finances</div>
