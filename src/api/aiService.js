@@ -8,7 +8,7 @@ const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions'
  * @param {string} model - AI model to use (default: google/gemini-1.5-pro)
  * @returns {Promise<Array<string>>} Array of 2 short insights
  */
-export const getFinancialInsights = async (transactions, savings, model = 'google/gemini-1.5-pro') => {
+export const getFinancialInsights = async (transactions, savings, model = 'google/gemini-2.5-flash') => {
   try {
     // Get API key from environment
     const apiKey = import.meta.env.VITE_OPENROUTER_API_KEY
@@ -56,8 +56,6 @@ Provide 2 concise insights in this format:
             content: prompt
           }
         ],
-        temperature: 0.7,
-        max_tokens: 200
       })
     })
 
