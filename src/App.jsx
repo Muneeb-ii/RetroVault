@@ -1,18 +1,43 @@
 import { Routes, Route } from 'react-router-dom'
+import Landing from './pages/Landing'
+import AuthPage from './pages/AuthPage'
 import RetroDashboard from './pages/RetroDashboard'
 import TimeMachine from './pages/TimeMachine'
 import Insights from './pages/Insights'
 import StoryMode from './pages/StoryMode'
+import ProtectedRoute from './routes/ProtectedRoute'
 
 function App() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-900 to-blue-700">
+    <div className="min-h-screen">
       <Routes>
-        <Route path="/" element={<RetroDashboard />} />
-        <Route path="/dashboard" element={<RetroDashboard />} />
-        <Route path="/time" element={<TimeMachine />} />
-        <Route path="/insights" element={<Insights />} />
-        <Route path="/story" element={<StoryMode />} />
+        {/* Public Landing Page */}
+        <Route path="/" element={<Landing />} />
+        
+        {/* Authentication Page */}
+        <Route path="/auth" element={<AuthPage />} />
+        
+        {/* Protected Dashboard Routes */}
+        <Route path="/dashboard" element={
+          <ProtectedRoute>
+            <RetroDashboard />
+          </ProtectedRoute>
+        } />
+        <Route path="/time" element={
+          <ProtectedRoute>
+            <TimeMachine />
+          </ProtectedRoute>
+        } />
+        <Route path="/insights" element={
+          <ProtectedRoute>
+            <Insights />
+          </ProtectedRoute>
+        } />
+        <Route path="/story" element={
+          <ProtectedRoute>
+            <StoryMode />
+          </ProtectedRoute>
+        } />
       </Routes>
     </div>
   )

@@ -243,24 +243,6 @@ const RetroDashboard = () => {
       {/* Top Navigation */}
       <TopNav />
       
-      {/* Authentication Section */}
-      {!user && (
-        <div className="retro-window mb-4 p-4">
-          <div className="text-center">
-            <div className="text-lg font-bold mb-2">🔐 Sign In to Sync Your Data</div>
-            <div className="text-sm text-gray-600 mb-4">
-              Connect your account to sync real financial data and save your progress
-            </div>
-            <button
-              className="retro-button px-6 py-3 text-lg font-bold"
-              onClick={handleSignIn}
-              disabled={isLoading}
-            >
-              {isLoading ? '⏳ Signing in...' : '🔑 Sign In with Google'}
-            </button>
-          </div>
-        </div>
-      )}
 
       {/* Sync Status */}
       {syncMessage && (
@@ -270,38 +252,36 @@ const RetroDashboard = () => {
       )}
 
       {/* User Info and Sync Button */}
-      {user && (
-        <div className="retro-window mb-4 p-4">
-          <div className="flex justify-between items-center">
-            <div>
-              <div className="text-sm font-bold">👤 {user.displayName}</div>
-              <div className="text-xs text-gray-600">{user.email}</div>
-            </div>
-            <div className="flex space-x-2">
-              <button
-                className="retro-button px-4 py-2 text-sm"
-                onClick={() => handleSyncData(false)}
-                disabled={isSyncing}
-              >
-                {isSyncing ? '⏳ Syncing...' : '🔄 Sync My Data'}
-              </button>
-              <button
-                className="retro-button px-4 py-2 text-sm"
-                onClick={() => handleSyncData(true)}
-                disabled={isSyncing}
-              >
-                🔄 Refresh Data
-              </button>
-              <button
-                className="retro-button px-4 py-2 text-sm"
-                onClick={handleSignOut}
-              >
-                🚪 Sign Out
-              </button>
-            </div>
+      <div className="retro-window mb-4 p-4">
+        <div className="flex justify-between items-center">
+          <div>
+            <div className="text-sm font-bold">👤 {user?.displayName || 'User'}</div>
+            <div className="text-xs text-gray-600">{user?.email || 'user@example.com'}</div>
+          </div>
+          <div className="flex space-x-2">
+            <button
+              className="retro-button px-4 py-2 text-sm"
+              onClick={() => handleSyncData(false)}
+              disabled={isSyncing}
+            >
+              {isSyncing ? '⏳ Syncing...' : '🔄 Sync My Data'}
+            </button>
+            <button
+              className="retro-button px-4 py-2 text-sm"
+              onClick={() => handleSyncData(true)}
+              disabled={isSyncing}
+            >
+              🔄 Refresh Data
+            </button>
+            <button
+              className="retro-button px-4 py-2 text-sm"
+              onClick={handleSignOut}
+            >
+              🚪 Sign Out
+            </button>
           </div>
         </div>
-      )}
+      </div>
       
       {/* Main Content Area */}
       <div className="flex">

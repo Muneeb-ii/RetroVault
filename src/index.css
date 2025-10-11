@@ -25,6 +25,13 @@ body {
 .retro-button:hover {
   transform: translate(1px, 1px);
   box-shadow: 1px 1px 0px #000000;
+  background: #e0e0e0;
+}
+
+.retro-button:active {
+  transform: translate(2px, 2px);
+  box-shadow: inset 1px 1px 2px #000000;
+  background: #c0c0c0;
 }
 
 /* Custom scrollbar for retro feel */
@@ -189,20 +196,92 @@ body {
   font-family: 'Courier New', monospace;
   font-weight: bold;
   cursor: pointer;
+  transition: all 0.1s ease;
 }
 
 .retro-button:hover {
   background: #e0e0e0;
+  transform: translate(1px, 1px);
+  box-shadow: 1px 1px 0px #000000;
 }
 
 .retro-button:active {
   border: 2px inset #c0c0c0;
+  transform: translate(2px, 2px);
+  box-shadow: inset 1px 1px 2px #000000;
+  background: #a0a0a0;
 }
 
 .retro-button:disabled {
   background: #a0a0a0;
   cursor: not-allowed;
   opacity: 0.6;
+  transform: none;
+  box-shadow: none;
+}
+
+/* Retro landing page specific styles */
+.retro-landing-bg {
+  background: linear-gradient(135deg, #c0c0c0 0%, #a0a0a0 50%, #c0c0c0 100%);
+  min-height: 100vh;
+}
+
+/* Retro authentication page styles */
+.retro-auth-bg {
+  background: linear-gradient(135deg, #c0c0c0 0%, #a0a0a0 50%, #c0c0c0 100%);
+  min-height: 100vh;
+}
+
+.retro-tab-active {
+  background: #4A90E2 !important;
+  color: white !important;
+  border: 2px inset #c0c0c0;
+}
+
+.retro-tab-inactive {
+  background: #e0e0e0;
+  color: #333;
+  border: 2px outset #c0c0c0;
+}
+
+.retro-tab-inactive:hover {
+  background: #d0d0d0;
+  border: 2px inset #c0c0c0;
+}
+
+.retro-google-button {
+  background: linear-gradient(to bottom, #ffffff 0%, #f8f8f8 100%);
+  border: 2px outset #c0c0c0;
+  color: #333;
+  font-weight: bold;
+}
+
+.retro-google-button:hover {
+  background: linear-gradient(to bottom, #f0f0f0 0%, #e8e8e8 100%);
+  border: 2px inset #c0c0c0;
+}
+
+.retro-google-button:active {
+  background: linear-gradient(to bottom, #e8e8e8 0%, #e0e0e0 100%);
+  border: 2px inset #999;
+}
+
+.retro-feature-card {
+  background: #f0f0f0;
+  border: 2px outset #c0c0c0;
+  box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+  transition: all 0.2s ease;
+}
+
+.retro-feature-card:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 3px 3px 6px rgba(0, 0, 0, 0.4);
+}
+
+.retro-step-arrow {
+  font-family: 'Courier New', monospace;
+  color: #4A90E2;
+  text-shadow: 1px 1px 0px #000000;
 }
 
 /* Retro story mode styling */
