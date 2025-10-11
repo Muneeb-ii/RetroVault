@@ -1,17 +1,28 @@
 // Firebase Admin SDK Configuration
 import admin from 'firebase-admin'
+import { readFileSync } from 'fs'
+import { fileURLToPath } from 'url'
+import { dirname, join } from 'path'
+
+const __filename = fileURLToPath(import.meta.url)
+const __dirname = dirname(__filename)
 
 // Initialize Firebase Admin SDK
 if (!admin.apps.length) {
   try {
     // First, try to use service account key file (for development)
     try {
-      const serviceAccount = await import('../serviceAccountKey.json', { assert: { type: 'json' } })
+      const serviceAccountPath = join(__dirname, '../serviceAccountKey.json')
+      const serviceAccount = JSON.parse(readFileSync(serviceAccountPath, 'utf8'))
+      
       admin.initializeApp({
-        credential: admin.credential.cert(serviceAccount.default),
+        credential: admin.credential.cert(serviceAccount),
+        projectId: serviceAccount.project_id
       })
-      console.log('Firebase Admin initialized with serviceAccountKey.json')
+      console.log('✅ Firebase Admin initialized with serviceAccountKey.json')
     } catch (jsonError) {
+      console.log('⚠️ Could not load serviceAccountKey.json, trying environment variables...')
+      
       // If JSON file not found, fall back to environment variables (for production)
       if (process.env.FIREBASE_PROJECT_ID && process.env.FIREBASE_CLIENT_EMAIL && process.env.FIREBASE_PRIVATE_KEY) {
         admin.initializeApp({
@@ -22,13 +33,13 @@ if (!admin.apps.length) {
           }),
           projectId: process.env.FIREBASE_PROJECT_ID,
         })
-        console.log('Firebase Admin initialized with environment variables')
+        console.log('✅ Firebase Admin initialized with environment variables')
       } else {
         throw new Error('No Firebase credentials found. Either provide serviceAccountKey.json or set FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, and FIREBASE_PRIVATE_KEY environment variables.')
       }
     }
   } catch (error) {
-    console.error('Error initializing Firebase Admin:', error)
+    console.error('❌ Error initializing Firebase Admin:', error)
     throw error
   }
 }

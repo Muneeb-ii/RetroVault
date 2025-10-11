@@ -141,7 +141,12 @@ const RetroDashboard = () => {
       
       // Call the backend to seed data from Nessie API
       console.log('🌐 [NEW_USER] Calling backend API...')
-      const response = await fetch('/api/syncNessieToFirestore', {
+      const apiUrl = import.meta.env.DEV 
+        ? 'http://localhost:3001/api/syncNessieToFirestore' 
+        : '/api/syncNessieToFirestore'
+      console.log('🔗 [NEW_USER] API URL:', apiUrl)
+      
+      const response = await fetch(apiUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
