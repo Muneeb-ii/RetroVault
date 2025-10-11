@@ -13,21 +13,22 @@ const MainPanel = ({ data, dataSource = 'Firestore' }) => {
     )
   }
   
-  // Use data from props
-  const spendingData = data.spendingBreakdown
-  const savingsData = data.savings
-  const balanceData = data.weeklyBalance
+  // Use data from props with null checks
+  const spendingData = data.spendingBreakdown || []
+  const savingsData = data.savings || []
+  const balanceData = data.weeklyBalance || []
   
-  // Calculate totals from data
-  const totalIncome = data.transactions
+  // Calculate totals from data with null checks
+  const transactions = data.transactions || []
+  const totalIncome = transactions
     .filter(t => t.type === 'income')
     .reduce((sum, t) => sum + t.amount, 0)
   
-  const totalExpenses = data.transactions
+  const totalExpenses = transactions
     .filter(t => t.type === 'expense')
     .reduce((sum, t) => sum + t.amount, 0)
   
-  const recentTransactions = data.transactions.slice(0, 5)
+  const recentTransactions = transactions.slice(0, 5)
 
   return (
     <div className="flex-1 space-y-4 retro-dashboard-fade">

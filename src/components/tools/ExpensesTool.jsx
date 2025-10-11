@@ -46,7 +46,24 @@ const ExpensesTool = ({ financialData, onClose, onDataUpdate }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    if (!financialData?.user) return
+    if (!financialData?.user) {
+      setMessage('❌ User not authenticated')
+      return
+    }
+    
+    // Validate form data
+    if (!newTransaction.description.trim()) {
+      setMessage('❌ Description is required')
+      return
+    }
+    if (!newTransaction.amount || parseFloat(newTransaction.amount) <= 0) {
+      setMessage('❌ Amount must be greater than 0')
+      return
+    }
+    if (!newTransaction.date) {
+      setMessage('❌ Date is required')
+      return
+    }
     
     try {
       setIsSaving(true)
@@ -72,6 +89,15 @@ const ExpensesTool = ({ financialData, onClose, onDataUpdate }) => {
       // Update user balance
       const balanceChange = newTransaction.type === 'income' ? 
         parseFloat(newTransaction.amount) : -parseFloat(newTransaction.amount)
+      
+      // Update user balance in Firestore
+      if (balanceChange !== 0) {
+        const userRef = doc(db, 'users', financialData.user.uid)
+        await updateDoc(userRef, {
+          balance: (financialData.balance || 0) + balanceChange,
+          lastUpdated: new Date().toISOString()
+        })
+      }
       
       // Reset form
       setNewTransaction({

@@ -88,6 +88,7 @@ export const FinancialDataProvider = ({ children }) => {
         
         // User info
         user: {
+          uid: userId,
           name: userData.name || 'User',
           email: userData.email || '',
           photoURL: userData.photoURL || null

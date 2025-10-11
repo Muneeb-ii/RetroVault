@@ -50,7 +50,28 @@ const GoalsTool = ({ financialData, onClose, onDataUpdate }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    if (!financialData?.user) return
+    if (!financialData?.user) {
+      setMessage('❌ User not authenticated')
+      return
+    }
+    
+    // Validate form data
+    if (!newGoal.title.trim()) {
+      setMessage('❌ Goal title is required')
+      return
+    }
+    if (!newGoal.targetAmount || parseFloat(newGoal.targetAmount) <= 0) {
+      setMessage('❌ Target amount must be greater than 0')
+      return
+    }
+    if (!newGoal.targetDate) {
+      setMessage('❌ Target date is required')
+      return
+    }
+    if (new Date(newGoal.targetDate) <= new Date()) {
+      setMessage('❌ Target date must be in the future')
+      return
+    }
     
     try {
       setIsSaving(true)
