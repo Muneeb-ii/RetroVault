@@ -126,6 +126,11 @@ const useFinancialStore = create((set, get) => ({
     return data.spendingBreakdown.reduce((max, category) => 
       category.value > max.value ? category : max
     )
+  },
+  
+  // Set data directly (for Firestore integration)
+  setData: (newData) => {
+    set({ data: newData })
   }
 }))
 

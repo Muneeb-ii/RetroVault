@@ -1,0 +1,97 @@
+// Firebase Admin SDK Configuration
+import admin from 'firebase-admin'
+
+// Initialize Firebase Admin SDK
+if (!admin.apps.length) {
+  try {
+    // For production, use environment variables
+    if (process.env.FIREBASE_PROJECT_ID) {
+      admin.initializeApp({
+        credential: admin.credential.cert({
+          projectId: process.env.FIREBASE_PROJECT_ID,
+          clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+          privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+        }),
+        projectId: process.env.FIREBASE_PROJECT_ID,
+      })
+    } else {
+      // For development, use service account key file
+      const serviceAccount = await import('../serviceAccountKey.json', { assert: { type: 'json' } })
+      admin.initializeApp({
+        credential: admin.credential.cert(serviceAccount.default),
+      })
+    }
+  } catch (error) {
+    console.error('Error initializing Firebase Admin:', error)
+    throw error
+  }
+}
+
+export const db = admin.firestore()
+export const auth = admin.auth()
+
+// Firestore collection references
+export const usersCollection = () => db.collection('users')
+export const accountsCollection = (userId) => db.collection(`users/${userId}/accounts`)
+export const transactionsCollection = (userId) => db.collection(`users/${userId}/transactions`)
+export const sampleProfilesCollection = () => db.collection('sampleProfiles')
+
+// Helper functions for Firestore operations
+export const createUserDocument = async (userId, userData) => {
+  try {
+    const userRef = usersCollection().doc(userId)
+    await userRef.set({
+      ...userData,
+      createdAt: admin.firestore.FieldValue.serverTimestamp(),
+      lastSync: admin.firestore.FieldValue.serverTimestamp(),
+    })
+    console.log(`Created user document for ${userId}`)
+    return userRef
+  } catch (error) {
+    console.error('Error creating user document:', error)
+    throw error
+  }
+}
+
+export const updateUserLastSync = async (userId) => {
+  try {
+    const userRef = usersCollection().doc(userId)
+    await userRef.update({
+      lastSync: admin.firestore.FieldValue.serverTimestamp(),
+    })
+    console.log(`Updated lastSync for user ${userId}`)
+  } catch (error) {
+    console.error('Error updating lastSync:', error)
+    throw error
+  }
+}
+
+export const getUserData = async (userId) => {
+  try {
+    const userDoc = await usersCollection().doc(userId).get()
+    if (userDoc.exists) {
+      return { id: userDoc.id, ...userDoc.data() }
+    }
+    return null
+  } catch (error) {
+    console.error('Error getting user data:', error)
+    throw error
+  }
+}
+
+export const getSampleProfile = async () => {
+  try {
+    const sampleProfiles = await sampleProfilesCollection().get()
+    if (sampleProfiles.empty) {
+      return null
+    }
+    
+    // Get a random sample profile
+    const profiles = sampleProfiles.docs
+    const randomIndex = Math.floor(Math.random() * profiles.length)
+    return { id: profiles[randomIndex].id, ...profiles[randomIndex].data() }
+  } catch (error) {
+    console.error('Error getting sample profile:', error)
+    throw error
+  }
+}

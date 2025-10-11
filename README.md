@@ -16,11 +16,14 @@ RetroVault combines the nostalgic charm of Windows 98-era financial software wit
 
 ## 🛠️ Tech Stack
 
-- **Frontend**: React + Vite
-- **Styling**: TailwindCSS + 98.css for retro aesthetics
+- **Frontend**: React + Vite + TailwindCSS + 98.css
+- **Backend**: Node.js + Express (Vercel Serverless)
+- **Database**: Firebase Firestore
+- **Authentication**: Firebase Auth (Google Sign-In)
+- **APIs**: Capital One Nessie API + OpenRouter AI
 - **Charts**: Recharts for data visualization
-- **Routing**: React Router DOM
-- **APIs**: Capital One Nessie API (mock data) + Google Gemini AI
+- **State Management**: Zustand
+- **Deployment**: Vercel
 
 ## 🎨 Design Philosophy
 
@@ -36,11 +39,11 @@ RetroVault combines the nostalgic charm of Windows 98-era financial software wit
    npm install
    ```
 
-2. **Configure AI Integration (Optional)**
-   - Copy `.env` file and add your OpenRouter API key:
+2. **Configure Environment Variables**
+   - Copy `.env.example` to `.env.local` and add your API keys:
    ```bash
-   cp .env .env.local
-   # Edit .env.local and add your OpenRouter API key
+   cp .env.example .env.local
+   # Edit .env.local with your API keys
    ```
 
 3. **Start Development Server**
@@ -51,29 +54,71 @@ RetroVault combines the nostalgic charm of Windows 98-era financial software wit
 4. **Open in Browser**
    Navigate to `http://localhost:5173`
 
+## 🔥 Full-Stack Deployment
+
+### **Firebase Setup**
+1. Create a Firebase project at [console.firebase.google.com](https://console.firebase.google.com)
+2. Enable Authentication (Google Sign-In)
+3. Enable Firestore Database
+4. Generate service account key for backend
+5. Get Firebase config for web app
+
+### **Environment Variables**
+```bash
+# Frontend (.env.local)
+VITE_FIREBASE_API_KEY=your_firebase_api_key
+VITE_FIREBASE_AUTH_DOMAIN=your_project.firebaseapp.com
+VITE_FIREBASE_PROJECT_ID=your_project_id
+VITE_FIREBASE_STORAGE_BUCKET=your_project.appspot.com
+VITE_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
+VITE_FIREBASE_APP_ID=your_app_id
+VITE_OPENROUTER_API_KEY=your_openrouter_key
+VITE_NESSIE_API_KEY=your_nessie_key
+
+# Backend (Vercel Environment Variables)
+FIREBASE_PROJECT_ID=your_project_id
+FIREBASE_CLIENT_EMAIL=your_service_account_email
+FIREBASE_PRIVATE_KEY=your_private_key
+NESSIE_API_KEY=your_nessie_key
+OPENROUTER_API_KEY=your_openrouter_key
+```
+
+### **Deploy to Vercel**
+```bash
+npm run build
+vercel --prod
+```
+
+### **Populate Sample Data**
+```bash
+node scripts/deploy.js
+```
+
 ## 📁 Project Structure
 
 ```
-src/
-├── components/
-│   ├── TopNav.jsx          # Navigation bar with tabs
-│   ├── SideBar.jsx         # Left sidebar with toolbar
-│   ├── MainPanel.jsx       # Main content area with charts
-│   └── AIModelSelector.jsx # AI model selection dropdown
-├── pages/
-│   ├── RetroDashboard.jsx  # Main dashboard page
-│   ├── TimeMachine.jsx     # Time travel interface
-│   ├── Insights.jsx        # AI insights page
-│   └── StoryMode.jsx       # Story mode interface
-├── api/
-│   └── aiService.js        # OpenRouter AI integration
-├── data/
-│   └── mockData.js         # Mock financial data generator
-├── store/
-│   └── useFinancialStore.js # Zustand state management
-├── App.jsx                 # Main app component with routing
-├── main.jsx               # Entry point
-└── index.css              # Global styles + 98.css imports
+RetroVault/
+├── src/
+│   ├── components/         # React components
+│   ├── pages/             # Page components
+│   ├── api/               # API services
+│   │   ├── aiService.js   # OpenRouter AI integration
+│   │   ├── nessieService.js # Capital One Nessie API
+│   │   ├── timeMachineService.js # Time Machine AI
+│   │   ├── storyService.js # Story Mode AI
+│   │   └── syncNessieToFirestore.js # Backend sync
+│   ├── store/             # Zustand state management
+│   ├── data/              # Mock data generators
+│   ├── scripts/           # Deployment scripts
+│   ├── firebaseAdmin.js   # Firebase Admin SDK
+│   ├── firebaseClient.js  # Firebase Client SDK
+│   └── index.css          # Global styles
+├── api/                   # Vercel serverless functions
+│   └── syncNessieToFirestore.js
+├── scripts/               # Deployment scripts
+├── firestore.rules        # Firestore security rules
+├── vercel.json            # Vercel configuration
+└── .env.example           # Environment variables template
 ```
 
 ## 🎯 Hackathon Ready
