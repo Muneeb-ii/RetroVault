@@ -13,10 +13,43 @@ const firebaseConfig = {
   appId: import.meta.env.VITE_FIREBASE_APP_ID
 }
 
+// Debug Firebase configuration
+console.log('🔧 [FIREBASE] Configuration check:', {
+  hasApiKey: !!firebaseConfig.apiKey,
+  hasAuthDomain: !!firebaseConfig.authDomain,
+  hasProjectId: !!firebaseConfig.projectId,
+  hasStorageBucket: !!firebaseConfig.storageBucket,
+  hasMessagingSenderId: !!firebaseConfig.messagingSenderId,
+  hasAppId: !!firebaseConfig.appId,
+  projectId: firebaseConfig.projectId,
+  authDomain: firebaseConfig.authDomain
+})
+
 // Initialize Firebase
 const app = initializeApp(firebaseConfig)
 export const auth = getAuth(app)
 export const db = getFirestore(app)
+
+// Add Firestore connection debugging
+console.log('🔧 [FIRESTORE] Database initialized:', db.app.name)
+console.log('🔧 [FIRESTORE] Database settings:', db.settings)
+
+// Test Firestore connection
+const testFirestoreConnection = async () => {
+  try {
+    console.log('🔧 [FIRESTORE] Testing connection...')
+    const testDoc = doc(db, 'test', 'connection')
+    await getDoc(testDoc)
+    console.log('✅ [FIRESTORE] Connection test successful')
+  } catch (error) {
+    console.error('❌ [FIRESTORE] Connection test failed:', error)
+    console.error('❌ [FIRESTORE] Error code:', error.code)
+    console.error('❌ [FIRESTORE] Error message:', error.message)
+  }
+}
+
+// Run connection test
+testFirestoreConnection()
 
 // Google Auth Provider
 const googleProvider = new GoogleAuthProvider()
@@ -84,13 +117,29 @@ export const onAuthStateChange = (callback) => {
  */
 export const getUserData = async (userId) => {
   try {
-    const userDoc = await getDoc(doc(db, 'users', userId))
+    console.log('🔍 [FIRESTORE] Getting user data for:', userId)
+    console.log('🔧 [FIRESTORE] Database instance:', db)
+    console.log('🔧 [FIRESTORE] Database app:', db.app.name)
+    
+    const userDocRef = doc(db, 'users', userId)
+    console.log('📄 [FIRESTORE] Document reference created:', userDocRef.path)
+    
+    const userDoc = await getDoc(userDocRef)
+    console.log('📄 [FIRESTORE] Document exists:', userDoc.exists())
+    console.log('📄 [FIRESTORE] Document metadata:', userDoc.metadata)
+    
     if (userDoc.exists()) {
-      return { id: userDoc.id, ...userDoc.data() }
+      const data = { id: userDoc.id, ...userDoc.data() }
+      console.log('📊 [FIRESTORE] User data retrieved:', data)
+      return data
     }
+    console.log('📄 [FIRESTORE] No user document found')
     return null
   } catch (error) {
-    console.error('Error getting user data:', error)
+    console.error('❌ [FIRESTORE] Error getting user data:', error)
+    console.error('❌ [FIRESTORE] Error code:', error.code)
+    console.error('❌ [FIRESTORE] Error message:', error.message)
+    console.error('❌ [FIRESTORE] Error stack:', error.stack)
     throw error
   }
 }
@@ -113,12 +162,28 @@ export const getUserAccounts = async (userId) => {
  */
 export const getUserTransactions = async (userId, limitCount = 50) => {
   try {
+    console.log('🔍 [FIRESTORE] Getting transactions for user:', userId)
+    console.log('🔧 [FIRESTORE] Limit count:', limitCount)
+    
     const transactionsRef = collection(db, 'users', userId, 'transactions')
+    console.log('📄 [FIRESTORE] Collection reference:', transactionsRef.path)
+    
     const q = query(transactionsRef, orderBy('date', 'desc'), limit(limitCount))
+    console.log('🔍 [FIRESTORE] Query created:', q)
+    
     const transactionsSnapshot = await getDocs(q)
-    return transactionsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
+    console.log('📊 [FIRESTORE] Transactions snapshot size:', transactionsSnapshot.size)
+    console.log('📊 [FIRESTORE] Transactions snapshot empty:', transactionsSnapshot.empty)
+    
+    const transactions = transactionsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
+    console.log('📊 [FIRESTORE] Transactions retrieved:', transactions.length)
+    
+    return transactions
   } catch (error) {
-    console.error('Error getting user transactions:', error)
+    console.error('❌ [FIRESTORE] Error getting user transactions:', error)
+    console.error('❌ [FIRESTORE] Error code:', error.code)
+    console.error('❌ [FIRESTORE] Error message:', error.message)
+    console.error('❌ [FIRESTORE] Error stack:', error.stack)
     throw error
   }
 }

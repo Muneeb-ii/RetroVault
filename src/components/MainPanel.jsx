@@ -1,28 +1,33 @@
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts'
-import useFinancialStore from '../store/useFinancialStore'
 
-const MainPanel = () => {
-  const { data, isLoading, dataSource, accounts, getTotalIncome, getTotalExpenses, getRecentTransactions } = useFinancialStore()
-  
-  // Use real data from store
-  const spendingData = data.spendingBreakdown
-  const savingsData = data.savings
-  const balanceData = data.weeklyBalance
-  const totalIncome = getTotalIncome()
-  const totalExpenses = getTotalExpenses()
-  const recentTransactions = getRecentTransactions(5)
-
-  if (isLoading) {
+const MainPanel = ({ data, dataSource = 'Firestore' }) => {
+  if (!data) {
     return (
       <div className="flex-1 flex items-center justify-center">
         <div className="retro-info text-center">
-          <div className="text-4xl mb-4">⏳</div>
-          <div className="text-lg">Loading financial data...</div>
-          <div className="text-sm text-gray-600 mt-2">Please wait while we refresh your data</div>
+          <div className="text-4xl mb-4">📊</div>
+          <div className="text-lg">No financial data available</div>
+          <div className="text-sm text-gray-600 mt-2">Please ensure your data is properly loaded</div>
         </div>
       </div>
     )
   }
+  
+  // Use data from props
+  const spendingData = data.spendingBreakdown
+  const savingsData = data.savings
+  const balanceData = data.weeklyBalance
+  
+  // Calculate totals from data
+  const totalIncome = data.transactions
+    .filter(t => t.type === 'income')
+    .reduce((sum, t) => sum + t.amount, 0)
+  
+  const totalExpenses = data.transactions
+    .filter(t => t.type === 'expense')
+    .reduce((sum, t) => sum + t.amount, 0)
+  
+  const recentTransactions = data.transactions.slice(0, 5)
 
   return (
     <div className="flex-1 space-y-4">
@@ -41,13 +46,15 @@ const MainPanel = () => {
           </div>
           {/* Data Source Indicator */}
           <div className="mt-2 text-xs">
-            {dataSource === 'nessie' ? (
+            {dataSource === 'Firestore' ? (
+              <span className="text-green-600 font-bold">💾 Data Source: Firestore Database</span>
+            ) : dataSource === 'Nessie' ? (
               <span className="text-blue-600 font-bold">💾 Data Source: Capital One Nessie API</span>
             ) : (
               <span className="text-orange-600 font-bold">🧪 Data Source: Mock Mode</span>
             )}
           </div>
-          {dataSource === 'nessie' && data.accountInfo && (
+          {dataSource === 'Nessie' && data.accountInfo && (
             <div className="mt-1 text-xs text-gray-500">
               Account: {data.accountInfo.accountName} ({data.accountInfo.accountType})
             </div>

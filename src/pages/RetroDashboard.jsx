@@ -1,151 +1,201 @@
+// RetroVault Dashboard - Firestore as Single Source of Truth
 import { useEffect, useState } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { onAuthStateChanged, signOut } from 'firebase/auth'
+import { auth } from '../firebaseClient'
+import { getUserData, getUserTransactions, getUserAccounts } from '../firebaseClient'
+import { handleOfflineError, checkFirestoreConnection } from '../utils/offlineHandler'
 import TopNav from '../components/TopNav'
 import SideBar from '../components/SideBar'
 import MainPanel from '../components/MainPanel'
-import useFinancialStore from '../store/useFinancialStore'
-import { 
-  signInWithGoogle, 
-  signOutUser, 
-  getCurrentUser, 
-  onAuthStateChange,
-  syncNessieData,
-  getUserData,
-  getUserTransactions,
-  getUserAccounts
-} from '../firebaseClient'
 
 const RetroDashboard = () => {
-  const { refreshData, dataSource, setData } = useFinancialStore()
   const [user, setUser] = useState(null)
-  const [isLoading, setIsLoading] = useState(false)
-  const [isSyncing, setIsSyncing] = useState(false)
-  const [syncMessage, setSyncMessage] = useState('')
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState(null)
+  const [financialData, setFinancialData] = useState(null)
+  const navigate = useNavigate()
 
   // Listen to auth state changes
   useEffect(() => {
-    const unsubscribe = onAuthStateChange((user) => {
-      setUser(user)
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
+        setUser(user)
         loadUserData(user.uid)
+      } else {
+        // User not authenticated, redirect to landing
+        navigate('/')
       }
     })
     return unsubscribe
-  }, [])
-
-  // Load data on component mount
-  useEffect(() => {
-    if (!user) {
-      refreshData()
-    }
-  }, [refreshData, user])
+  }, [navigate])
 
   const loadUserData = async (userId) => {
     try {
       setIsLoading(true)
-      const userData = await getUserData(userId)
+      setError(null)
       
-      if (userData && userData.dataConsistency?.isConsistent) {
-        // User has consistent data, load from Firestore
-        const transactions = await getUserTransactions(userId)
-        const accounts = await getUserAccounts(userId)
-        
-        if (transactions.length > 0) {
-          // Transform Firestore data to match our store format
-          const transformedData = {
-            transactions: transactions,
-            savings: calculateSavingsFromTransactions(transactions),
-            spendingBreakdown: calculateSpendingBreakdown(transactions),
-            weeklyBalance: generateWeeklyBalance(transactions),
-            balance: userData.balance || 0,
-            aiInsight: `Welcome back! Your consistent financial data (${userData.dataConsistency?.accountsCount || 0} accounts, ${userData.dataConsistency?.transactionsCount || 0} transactions)`,
-            aiGenerated: false,
-            lastUpdated: userData.dataConsistency?.lastSync || new Date().toLocaleString(),
-            accountInfo: userData.accountInfo || {},
-            dataSource: userData.dataSource || 'Firestore',
-            isConsistent: true
-          }
-          
-          setData(transformedData)
-          console.log(`Consistent user data loaded for ${userId}`)
-          return
-        }
+      console.log('🔄 [DASHBOARD] Starting data loading process...')
+      console.log('🆔 [DASHBOARD] User ID:', userId)
+      
+      // Load user document
+      console.log('🔍 [FIRESTORE] Loading user document...')
+      const userData = await getUserData(userId)
+      console.log('📄 [FIRESTORE] User data loaded:', userData ? 'Found' : 'Not found')
+      
+      if (!userData) {
+        console.log('🆕 [DASHBOARD] New user detected - no data in Firestore')
+        await handleNewUser(userId)
+        return
+      }
+
+      console.log('📊 [FIRESTORE] User data details:', {
+        email: userData.email,
+        dataSource: userData.dataSource,
+        balance: userData.balance,
+        hasAccountInfo: !!userData.accountInfo
+      })
+
+      // Load transactions and accounts
+      console.log('🔍 [FIRESTORE] Loading transactions and accounts...')
+      const [transactions, accounts] = await Promise.all([
+        getUserTransactions(userId),
+        getUserAccounts(userId)
+      ])
+
+      console.log('📊 [FIRESTORE] Data loaded:', {
+        transactionsCount: transactions.length,
+        accountsCount: accounts.length
+      })
+
+      if (transactions.length === 0) {
+        console.log('🆕 [DASHBOARD] User exists but no transaction data - triggering data seeding')
+        await handleNewUser(userId)
+        return
+      }
+
+      console.log('🔄 [DASHBOARD] Transforming data for display...')
+      // Transform Firestore data to dashboard format
+      const transformedData = {
+        transactions: transactions,
+        savings: calculateSavingsFromTransactions(transactions),
+        spendingBreakdown: calculateSpendingBreakdown(transactions),
+        weeklyBalance: generateWeeklyBalance(transactions),
+        balance: userData.balance || 0,
+        aiInsight: `Welcome back! Your financial data (${accounts.length} accounts, ${transactions.length} transactions)`,
+        aiGenerated: false,
+        lastUpdated: userData.dataConsistency?.lastSync || new Date().toLocaleString(),
+        accountInfo: userData.accountInfo || {},
+        dataSource: userData.dataSource || 'Firestore',
+        isConsistent: true
       }
       
-      // No consistent data found, use mock data
-      console.log('No consistent user data found, using mock data')
-      refreshData()
+      console.log('📊 [DASHBOARD] Transformed data:', {
+        transactionsCount: transformedData.transactions.length,
+        savingsCount: transformedData.savings.length,
+        spendingCategories: transformedData.spendingBreakdown.length,
+        balance: transformedData.balance
+      })
+      
+      setFinancialData(transformedData)
+      console.log('✅ [DASHBOARD] User data loaded successfully from Firestore')
       
     } catch (error) {
-      console.error('Error loading user data:', error)
-      refreshData() // Fallback to mock data
+      console.error('❌ [DASHBOARD] Error loading user data:', error)
+      console.error('❌ [DASHBOARD] Error details:', {
+        message: error.message,
+        stack: error.stack
+      })
+      
+      // Handle offline errors specifically
+      if (error.code === 'unavailable') {
+        console.log('🔄 [DASHBOARD] Attempting to handle offline error...')
+        const offlineResult = await handleOfflineError(error)
+        
+        if (offlineResult.success) {
+          console.log('✅ [DASHBOARD] Offline error resolved, retrying...')
+          // Retry loading data
+          setTimeout(() => loadUserData(userId), 2000)
+          return
+        } else {
+          setError(`Connection issue: ${offlineResult.message}. Please check your internet connection and try again.`)
+        }
+      } else {
+        setError(error.message)
+      }
     } finally {
       setIsLoading(false)
     }
   }
 
-  const handleSignIn = async () => {
+  const handleNewUser = async (userId) => {
     try {
-      setIsLoading(true)
-      const result = await signInWithGoogle()
-      if (result.success) {
-        setSyncMessage('✅ Signed in successfully!')
-        setTimeout(() => setSyncMessage(''), 3000)
-      } else {
-        setSyncMessage('❌ Sign in failed: ' + result.error)
-        setTimeout(() => setSyncMessage(''), 5000)
+      console.log('🌱 [NEW_USER] Starting data seeding for new user...')
+      console.log('🆔 [NEW_USER] User ID:', userId)
+      console.log('👤 [NEW_USER] User info:', {
+        name: user?.displayName || user?.email,
+        email: user?.email
+      })
+      
+      const seedPayload = {
+        userId: userId,
+        userInfo: {
+          name: user?.displayName || user?.email,
+          email: user?.email
+        }
       }
+      console.log('📤 [NEW_USER] Seeding payload:', seedPayload)
+      
+      // Call the backend to seed data from Nessie API
+      console.log('🌐 [NEW_USER] Calling backend API...')
+      const response = await fetch('/api/syncNessieToFirestore', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(seedPayload)
+      })
+
+      console.log('📡 [NEW_USER] API response status:', response.status)
+      console.log('📡 [NEW_USER] API response ok:', response.ok)
+
+      if (!response.ok) {
+        const errorText = await response.text()
+        console.error('❌ [NEW_USER] Backend sync failed:', response.status, errorText)
+        throw new Error(`Backend sync failed: ${response.status}`)
+      }
+
+      const result = await response.json()
+      console.log('✅ [NEW_USER] Data seeded successfully:', result)
+      console.log('📊 [NEW_USER] Seeding result details:', {
+        success: result.success,
+        message: result.message,
+        dataSource: result.dataSource,
+        accountsCount: result.accountsCount,
+        transactionsCount: result.transactionsCount
+      })
+      
+      // Reload data after seeding
+      console.log('🔄 [NEW_USER] Reloading data after seeding...')
+      await loadUserData(userId)
+      
     } catch (error) {
-      console.error('Sign in error:', error)
-      setSyncMessage('❌ Sign in error: ' + error.message)
-      setTimeout(() => setSyncMessage(''), 5000)
-    } finally {
-      setIsLoading(false)
+      console.error('❌ [NEW_USER] Error seeding data for new user:', error)
+      console.error('❌ [NEW_USER] Error details:', {
+        message: error.message,
+        stack: error.stack
+      })
+      setError(`Failed to initialize your account: ${error.message}`)
     }
   }
 
   const handleSignOut = async () => {
     try {
-      await signOutUser()
-      setSyncMessage('👋 Signed out successfully!')
-      setTimeout(() => setSyncMessage(''), 3000)
+      await signOut(auth)
+      console.log('👋 User signed out')
+      navigate('/')
     } catch (error) {
-      console.error('Sign out error:', error)
-    }
-  }
-
-  const handleSyncData = async (forceRefresh = false) => {
-    if (!user) {
-      setSyncMessage('❌ Please sign in first!')
-      setTimeout(() => setSyncMessage(''), 3000)
-      return
-    }
-
-    try {
-      setIsSyncing(true)
-      setSyncMessage(forceRefresh ? '🔄 Refreshing your data...' : '🔄 Syncing your data...')
-      
-      const result = await syncNessieData(user.uid, {
-        name: user.displayName,
-        email: user.email
-      }, forceRefresh)
-      
-      if (result.success) {
-        if (result.isExistingData) {
-          setSyncMessage(`✅ ${result.message}`)
-        } else {
-          setSyncMessage(`✅ ${result.message} (${result.dataSource})`)
-        }
-        // Reload user data after sync
-        await loadUserData(user.uid)
-      } else {
-        setSyncMessage('❌ Sync failed: ' + result.error)
-      }
-    } catch (error) {
-      console.error('Sync error:', error)
-      setSyncMessage('❌ Sync error: ' + error.message)
-    } finally {
-      setIsSyncing(false)
-      setTimeout(() => setSyncMessage(''), 5000)
+      console.error('❌ Sign out error:', error)
     }
   }
 
@@ -238,41 +288,89 @@ const RetroDashboard = () => {
     return colors[category] || '#95A5A6'
   }
 
+  // Loading state
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center retro-auth-bg">
+        <div className="window max-w-md">
+          <div className="title-bar">
+            <div className="title-bar-text">💾 RetroVault</div>
+            <div className="title-bar-controls">
+              <button aria-label="Minimize"></button>
+              <button aria-label="Maximize"></button>
+              <button aria-label="Close"></button>
+            </div>
+          </div>
+          <div className="window-body text-center">
+            <div className="text-lg font-bold mb-4">Loading data... Please Wait 💾</div>
+            <div className="text-sm text-gray-600 mb-2">Fetching your financial data from Firestore</div>
+            <div className="text-xs text-blue-600">This may take a moment for new users</div>
+          </div>
+          <div className="status-bar">
+            <div className="status-bar-field">Loading...</div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center retro-auth-bg">
+        <div className="window max-w-md">
+          <div className="title-bar">
+            <div className="title-bar-text">❌ Error</div>
+            <div className="title-bar-controls">
+              <button aria-label="Minimize"></button>
+              <button aria-label="Maximize"></button>
+              <button aria-label="Close"></button>
+            </div>
+          </div>
+          <div className="window-body text-center">
+            <div className="text-lg font-bold mb-4 text-red-600">Failed to load data</div>
+            <div className="text-sm text-gray-600 mb-4">{error}</div>
+            <div className="text-xs text-gray-500 mb-4">
+              If you're a new user, this might be due to data initialization taking longer than expected.
+            </div>
+            <div className="flex space-x-2 justify-center">
+              <button
+                onClick={() => window.location.reload()}
+                className="retro-button px-4 py-2"
+              >
+                🔄 Retry
+              </button>
+              <button
+                onClick={() => navigate('/auth')}
+                className="retro-button px-4 py-2"
+              >
+                🔑 Re-authenticate
+              </button>
+            </div>
+          </div>
+          <div className="status-bar">
+            <div className="status-bar-field">Error loading Firestore data</div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // Main dashboard
   return (
     <div className="min-h-screen p-4">
       {/* Top Navigation */}
       <TopNav />
       
-
-      {/* Sync Status */}
-      {syncMessage && (
-        <div className="retro-info mb-4 text-center">
-          <div className="text-sm font-bold">{syncMessage}</div>
-        </div>
-      )}
-
-      {/* User Info and Sync Button */}
+      {/* User Info */}
       <div className="retro-window mb-4 p-4">
         <div className="flex justify-between items-center">
           <div>
             <div className="text-sm font-bold">👤 {user?.displayName || 'User'}</div>
             <div className="text-xs text-gray-600">{user?.email || 'user@example.com'}</div>
+            <div className="text-xs text-green-600">✅ Data loaded from Firestore</div>
           </div>
           <div className="flex space-x-2">
-            <button
-              className="retro-button px-4 py-2 text-sm"
-              onClick={() => handleSyncData(false)}
-              disabled={isSyncing}
-            >
-              {isSyncing ? '⏳ Syncing...' : '🔄 Sync My Data'}
-            </button>
-            <button
-              className="retro-button px-4 py-2 text-sm"
-              onClick={() => handleSyncData(true)}
-              disabled={isSyncing}
-            >
-              🔄 Refresh Data
-            </button>
             <button
               className="retro-button px-4 py-2 text-sm"
               onClick={handleSignOut}
@@ -294,7 +392,12 @@ const RetroDashboard = () => {
             <div className="text-center font-bold text-lg mb-4 text-retro-dark">
               📊 FINANCIAL DASHBOARD
             </div>
-            <MainPanel />
+            {financialData && (
+              <MainPanel 
+                data={financialData}
+                dataSource="Firestore"
+              />
+            )}
           </div>
         </div>
       </div>

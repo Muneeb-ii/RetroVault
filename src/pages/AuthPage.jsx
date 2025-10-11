@@ -33,13 +33,27 @@ const AuthPage = () => {
     setIsLoading(true)
 
     try {
+      console.log('🔄 [AUTH_PAGE] Starting email authentication...')
+      console.log('📧 [AUTH_PAGE] Email:', email)
+      console.log('🔐 [AUTH_PAGE] Mode:', isLogin ? 'Login' : 'Sign Up')
+      
       if (isLogin) {
+        console.log('🔑 [AUTH_PAGE] Attempting email login...')
         await loginEmail(email, password)
+        console.log('✅ [AUTH_PAGE] Email login successful')
       } else {
+        console.log('📝 [AUTH_PAGE] Attempting email sign-up...')
+        console.log('👤 [AUTH_PAGE] Display name:', displayName)
         await signUpEmail(email, password, displayName)
+        console.log('✅ [AUTH_PAGE] Email sign-up successful')
       }
       // Navigation will be handled by the useEffect above
     } catch (error) {
+      console.error('❌ [AUTH_PAGE] Email authentication failed:', error)
+      console.error('❌ [AUTH_PAGE] Error details:', {
+        message: error.message,
+        code: error.code
+      })
       setError(error.message)
     } finally {
       setIsLoading(false)
@@ -51,9 +65,16 @@ const AuthPage = () => {
     setIsLoading(true)
 
     try {
+      console.log('🔄 [AUTH_PAGE] Starting Google authentication...')
       await loginGoogle()
+      console.log('✅ [AUTH_PAGE] Google authentication successful')
       // Navigation will be handled by the useEffect above
     } catch (error) {
+      console.error('❌ [AUTH_PAGE] Google authentication failed:', error)
+      console.error('❌ [AUTH_PAGE] Error details:', {
+        message: error.message,
+        code: error.code
+      })
       setError(error.message)
     } finally {
       setIsLoading(false)

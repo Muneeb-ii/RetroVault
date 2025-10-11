@@ -14,79 +14,130 @@ export function useFirebaseAuth() {
 
   async function signUpEmail(email, password, displayName = '') {
     try {
-      console.log('🔄 Creating account with email...')
+      console.log('🔄 [AUTH] Starting email sign-up process...')
+      console.log('📧 [AUTH] Email:', email)
+      console.log('👤 [AUTH] Display Name:', displayName)
+      
       const { user } = await createUserWithEmailAndPassword(auth, email, password)
+      console.log('✅ [AUTH] Firebase account created successfully')
+      console.log('🆔 [AUTH] User UID:', user.uid)
+      console.log('📧 [AUTH] User Email:', user.email)
       
       // Update display name if provided
       if (displayName) {
+        console.log('👤 [AUTH] Updating display name...')
         await user.updateProfile({ displayName })
+        console.log('✅ [AUTH] Display name updated:', user.displayName)
       }
       
-      console.log('✅ Email Sign-Up successful:', user.email)
+      console.log('✅ [AUTH] Email Sign-Up successful:', user.email)
       
       // Check if user document exists in Firestore
+      console.log('🔍 [FIRESTORE] Checking for existing user document...')
       const userDoc = doc(db, "users", user.uid)
       const snap = await getDoc(userDoc)
+      console.log('📄 [FIRESTORE] User document exists:', snap.exists())
 
       if (!snap.exists()) {
-        console.log('🆕 New user detected, creating Firestore document...')
-        await setDoc(userDoc, {
+        console.log('🆕 [FIRESTORE] New user detected, creating Firestore document...')
+        const userData = {
           email: user.email,
           name: user.displayName || user.email,
           createdAt: serverTimestamp(),
           dataSource: "Nessie",
           balance: 0,
           accountInfo: {}
-        })
+        }
+        console.log('💾 [FIRESTORE] User data to store:', userData)
+        
+        await setDoc(userDoc, userData)
+        console.log('✅ [FIRESTORE] User document created successfully')
         
         // Seed with Nessie data for new users
-        console.log('🌱 Seeding data from Nessie API...')
-        await fetch("/api/syncNessieToFirestore", {
+        console.log('🌱 [NESSIE] Starting data seeding process...')
+        const seedPayload = {
+          userId: user.uid,
+          userInfo: {
+            name: user.displayName || user.email,
+            email: user.email
+          }
+        }
+        console.log('📤 [NESSIE] Seeding payload:', seedPayload)
+        
+        const response = await fetch("/api/syncNessieToFirestore", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ 
-            userId: user.uid,
-            userInfo: {
-              name: user.displayName || user.email,
-              email: user.email
-            }
-          }),
+          body: JSON.stringify(seedPayload),
         })
-        console.log('✅ Nessie data seeded successfully')
+        
+        console.log('📡 [NESSIE] Response status:', response.status)
+        console.log('📡 [NESSIE] Response ok:', response.ok)
+        
+        if (!response.ok) {
+          const errorText = await response.text()
+          console.error('❌ [NESSIE] Seeding failed:', response.status, errorText)
+          throw new Error(`Nessie seeding failed: ${response.status}`)
+        }
+        
+        const result = await response.json()
+        console.log('✅ [NESSIE] Data seeded successfully:', result)
+      } else {
+        console.log('👤 [FIRESTORE] Existing user found, skipping Nessie seeding')
       }
 
+      console.log('🎉 [AUTH] Email sign-up process completed successfully')
       return user
     } catch (error) {
-      console.error('❌ Email sign-up error:', error)
+      console.error('❌ [AUTH] Email sign-up error:', error)
+      console.error('❌ [AUTH] Error code:', error.code)
+      console.error('❌ [AUTH] Error message:', error.message)
       throw error
     }
   }
 
   async function loginEmail(email, password) {
     try {
-      console.log('🔄 Signing in with email...')
+      console.log('🔄 [AUTH] Starting email sign-in process...')
+      console.log('📧 [AUTH] Email:', email)
+      
       const { user } = await signInWithEmailAndPassword(auth, email, password)
-      console.log('✅ Email Sign-In successful:', user.email)
+      console.log('✅ [AUTH] Firebase authentication successful')
+      console.log('🆔 [AUTH] User UID:', user.uid)
+      console.log('📧 [AUTH] User Email:', user.email)
+      console.log('👤 [AUTH] Display Name:', user.displayName)
+      console.log('✅ [AUTH] Email Sign-In successful:', user.email)
+      
       return user
     } catch (error) {
-      console.error('❌ Email sign-in error:', error)
+      console.error('❌ [AUTH] Email sign-in error:', error)
+      console.error('❌ [AUTH] Error code:', error.code)
+      console.error('❌ [AUTH] Error message:', error.message)
       throw error
     }
   }
 
   async function loginGoogle() {
     try {
-      console.log('🔄 Signing in with Google...')
+      console.log('🔄 [AUTH] Starting Google sign-in process...')
+      console.log('🔑 [AUTH] Google provider configured:', provider.providerId)
+      
       const { user } = await signInWithPopup(auth, provider)
-      console.log('✅ Google Sign-In successful:', user.displayName)
+      console.log('✅ [AUTH] Google authentication successful')
+      console.log('🆔 [AUTH] User UID:', user.uid)
+      console.log('📧 [AUTH] User Email:', user.email)
+      console.log('👤 [AUTH] Display Name:', user.displayName)
+      console.log('🖼️ [AUTH] Photo URL:', user.photoURL)
+      console.log('✅ [AUTH] Google Sign-In successful:', user.displayName)
       
       // Check if user document exists in Firestore
+      console.log('🔍 [FIRESTORE] Checking for existing user document...')
       const userDoc = doc(db, "users", user.uid)
       const snap = await getDoc(userDoc)
+      console.log('📄 [FIRESTORE] User document exists:', snap.exists())
       
       if (!snap.exists()) {
-        console.log('🆕 New user detected, creating Firestore document...')
-        await setDoc(userDoc, {
+        console.log('🆕 [FIRESTORE] New user detected, creating Firestore document...')
+        const userData = {
           email: user.email,
           name: user.displayName,
           photoURL: user.photoURL,
@@ -94,41 +145,73 @@ export function useFirebaseAuth() {
           dataSource: "Nessie",
           balance: 0,
           accountInfo: {}
-        })
+        }
+        console.log('💾 [FIRESTORE] User data to store:', userData)
+        
+        await setDoc(userDoc, userData)
+        console.log('✅ [FIRESTORE] User document created successfully')
         
         // Seed with Nessie data for new users
-        console.log('🌱 Seeding data from Nessie API...')
-        await fetch("/api/syncNessieToFirestore", {
+        console.log('🌱 [NESSIE] Starting data seeding process...')
+        const seedPayload = {
+          userId: user.uid,
+          userInfo: {
+            name: user.displayName,
+            email: user.email,
+            photoURL: user.photoURL
+          }
+        }
+        console.log('📤 [NESSIE] Seeding payload:', seedPayload)
+        
+        const response = await fetch("/api/syncNessieToFirestore", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ 
-            userId: user.uid,
-            userInfo: {
-              name: user.displayName,
-              email: user.email,
-              photoURL: user.photoURL
-            }
-          }),
+          body: JSON.stringify(seedPayload),
         })
-        console.log('✅ Nessie data seeded successfully')
+        
+        console.log('📡 [NESSIE] Response status:', response.status)
+        console.log('📡 [NESSIE] Response ok:', response.ok)
+        
+        if (!response.ok) {
+          const errorText = await response.text()
+          console.error('❌ [NESSIE] Seeding failed:', response.status, errorText)
+          throw new Error(`Nessie seeding failed: ${response.status}`)
+        }
+        
+        const result = await response.json()
+        console.log('✅ [NESSIE] Data seeded successfully:', result)
       } else {
-        console.log('👤 Returning user found, skipping Nessie sync')
+        console.log('👤 [FIRESTORE] Existing user found, skipping Nessie seeding')
+        const existingData = snap.data()
+        console.log('📊 [FIRESTORE] Existing user data:', existingData)
       }
       
+      console.log('🎉 [AUTH] Google sign-in process completed successfully')
       return user
     } catch (error) {
-      console.error('❌ Google sign-in error:', error)
+      console.error('❌ [AUTH] Google sign-in error:', error)
+      console.error('❌ [AUTH] Error code:', error.code)
+      console.error('❌ [AUTH] Error message:', error.message)
       throw error
     }
   }
 
   async function signOutUser() {
     try {
-      console.log('🔄 Signing out...')
+      console.log('🔄 [AUTH] Starting sign-out process...')
+      const currentUser = auth.currentUser
+      if (currentUser) {
+        console.log('👤 [AUTH] Current user:', currentUser.email)
+        console.log('🆔 [AUTH] Current user UID:', currentUser.uid)
+      }
+      
       await signOut(auth)
-      console.log('✅ User signed out successfully')
+      console.log('✅ [AUTH] User signed out successfully')
+      console.log('🎉 [AUTH] Sign-out process completed')
     } catch (error) {
-      console.error('❌ Sign out error:', error)
+      console.error('❌ [AUTH] Sign out error:', error)
+      console.error('❌ [AUTH] Error code:', error.code)
+      console.error('❌ [AUTH] Error message:', error.message)
       throw error
     }
   }
