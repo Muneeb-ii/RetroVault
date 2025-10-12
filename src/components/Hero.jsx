@@ -9,7 +9,7 @@ const Hero = () => {
   }
 
   return (
-    <section className="py-16 bg-gradient-to-b from-blue-50 to-gray-100">
+    <section className="py-8 bg-gradient-to-b from-blue-50 to-gray-100">
   <div className="w-full px-4">
         <div className="window retro-window-animate">
           <div className="title-bar">
@@ -23,43 +23,43 @@ const Hero = () => {
           <div className="window-body">
             <div className="text-center">
               {/* Retro ASCII Art Header */}
-              <div className="mb-6 retro-fade-in">
-                <div className="text-6xl font-bold text-gray-800 mb-2">■</div>
-                <div className="text-2xl font-bold text-blue-600 mb-4 retro-text-reveal">RetroVault</div>
+              <div className="mb-3 retro-fade-in">
+                <div className="text-6xl font-bold text-gray-800 mb-1">■</div>
+                <div className="text-2xl font-bold text-blue-600 mb-2 retro-text-reveal">RetroVault</div>
               </div>
               
               {/* Main Headline */}
-              <h1 className="text-4xl md:text-6xl font-bold text-gray-800 mb-6 leading-tight retro-fade-in-delay-1">
+              <h1 className="text-4xl md:text-6xl font-bold text-gray-800 mb-3 leading-tight retro-fade-in-delay-1">
                 Rewind your finances.<br />
                 <span className="text-blue-600 retro-glow">Fast-forward your future.</span>
               </h1>
               
               {/* Subheadline */}
-              <p className="text-lg md:text-xl text-gray-600 mb-8 max-w-3xl mx-auto leading-relaxed retro-fade-in-delay-2">
+              <p className="text-lg md:text-xl text-gray-600 mb-4 max-w-3xl mx-auto leading-normal retro-fade-in-delay-2">
                 Experience the nostalgia of Windows 98 with the power of modern AI. 
                 Transform your financial data into an interactive time machine that helps you 
                 understand your past, optimize your present, and plan your future.
               </p>
 
               {/* CTA Buttons */}
-              <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-8 retro-fade-in-delay-3">
+              <div className="flex flex-col sm:flex-row gap-4 justify-center items-center mb-4 retro-fade-in-delay-3">
                 <button
                   onClick={handleSignIn}
-                  className="retro-button px-8 py-4 text-lg font-bold text-white bg-blue-600 hover:bg-blue-700 transition-colors retro-card-hover"
+                  className="retro-button px-8 py-3 text-lg font-bold text-white bg-blue-600 hover:bg-blue-700 transition-colors retro-card-hover"
                 >
                   Start Your Journey
                 </button>
                 
                 <a 
                   href="#features" 
-                  className="retro-button px-8 py-4 text-lg font-bold text-gray-700 bg-gray-200 hover:bg-gray-300 transition-colors retro-card-hover"
+                  className="retro-button px-8 py-3 text-lg font-bold text-gray-700 bg-gray-200 hover:bg-gray-300 transition-colors retro-card-hover"
                 >
                   Explore Features
                 </a>
               </div>
 
               {/* Demo Stats */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-12">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mt-6">
                 <div className="retro-info text-center p-4 retro-feature-card-animate retro-card-hover">
                   <div className="text-2xl font-bold text-blue-600 mb-2">AI-Powered</div>
                   <div className="text-sm text-gray-600">Smart insights from multiple AI models</div>

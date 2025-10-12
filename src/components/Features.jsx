@@ -52,7 +52,7 @@ const Features = () => {
   }
 
   return (
-    <section id="features" className="py-16 bg-white">
+    <section id="features" className="py-8 bg-white">
   <div className="w-full px-4">
         <div className="window retro-window-animate">
           <div className="title-bar">
@@ -64,27 +64,27 @@ const Features = () => {
             </div>
           </div>
           <div className="window-body">
-            <div className="text-center mb-12 retro-fade-in">
-              <h2 className="text-3xl md:text-4xl font-bold text-gray-800 mb-4 retro-text-reveal">
+            <div className="text-center mb-6 retro-fade-in">
+              <h2 className="text-3xl md:text-4xl font-bold text-gray-800 mb-2 retro-text-reveal">
                 Built for the Future, Styled for the Past
               </h2>
-              <p className="text-lg text-gray-600 max-w-3xl mx-auto retro-fade-in-delay-1">
+              <p className="text-lg text-gray-600 max-w-3xl mx-auto leading-normal retro-fade-in-delay-1">
                 RetroVault combines cutting-edge AI technology with nostalgic design to create 
                 the most engaging financial management experience ever built.
               </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
               {features.map((feature, index) => (
                 <div 
                   key={index} 
-                  className={`retro-info p-6 ${getColorClasses(feature.color)} retro-feature-card-animate retro-card-hover`}
+                  className={`retro-info p-4 ${getColorClasses(feature.color)} retro-feature-card-animate retro-card-hover`}
                   style={{animationDelay: `${index * 0.1}s`}}
                 >
                   <div className="text-center">
-                    <div className="text-4xl mb-4">{feature.icon}</div>
-                    <h3 className="text-xl font-bold mb-3 retro-text-reveal" style={{animationDelay: `${index * 0.1 + 0.5}s`}}>{feature.title}</h3>
-                    <p className="text-sm leading-relaxed retro-fade-in-delay-1" style={{animationDelay: `${index * 0.1 + 0.7}s`}}>{feature.description}</p>
+                    <div className="text-4xl mb-2">{feature.icon}</div>
+                    <h3 className="text-xl font-bold mb-2 retro-text-reveal" style={{animationDelay: `${index * 0.1 + 0.5}s`}}>{feature.title}</h3>
+                    <p className="text-sm leading-normal retro-fade-in-delay-1" style={{animationDelay: `${index * 0.1 + 0.7}s`}}>{feature.description}</p>
                   </div>
                 </div>
               ))}
