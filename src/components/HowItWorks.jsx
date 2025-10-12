@@ -5,7 +5,7 @@ const HowItWorks = () => {
       number: '01',
       title: 'Sign In with Google',
       description: 'Authenticate securely with your Google account. Your data is protected with enterprise-grade security.',
-      icon: '🔑',
+      icon: '◆',
       details: [
         'One-click Google authentication',
         'Secure Firebase Auth integration',
@@ -17,7 +17,7 @@ const HowItWorks = () => {
       number: '02',
       title: 'Automatic Data Seeding',
       description: 'On your first visit, RetroVault fetches real financial data from Capital One\'s Nessie API and creates your personalized profile.',
-      icon: '🌱',
+      icon: '■',
       details: [
         'Real transaction data from Capital One',
         'Authentic spending patterns',
@@ -29,7 +29,7 @@ const HowItWorks = () => {
       number: '03',
       title: 'Explore Your Dashboard',
       description: 'Navigate through your financial time machine with AI insights, interactive charts, and story mode.',
-      icon: '🚀',
+      icon: '▲',
       details: [
         'Interactive financial dashboard',
         'AI-powered insights and advice',
@@ -44,7 +44,7 @@ const HowItWorks = () => {
   <div className="w-full px-4">
         <div className="window retro-window-animate">
           <div className="title-bar">
-            <div className="title-bar-text">⚙️ How It Works - Simple as 1-2-3</div>
+            <div className="title-bar-text">How It Works - Simple as 1-2-3</div>
             <div className="title-bar-controls">
               <button aria-label="Minimize"></button>
               <button aria-label="Maximize"></button>

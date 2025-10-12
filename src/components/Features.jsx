@@ -2,37 +2,37 @@
 const Features = () => {
   const features = [
     {
-      icon: '📊',
+      icon: '■',
       title: 'Interactive Retro Dashboard',
       description: 'Navigate your finances through a nostalgic Windows 98 interface. Every chart, button, and window is crafted for maximum retro appeal.',
       color: 'blue'
     },
     {
-      icon: '🧠',
+      icon: '◆',
       title: 'AI Financial Insights',
       description: 'Get personalized financial advice from multiple AI models including Gemini, Claude, GPT-4, and Llama. Your data, analyzed by the best AI minds.',
       color: 'green'
     },
     {
-      icon: '⏱️',
+      icon: '▲',
       title: 'Time Machine Simulations',
       description: 'Navigate through your financial past, analyze your present spending, and project your future wealth with interactive time travel.',
       color: 'purple'
     },
     {
-      icon: '💬',
+      icon: '●',
       title: 'Story Mode Narratives',
       description: 'Transform your financial journey into an engaging narrative. Experience your money story as an interactive adventure with achievements and milestones.',
       color: 'orange'
     },
     {
-      icon: '🔐',
+      icon: '★',
       title: 'Persistent Profiles with Firestore',
       description: 'Your financial data is securely stored and consistent across all sessions. Sign in from anywhere and pick up exactly where you left off.',
       color: 'indigo'
     },
     {
-      icon: '💠',
+      icon: '♦',
       title: 'Retro Crypto Terminal',
       description: 'Trade, track, and simulate cryptocurrencies inside a vintage command-line interface. Watch pixelated candlestick charts update in real time, execute mock trades, and explore how blockchain assets would\'ve looked on a 90s desktop.',
       color: 'cyan'
@@ -56,7 +56,7 @@ const Features = () => {
   <div className="w-full px-4">
         <div className="window retro-window-animate">
           <div className="title-bar">
-            <div className="title-bar-text">📊 Features - Why RetroVault is Revolutionary</div>
+            <div className="title-bar-text">Features - Why RetroVault is Revolutionary</div>
             <div className="title-bar-controls">
               <button aria-label="Minimize"></button>
               <button aria-label="Maximize"></button>
