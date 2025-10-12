@@ -5,6 +5,7 @@ import {
   updateBudget as updateBudgetInDB,
   deleteBudget
 } from '../../api/unifiedFirestoreService'
+import { play as playSound } from '../../utils/soundPlayer'
 
 const BudgetTool = ({ financialData, onClose, onDataUpdate }) => {
   const [budgets, setBudgets] = useState({})
@@ -122,9 +123,11 @@ const BudgetTool = ({ financialData, onClose, onDataUpdate }) => {
       setMessage(message)
       setTimeout(() => setMessage(''), 3000)
       onDataUpdate()
+  playSound('success')
     } catch (error) {
       console.error('Error saving budgets:', error)
       setMessage('❌ Failed to save budgets: ' + error.message)
+  playSound('error')
     } finally {
       setIsSaving(false)
     }
@@ -144,6 +147,7 @@ const BudgetTool = ({ financialData, onClose, onDataUpdate }) => {
       })
       setBudgets(clearedBudgets)
       setMessage('🔄 All budgets cleared. Click Save to apply changes.')
+      playSound('click1')
     }
   }
 
@@ -262,21 +266,21 @@ const BudgetTool = ({ financialData, onClose, onDataUpdate }) => {
       <div className="flex space-x-4 justify-center">
         <button
           className="retro-button px-6 py-3 text-lg font-bold"
-          onClick={saveBudgets}
+          onClick={() => { playSound('click1'); saveBudgets() }}
           disabled={isSaving}
         >
           {isSaving ? 'Saving...' : 'Save Budgets'}
         </button>
         <button
           className="retro-button px-4 py-3 text-sm font-bold bg-orange-600 hover:bg-orange-700"
-          onClick={clearAllBudgets}
+          onClick={() => { playSound('click1'); clearAllBudgets() }}
           disabled={isSaving}
         >
           Clear All
         </button>
         <button
           className="retro-button px-6 py-3 text-lg font-bold"
-          onClick={onClose}
+          onClick={() => { playSound('click1'); onClose() }}
         >
           Close
         </button>

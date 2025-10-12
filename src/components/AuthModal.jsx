@@ -1,6 +1,7 @@
 // Retro-styled authentication modal component
 import { useState } from 'react'
 import { useAuthInit } from '../hooks/useAuthInit'
+import { play as playSound } from '../utils/soundPlayer'
 
 const AuthModal = ({ isOpen, onClose }) => {
   const [isSignUp, setIsSignUp] = useState(false)
@@ -18,21 +19,26 @@ const AuthModal = ({ isOpen, onClose }) => {
     try {
       if (isSignUp) {
         await signUpWithEmail(email, password, displayName)
+        playSound('logon')
       } else {
         await signInWithEmail(email, password)
+        playSound('logon')
       }
       onClose()
     } catch (error) {
       setError(error.message)
+      playSound('error')
     }
   }
 
   const handleGoogleAuth = async () => {
     try {
       await signInAndSeedIfNeeded()
+      playSound('logon')
       onClose()
     } catch (error) {
       setError(error.message)
+      playSound('error')
     }
   }
 
@@ -54,7 +60,7 @@ const AuthModal = ({ isOpen, onClose }) => {
             {/* Google Sign-In Button */}
             <div className="text-center">
               <button
-                onClick={handleGoogleAuth}
+                onClick={() => { playSound('click1'); handleGoogleAuth() }}
                 disabled={isLoading}
                 className="retro-button w-full py-3 text-lg font-bold"
               >

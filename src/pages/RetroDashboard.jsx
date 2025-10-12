@@ -6,15 +6,24 @@ import { useFinancialData } from '../contexts/FinancialDataContext'
 import TopNav from '../components/TopNav'
 import SideBar from '../components/SideBar'
 import MainPanel from '../components/MainPanel'
+import { play as playSound } from '../utils/soundPlayer'
+import { useEffect } from 'react'
 
 const RetroDashboard = () => {
   const { user, financialData, isLoading, error } = useFinancialData()
   const navigate = useNavigate()
 
+  // Play startup sound when dashboard is shown and user data is ready
+  useEffect(() => {
+    if (user) {
+      try { playSound('startup') } catch (e) {}
+    }
+  }, [user])
 
   const handleSignOut = async () => {
     try {
       await signOut(auth)
+      playSound('logoff')
       console.log('👋 User signed out')
       navigate('/')
     } catch (error) {
@@ -79,7 +88,7 @@ const RetroDashboard = () => {
                 🔄 Retry
               </button>
               <button
-                onClick={() => navigate('/auth')}
+                onClick={() => { playSound('click1'); navigate('/auth') }}
                 className="retro-button px-4 py-2 retro-card-hover"
               >
                 🔑 Re-authenticate

@@ -9,6 +9,7 @@ import SettingsTool from './tools/SettingsTool'
 import ReportsTool from './tools/ReportsTool'
 import SyncTool from './tools/SyncTool'
 import ElizaTool from './tools/ElizaTool'
+import { play as playSound } from '../utils/soundPlayer'
 
 const SideBar = () => {
   const { financialData, loadUserData } = useFinancialData()
@@ -36,11 +37,13 @@ const SideBar = () => {
   ]
 
   const handleToolClick = (item) => {
+    playSound('click1')
     setActiveTool(item.action)
     setIsToolOpen(true)
   }
 
   const closeTool = () => {
+    playSound('click2')
     setIsToolOpen(false)
     setActiveTool(null)
   }

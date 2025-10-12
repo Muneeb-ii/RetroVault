@@ -5,6 +5,7 @@ import {
   updateGoal,
   deleteGoal
 } from '../../api/unifiedFirestoreService'
+import { play as playSound } from '../../utils/soundPlayer'
 
 const GoalsTool = ({ financialData, onClose, onDataUpdate }) => {
   const [goals, setGoals] = useState([])
@@ -89,11 +90,13 @@ const GoalsTool = ({ financialData, onClose, onDataUpdate }) => {
       if (editingGoal) {
         // Update existing goal using unified service
         await updateGoal(editingGoal.id, goalData)
-        setMessage('✅ Goal updated successfully!')
+  setMessage('✅ Goal updated successfully!')
+  playSound('success')
       } else {
         // Add new goal using unified service
         await createGoal(goalData)
-        setMessage('✅ Goal added successfully!')
+  setMessage('✅ Goal added successfully!')
+  playSound('success')
       }
 
       // Reset form
@@ -113,7 +116,8 @@ const GoalsTool = ({ financialData, onClose, onDataUpdate }) => {
       onDataUpdate()
     } catch (error) {
       console.error('Error saving goal:', error)
-      setMessage('❌ Failed to save goal')
+  setMessage('❌ Failed to save goal')
+  playSound('error')
     } finally {
       setIsSaving(false)
     }
@@ -138,12 +142,14 @@ const GoalsTool = ({ financialData, onClose, onDataUpdate }) => {
     
     try {
       await deleteDoc(doc(db, 'users', financialData.user.uid, 'goals', goalId))
-      setMessage('Goal deleted successfully!')
+  setMessage('Goal deleted successfully!')
+  playSound('success')
       setTimeout(() => setMessage(''), 3000)
       onDataUpdate()
     } catch (error) {
       console.error('Error deleting goal:', error)
-      setMessage('Failed to delete goal')
+  setMessage('Failed to delete goal')
+  playSound('error')
     }
   }
 
@@ -202,7 +208,7 @@ const GoalsTool = ({ financialData, onClose, onDataUpdate }) => {
       <div className="text-center mb-6">
         <button
           className="retro-button px-6 py-3 text-lg font-bold"
-          onClick={() => setShowAddForm(true)}
+          onClick={() => { playSound('click1'); setShowAddForm(true) }}
         >
           ➕ Add New Goal
         </button>
@@ -309,25 +315,14 @@ const GoalsTool = ({ financialData, onClose, onDataUpdate }) => {
                 type="submit"
                 className="retro-button px-6 py-2"
                 disabled={isSaving}
+                onClick={() => playSound('click1')}
               >
                 {isSaving ? '⏳ Saving...' : '💾 Save Goal'}
               </button>
               <button
                 type="button"
                 className="retro-button px-6 py-2"
-                onClick={() => {
-                  setShowAddForm(false)
-                  setEditingGoal(null)
-                  setNewGoal({
-                    title: '',
-                    description: '',
-                    targetAmount: '',
-                    currentAmount: '',
-                    targetDate: '',
-                    category: 'Savings',
-                    priority: 'Medium'
-                  })
-                }}
+                onClick={() => { playSound('click1'); setShowAddForm(false); setEditingGoal(null); setNewGoal({ title: '', description: '', targetAmount: '', currentAmount: '', targetDate: '', category: 'Savings', priority: 'Medium' }) }}
               >
                 ✕ Cancel
               </button>
@@ -414,13 +409,13 @@ const GoalsTool = ({ financialData, onClose, onDataUpdate }) => {
                 <div className="flex space-x-2">
                   <button
                     className="retro-button text-xs px-2 py-1"
-                    onClick={() => handleEdit(goal)}
+                    onClick={() => { playSound('click1'); handleEdit(goal) }}
                   >
                     Edit
                   </button>
                   <button
                     className="retro-button text-xs px-2 py-1"
-                    onClick={() => handleDelete(goal.id)}
+                    onClick={() => { playSound('click1'); handleDelete(goal.id) }}
                   >
                     Delete
                   </button>
@@ -435,7 +430,7 @@ const GoalsTool = ({ financialData, onClose, onDataUpdate }) => {
       <div className="flex space-x-4 justify-center">
         <button
           className="retro-button px-6 py-3 text-lg font-bold"
-          onClick={onClose}
+          onClick={() => { playSound('click1'); onClose() }}
         >
           Close
         </button>

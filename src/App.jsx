@@ -10,7 +10,7 @@ import { FinancialDataProvider } from './contexts/FinancialDataContext'
 
 function App() {
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen page-bg-transparent">
       <Routes>
         {/* Public Landing Page */}
         <Route path="/" element={<Landing />} />

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { collection, getDocs, query, orderBy, where, addDoc } from 'firebase/firestore'
 import { db } from '../../firebaseClient'
+import { play } from '../../utils/soundPlayer'
 
 const ReportsTool = ({ financialData, onClose, onDataUpdate }) => {
   const [reports, setReports] = useState([])
@@ -48,6 +49,8 @@ const ReportsTool = ({ financialData, onClose, onDataUpdate }) => {
     if (!financialData?.user) return
     
     try {
+      // play click sound for starting generation
+      try { play('click1') } catch (e) {}
       setIsGenerating(true)
       
       const startDate = new Date(dateRange.start)
@@ -97,13 +100,15 @@ const ReportsTool = ({ financialData, onClose, onDataUpdate }) => {
       const docRef = await addDoc(collection(db, 'users', financialData.user.uid, 'reports'), reportDoc)
       reportDoc.id = docRef.id
       
-      setReports(prev => [reportDoc, ...prev])
-      setMessage('✅ Report generated successfully!')
+  setReports(prev => [reportDoc, ...prev])
+  setMessage('✅ Report generated successfully!')
+  try { play('success') } catch (e) {}
       setTimeout(() => setMessage(''), 3000)
       
     } catch (error) {
       console.error('Error generating report:', error)
       setMessage('❌ Failed to generate report')
+      try { play('error') } catch (e) {}
     } finally {
       setIsGenerating(false)
     }
@@ -253,6 +258,7 @@ const ReportsTool = ({ financialData, onClose, onDataUpdate }) => {
     URL.revokeObjectURL(url)
     
     setMessage('✅ Report exported successfully!')
+    try { play('success') } catch (e) {}
     setTimeout(() => setMessage(''), 3000)
   }
 
@@ -304,7 +310,7 @@ const ReportsTool = ({ financialData, onClose, onDataUpdate }) => {
             <button
               key={reportType.id}
               className="retro-button p-4 text-center"
-              onClick={() => generateReport(reportType.id)}
+              onClick={() => { try { play('click1') } catch (e) {}; generateReport(reportType.id) }}
               disabled={isGenerating}
             >
               <div className="text-2xl mb-2">{reportType.icon}</div>
@@ -344,13 +350,13 @@ const ReportsTool = ({ financialData, onClose, onDataUpdate }) => {
                 <div className="flex space-x-2">
                   <button
                     className="retro-button text-xs px-2 py-1"
-                    onClick={() => setSelectedReport(selectedReport?.id === report.id ? null : report)}
+                    onClick={() => { try { play('click1') } catch (e) {}; setSelectedReport(selectedReport?.id === report.id ? null : report) }}
                   >
                     {selectedReport?.id === report.id ? '👁️ Hide' : '👁️ View'}
                   </button>
                   <button
                     className="retro-button text-xs px-2 py-1"
-                    onClick={() => exportReport(report)}
+                    onClick={() => { try { play('click1') } catch (e) {}; exportReport(report) }}
                   >
                     📤 Export
                   </button>

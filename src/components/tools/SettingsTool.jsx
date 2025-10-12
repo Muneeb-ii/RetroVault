@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { doc, updateDoc, getDoc, setDoc } from 'firebase/firestore'
 import { db } from '../../firebaseClient'
 import { safeTimestamp } from '../../utils/timestampUtils'
+import { play as playSound } from '../../utils/soundPlayer'
 
 const SettingsTool = ({ financialData, onClose, onDataUpdate }) => {
   const [settings, setSettings] = useState({
@@ -109,11 +110,13 @@ const SettingsTool = ({ financialData, onClose, onDataUpdate }) => {
         lastUpdated: new Date().toISOString()
       })
       setMessage('✅ Settings saved successfully!')
+        playSound('success')
       setTimeout(() => setMessage(''), 3000)
       onDataUpdate()
     } catch (error) {
       console.error('Error saving settings:', error)
       setMessage('❌ Failed to save settings')
+        playSound('error')
     } finally {
       setIsSaving(false)
     }
@@ -133,6 +136,7 @@ const SettingsTool = ({ financialData, onClose, onDataUpdate }) => {
         dataRetention: '1year'
       })
       setMessage('Settings reset to default')
+        playSound('click1')
       setTimeout(() => setMessage(''), 3000)
     }
   }
