@@ -138,12 +138,12 @@ const GoalsTool = ({ financialData, onClose, onDataUpdate }) => {
     
     try {
       await deleteDoc(doc(db, 'users', financialData.user.uid, 'goals', goalId))
-      setMessage('✅ Goal deleted successfully!')
+      setMessage('Goal deleted successfully!')
       setTimeout(() => setMessage(''), 3000)
       onDataUpdate()
     } catch (error) {
       console.error('Error deleting goal:', error)
-      setMessage('❌ Failed to delete goal')
+      setMessage('Failed to delete goal')
     }
   }
 
@@ -153,12 +153,12 @@ const GoalsTool = ({ financialData, onClose, onDataUpdate }) => {
         currentAmount: parseFloat(newAmount),
         isCompleted: parseFloat(newAmount) >= goals.find(g => g.id === goalId)?.targetAmount
       })
-      setMessage('✅ Progress updated!')
+      setMessage('Progress updated!')
       setTimeout(() => setMessage(''), 3000)
       onDataUpdate()
     } catch (error) {
       console.error('Error updating progress:', error)
-      setMessage('❌ Failed to update progress')
+      setMessage('Failed to update progress')
     }
   }
 
@@ -416,13 +416,13 @@ const GoalsTool = ({ financialData, onClose, onDataUpdate }) => {
                     className="retro-button text-xs px-2 py-1"
                     onClick={() => handleEdit(goal)}
                   >
-                    ✏️ Edit
+                    Edit
                   </button>
                   <button
                     className="retro-button text-xs px-2 py-1"
                     onClick={() => handleDelete(goal.id)}
                   >
-                    🗑️ Delete
+                    Delete
                   </button>
                 </div>
               </div>
@@ -437,7 +437,7 @@ const GoalsTool = ({ financialData, onClose, onDataUpdate }) => {
           className="retro-button px-6 py-3 text-lg font-bold"
           onClick={onClose}
         >
-          ✕ Close
+          Close
         </button>
       </div>
 
@@ -451,7 +451,7 @@ const GoalsTool = ({ financialData, onClose, onDataUpdate }) => {
       {/* Goal Tips */}
       <div className="retro-info mt-6">
         <div className="text-center">
-          <div className="text-lg font-bold mb-2">💡 Goal Setting Tips</div>
+          <div className="text-lg font-bold mb-2">Goal Setting Tips</div>
           <div className="text-sm text-gray-600 space-y-1">
             <div>• Set SMART goals: Specific, Measurable, Achievable, Relevant, Time-bound</div>
             <div>• Break large goals into smaller milestones</div>

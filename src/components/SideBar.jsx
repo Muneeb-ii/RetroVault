@@ -26,13 +26,13 @@ const SideBar = () => {
   }
 
   const sidebarItems = [
-    { icon: '💰', label: 'Budget', action: 'budget' },
-    { icon: '💸', label: 'Transaction', action: 'expenses' },
-    { icon: '🎯', label: 'Goals', action: 'goals' },
-    { icon: '🤖', label: 'Eliza AI', action: 'eliza' },
-    { icon: '⚙️', label: 'Settings', action: 'settings' },
-    { icon: '📊', label: 'Reports', action: 'reports' },
-    { icon: '🔄', label: 'Sync', action: 'sync' }
+    { icon: '■', label: 'Budget', action: 'budget' },
+    { icon: '◆', label: 'Transaction', action: 'expenses' },
+    { icon: '▲', label: 'Goals', action: 'goals' },
+    { icon: '●', label: 'Eliza AI', action: 'eliza' },
+    { icon: '★', label: 'Settings', action: 'settings' },
+    { icon: '♦', label: 'Reports', action: 'reports' },
+    { icon: '▲', label: 'Sync', action: 'sync' }
   ]
 
   const handleToolClick = (item) => {
