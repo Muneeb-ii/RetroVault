@@ -10,32 +10,30 @@ const __dirname = dirname(__filename)
 // Initialize Firebase Admin SDK
 if (!admin.apps.length) {
   try {
-    // First, try to use service account key file (for development)
-    try {
-      const serviceAccountPath = join(__dirname, '../serviceAccountKey.json')
-      const serviceAccount = JSON.parse(readFileSync(serviceAccountPath, 'utf8'))
-      
+    // First, try environment variables (for production/Vercel)
+    if (process.env.FIREBASE_PROJECT_ID && process.env.FIREBASE_CLIENT_EMAIL && process.env.FIREBASE_PRIVATE_KEY) {
       admin.initializeApp({
-        credential: admin.credential.cert(serviceAccount),
-        projectId: serviceAccount.project_id
-      })
-      console.log('✅ Firebase Admin initialized with serviceAccountKey.json')
-    } catch (jsonError) {
-      console.log('⚠️ Could not load serviceAccountKey.json, trying environment variables...')
-      
-      // If JSON file not found, fall back to environment variables (for production)
-      if (process.env.FIREBASE_PROJECT_ID && process.env.FIREBASE_CLIENT_EMAIL && process.env.FIREBASE_PRIVATE_KEY) {
-        admin.initializeApp({
-          credential: admin.credential.cert({
-            projectId: process.env.FIREBASE_PROJECT_ID,
-            clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-            privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
-          }),
+        credential: admin.credential.cert({
           projectId: process.env.FIREBASE_PROJECT_ID,
+          clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+          privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+        }),
+        projectId: process.env.FIREBASE_PROJECT_ID,
+      })
+      console.log('✅ Firebase Admin initialized with environment variables')
+    } else {
+      // Fallback to service account key file (for local development)
+      try {
+        const serviceAccountPath = join(__dirname, '../serviceAccountKey.json')
+        const serviceAccount = JSON.parse(readFileSync(serviceAccountPath, 'utf8'))
+        
+        admin.initializeApp({
+          credential: admin.credential.cert(serviceAccount),
+          projectId: serviceAccount.project_id
         })
-        console.log('✅ Firebase Admin initialized with environment variables')
-      } else {
-        throw new Error('No Firebase credentials found. Either provide serviceAccountKey.json or set FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, and FIREBASE_PRIVATE_KEY environment variables.')
+        console.log('✅ Firebase Admin initialized with serviceAccountKey.json')
+      } catch (jsonError) {
+        throw new Error('No Firebase credentials found. Either provide serviceAccountKey.json for local development or set FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, and FIREBASE_PRIVATE_KEY environment variables for production.')
       }
     }
   } catch (error) {
