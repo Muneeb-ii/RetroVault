@@ -10,7 +10,7 @@ import { play as playSound } from '../utils/soundPlayer'
 import { useEffect } from 'react'
 
 const RetroDashboard = () => {
-  const { user, financialData, isLoading, error } = useFinancialData()
+  const { user, financialData, isLoading, error, loadingMessage } = useFinancialData()
   const navigate = useNavigate()
 
   // Play startup sound when dashboard is shown and user data is ready
@@ -46,15 +46,16 @@ const RetroDashboard = () => {
             </div>
           </div>
           <div className="window-body text-center">
-            <div className="text-lg font-bold mb-4 retro-text-reveal">Loading data... Please Wait 💾</div>
-            <div className="text-sm text-gray-600 mb-2 retro-fade-in-delay-1">Fetching your financial data from Firestore</div>
+            <div className="text-lg font-bold mb-4 retro-text-reveal">{loadingMessage} 💾</div>
+            <div className="text-sm text-gray-600 mb-2 retro-fade-in-delay-1">Generating your financial data</div>
             <div className="text-xs text-blue-600 retro-fade-in-delay-2">This may take a moment for new users</div>
+            <div className="text-xs text-gray-500 retro-fade-in-delay-3">Please wait while we prepare your dashboard</div>
             <div className="mt-4">
               <div className="retro-loading text-4xl">💾</div>
             </div>
           </div>
           <div className="status-bar">
-            <div className="status-bar-field retro-status-pulse">Loading...</div>
+            <div className="status-bar-field retro-status-pulse">Initializing...</div>
           </div>
         </div>
       </div>
@@ -78,7 +79,8 @@ const RetroDashboard = () => {
             <div className="text-lg font-bold mb-4 text-red-600 retro-text-reveal">Failed to load data</div>
             <div className="text-sm text-gray-600 mb-4 retro-fade-in-delay-1">{error}</div>
             <div className="text-xs text-gray-500 mb-4 retro-fade-in-delay-2">
-              If you're a new user, this might be due to data initialization taking longer than expected.
+              If you're a new user, this might be due to data initialization taking longer than expected. 
+              Try refreshing the page or re-authenticating.
             </div>
             <div className="flex space-x-2 justify-center">
               <button

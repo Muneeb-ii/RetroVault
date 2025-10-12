@@ -26,6 +26,7 @@ export const FinancialDataProvider = ({ children }) => {
   const [financialData, setFinancialData] = useState(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [loadingMessage, setLoadingMessage] = useState('Loading data...')
 
   // Listen to auth state changes
   useEffect(() => {
@@ -47,6 +48,7 @@ export const FinancialDataProvider = ({ children }) => {
     try {
       setIsLoading(true)
       setError(null)
+      setLoadingMessage('Loading data...')
       
       console.log('🔄 [CONTEXT] Loading user data for all tabs...')
       console.log('🆔 [CONTEXT] User ID:', userId)
@@ -56,9 +58,104 @@ export const FinancialDataProvider = ({ children }) => {
       console.log('📄 [CONTEXT] User profile loaded:', userProfile ? 'Found' : 'Not found')
       
       if (!userProfile) {
-        console.log('🆕 [CONTEXT] No user profile found')
-        setFinancialData(null)
-        setError('No financial data available. Please ensure your account is properly set up.')
+        console.log('🆕 [CONTEXT] No user profile found - checking if user is being seeded...')
+        
+        // For new users, retry with exponential backoff to allow seeding to complete
+        let retryProfile = null
+        const maxRetries = 3
+        const baseDelay = 1000 // 1 second
+        
+        for (let attempt = 1; attempt <= maxRetries; attempt++) {
+          console.log(`⏳ [CONTEXT] Waiting for user data seeding to complete... (attempt ${attempt}/${maxRetries})`)
+          setLoadingMessage(`Setting up your account... (attempt ${attempt}/${maxRetries})`)
+          await new Promise(resolve => setTimeout(resolve, baseDelay * attempt)) // Exponential backoff
+          
+          retryProfile = await getUserProfile(userId)
+          if (retryProfile) {
+            console.log(`✅ [CONTEXT] User profile found after ${attempt} attempt(s)`)
+            break
+          }
+        }
+        
+        if (!retryProfile) {
+          console.log('❌ [CONTEXT] Still no user profile after all retries - user may need manual setup')
+          setFinancialData(null)
+          setError('No financial data available. Please ensure your account is properly set up.')
+          return
+        }
+        
+        // Use the retry profile
+        const finalProfile = retryProfile
+        
+        // Load transactions and accounts using unified service
+        const [transactions, accounts] = await Promise.all([
+          getUserTransactions(userId, { limitCount: 100 }),
+          getUserAccounts(userId, { activeOnly: true })
+        ])
+
+        console.log('📊 [CONTEXT] Data loaded:', {
+          transactionsCount: transactions.length,
+          accountsCount: accounts.length
+        })
+
+        // Transform unified data to shared format
+        const transformedData = {
+          // Core data from unified structure
+          balance: finalProfile.financialSummary?.totalBalance || 0,
+          transactions: transactions,
+          accounts: accounts,
+          
+          // Derived data for charts
+          savings: calculateSavingsFromTransactions(transactions),
+          spendingBreakdown: calculateSpendingBreakdown(transactions),
+          weeklyBalance: generateWeeklyBalance(transactions),
+          
+          // Metadata from unified structure
+          aiInsight: `Your financial data (${accounts.length} accounts, ${transactions.length} transactions)`,
+          aiGenerated: false,
+          lastUpdated: finalProfile.syncStatus?.lastSync 
+            ? (finalProfile.syncStatus.lastSync.toDate ? finalProfile.syncStatus.lastSync.toDate().toLocaleString() : finalProfile.syncStatus.lastSync.toString())
+            : new Date().toLocaleString(),
+          accountInfo: finalProfile.metadata || {},
+          dataSource: finalProfile.dataSource || 'Firestore',
+          isConsistent: finalProfile.syncStatus?.isConsistent || true,
+          
+          // User info from unified structure
+          user: {
+            uid: userId,
+            name: finalProfile.profile?.name || 'User',
+            email: finalProfile.profile?.email || '',
+            photoURL: finalProfile.profile?.photoURL || null
+          },
+          
+          // Financial summary from unified structure
+          financialSummary: finalProfile.financialSummary || {
+            totalBalance: 0,
+            totalIncome: 0,
+            totalExpenses: 0,
+            totalSavings: 0
+          },
+          
+          // Sync and system status
+          syncStatus: {
+            lastSync: finalProfile.syncStatus?.lastSync || null,
+            isConsistent: finalProfile.syncStatus?.isConsistent || true,
+            dataSource: finalProfile.dataSource || 'Firestore',
+            autoSync: finalProfile.settings?.autoSync || false
+          },
+          
+          // User preferences and settings
+          userSettings: {
+            currency: finalProfile.settings?.currency || 'USD',
+            dateFormat: finalProfile.settings?.dateFormat || 'MM/DD/YYYY',
+            notifications: finalProfile.settings?.notifications || true,
+            theme: finalProfile.settings?.theme || 'retro',
+            timezone: finalProfile.settings?.timezone || 'America/New_York'
+          }
+        }
+        
+        setFinancialData(transformedData)
+        console.log('✅ [CONTEXT] Financial data loaded successfully for all tabs')
         return
       }
 
@@ -296,6 +393,7 @@ export const FinancialDataProvider = ({ children }) => {
     financialData,
     isLoading,
     error,
+    loadingMessage,
     loadUserData,
     refreshData,
     updateData,
