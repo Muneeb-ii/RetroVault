@@ -173,20 +173,57 @@ export const FinancialDataProvider = ({ children }) => {
   }
 
   const generateWeeklyBalance = (transactions) => {
+    // Handle empty or invalid data
+    if (!transactions || !Array.isArray(transactions) || transactions.length === 0) {
+      return [
+        { day: 'Mon', balance: 0 },
+        { day: 'Tue', balance: 0 },
+        { day: 'Wed', balance: 0 },
+        { day: 'Thu', balance: 0 },
+        { day: 'Fri', balance: 0 },
+        { day: 'Sat', balance: 0 },
+        { day: 'Sun', balance: 0 }
+      ]
+    }
+
     const weeklyData = []
     const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
-    let balance = 2000
     
+    // Calculate starting balance from all transactions
+    const totalIncome = transactions
+      .filter(t => t.type === 'income')
+      .reduce((sum, t) => sum + (t.amount || 0), 0)
+    
+    const totalExpenses = transactions
+      .filter(t => t.type === 'expense')
+      .reduce((sum, t) => sum + (t.amount || 0), 0)
+    
+    let balance = totalIncome - totalExpenses
+    
+    // Generate weekly data by calculating balance for each day of the week
     days.forEach((day, index) => {
-      const recentTransactions = transactions.filter(t => 
-        new Date(t.date) >= new Date(Date.now() - (7 - index) * 24 * 60 * 60 * 1000)
-      )
+      // Get transactions for this specific day (last 7 days, going backwards)
+      const targetDate = new Date()
+      targetDate.setDate(targetDate.getDate() - (6 - index))
+      targetDate.setHours(0, 0, 0, 0)
       
-      const dailyChange = recentTransactions.reduce((sum, t) => 
-        sum + (t.type === 'income' ? t.amount : -t.amount), 0
-      )
+      const nextDay = new Date(targetDate)
+      nextDay.setDate(nextDay.getDate() + 1)
       
-      balance += dailyChange / 7
+      const dayTransactions = transactions.filter(t => {
+        if (!t.date) return false
+        const transactionDate = new Date(t.date)
+        return transactionDate >= targetDate && transactionDate < nextDay
+      })
+      
+      // Calculate net change for this day
+      const dailyChange = dayTransactions.reduce((sum, t) => {
+        const amount = parseFloat(t.amount) || 0
+        return sum + (t.type === 'income' ? amount : -amount)
+      }, 0)
+      
+      // Update balance for this day
+      balance += dailyChange
       
       weeklyData.push({
         day,
