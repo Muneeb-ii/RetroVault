@@ -1,6 +1,10 @@
 // Local development server for API endpoints
 import express from 'express'
 import cors from 'cors'
+import dotenv from 'dotenv'
+
+// Load environment variables from .env.local
+dotenv.config({ path: '.env.local' })
 
 // Import Firebase Admin with error handling
 let syncNessieToFirestore
