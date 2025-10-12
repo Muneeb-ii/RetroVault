@@ -362,21 +362,21 @@ const TimeMachine = () => {
               {/* Scenario Selector */}
               <div className="retro-info">
                 <div className="text-sm font-bold mb-2">SCENARIO</div>
-                <div className="grid grid-cols-3 gap-2">
+                <div className="grid grid-cols-3 gap-1">
                   {Object.entries(FINANCIAL_SCENARIOS).map(([key, scenario]) => (
                     <button
                       key={key}
                       onClick={() => setSelectedScenario(key)}
-                      className={`retro-button text-xs py-2 px-1 ${
+                      className={`retro-button text-xs py-1.5 px-1 min-h-[2rem] flex items-center justify-center text-center ${
                         selectedScenario === key ? 'bg-blue-500 text-white' : ''
                       }`}
                       style={{ backgroundColor: selectedScenario === key ? scenario.color : undefined }}
                     >
-                      {scenario.name}
+                      <span className="truncate w-full">{scenario.name}</span>
                     </button>
                   ))}
                 </div>
-                <div className="text-xs text-gray-600 mt-1">
+                <div className="text-xs text-gray-600 mt-1 leading-tight">
                   {FINANCIAL_SCENARIOS[selectedScenario].description}
                 </div>
               </div>
@@ -387,7 +387,7 @@ const TimeMachine = () => {
                 <select
                   value={timeRange}
                   onChange={(e) => setTimeRange(parseInt(e.target.value))}
-                  className="retro-input w-full text-xs"
+                  className="retro-input w-full text-xs py-2 px-2 min-h-[2rem]"
                 >
                   <option value={5}>5 Years</option>
                   <option value={10}>10 Years</option>
@@ -401,21 +401,21 @@ const TimeMachine = () => {
                 <div className="text-sm font-bold mb-2">AGE SETTINGS</div>
                 <div className="grid grid-cols-2 gap-2">
                   <div>
-                    <label className="text-xs">Current Age</label>
+                    <label className="text-xs block mb-1">Current Age</label>
                     <input
                       type="number"
                       value={currentAge}
                       onChange={(e) => setCurrentAge(parseInt(e.target.value))}
-                      className="retro-input w-full text-xs"
+                      className="retro-input w-full text-xs py-1.5 px-2 min-h-[2rem] text-center"
                     />
                   </div>
                   <div>
-                    <label className="text-xs">Retirement Age</label>
+                    <label className="text-xs block mb-1">Retirement Age</label>
                     <input
                       type="number"
                       value={retirementAge}
                       onChange={(e) => setRetirementAge(parseInt(e.target.value))}
-                      className="retro-input w-full text-xs"
+                      className="retro-input w-full text-xs py-1.5 px-2 min-h-[2rem] text-center"
                     />
                   </div>
                 </div>
@@ -424,7 +424,7 @@ const TimeMachine = () => {
               {/* Savings Adjustment */}
               <div className="retro-info">
                 <div className="text-sm font-bold mb-2">SAVINGS ADJUSTMENT</div>
-                <div className="text-xs text-gray-600 mb-2">
+                <div className="text-xs text-gray-600 mb-2 leading-tight">
                   Current: ${projections?.currentMonthlySavings ?? Math.round((financialData?.balance || 0) * 0)} /month
                 </div>
                 <input
@@ -444,8 +444,8 @@ const TimeMachine = () => {
                 {/* Data Quality Indicator */}
                 <div className="mt-2 text-xs">
                   <div className="flex items-center justify-between">
-                    <span>Data Quality:</span>
-                    <span className={`font-bold ${
+                    <span className="truncate">Data Quality:</span>
+                    <span className={`font-bold text-xs ${
                       dataValidation.isValid && dataValidation.warnings.length === 0 
                         ? 'text-green-600' 
                         : dataValidation.warnings.length > 0 
