@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react'
 import { useFinancialData } from '../../contexts/FinancialDataContext'
 import { getFinancialInsights, getAvailableModels } from '../../api/aiService'
 import { calculateFinancialInsights, formatDataForAI } from '../../utils/financialDataHelpers'
+import { ElevenLabsClient } from '@elevenlabs/elevenlabs-js'
 
 const ElizaTool = ({ financialData, onClose, onDataUpdate }) => {
   const [messages, setMessages] = useState([])
@@ -10,6 +11,15 @@ const ElizaTool = ({ financialData, onClose, onDataUpdate }) => {
   const [conversationHistory, setConversationHistory] = useState([])
   const messagesEndRef = useRef(null)
   const { user } = useFinancialData()
+  const audioRef = useRef(null)
+  const currentAudioUrlRef = useRef(null)
+
+  // Initialize ElevenLabs client once
+  const elevenlabsApiKey = import.meta.env.VITE_ELEVENLABS_API_KEY
+  const elevenlabs = useRef(null)
+  if (!elevenlabs.current && elevenlabsApiKey) {
+    elevenlabs.current = new ElevenLabsClient({ apiKey: elevenlabsApiKey })
+  }
 
   // Auto-scroll to bottom when new messages arrive
   const scrollToBottom = () => {
@@ -32,6 +42,64 @@ const ElizaTool = ({ financialData, onClose, onDataUpdate }) => {
       }
     }
   }, [])
+
+  // Stop playback helper
+  const stopPlayback = () => {
+    try {
+      if (audioRef.current) {
+        audioRef.current.pause()
+        audioRef.current.removeAttribute('src')
+        audioRef.current.load()
+        audioRef.current = null
+      }
+      if (currentAudioUrlRef.current) {
+        try { URL.revokeObjectURL(currentAudioUrlRef.current) } catch (e) {}
+        currentAudioUrlRef.current = null
+      }
+    } catch (err) {
+      console.error('Error stopping audio playback', err)
+    }
+  }
+
+  // Play Eliza's message via ElevenLabs (on-demand)
+  const playElizaAudio = async (text) => {
+    if (!elevenlabs.current) {
+      console.warn('ElevenLabs API key not configured — skipping TTS')
+      return
+    }
+
+    try {
+      // Stop any existing playback first
+      stopPlayback()
+
+      const audioIterable = await elevenlabs.current.textToSpeech.convert('EXAVITQu4vr4xnSDxMaL', {
+        text,
+        modelId: 'eleven_multilingual_v2'
+      })
+
+      const chunks = []
+      for await (const chunk of audioIterable) {
+        chunks.push(chunk)
+      }
+
+      const blob = new Blob(chunks, { type: 'audio/mpeg' })
+      const audioUrl = URL.createObjectURL(blob)
+      currentAudioUrlRef.current = audioUrl
+
+      const audioElement = new Audio(audioUrl)
+      audioRef.current = audioElement
+
+      audioElement.addEventListener('ended', () => {
+        try { URL.revokeObjectURL(audioUrl) } catch (e) {}
+        currentAudioUrlRef.current = null
+        audioRef.current = null
+      })
+
+      await audioElement.play()
+    } catch (error) {
+      console.error('Error playing Eliza TTS:', error)
+    }
+  }
 
   // Save conversation history to localStorage
   useEffect(() => {
@@ -476,14 +544,25 @@ Respond as Eliza with specific, data-driven advice:`
             key={message.id}
             className={`flex ${message.type === 'user' ? 'justify-end' : 'justify-start'}`}
           >
-            <div
-              className={`max-w-xs lg:max-w-md px-4 py-3 rounded-lg ${
+            <div className={`max-w-xs lg:max-w-md px-4 py-3 rounded-lg ${
                 message.type === 'user'
                   ? 'bg-blue-500 text-white'
                   : 'bg-white border border-gray-200 shadow-sm'
-              }`}
-            >
-              <div className="whitespace-pre-wrap text-sm">{message.content}</div>
+              }`}>
+              <div className="flex items-start space-x-2">
+                <div className="flex-1 whitespace-pre-wrap text-sm">{message.content}</div>
+                {message.type === 'bot' && (
+                  <button
+                    onClick={() => { stopPlayback(); playElizaAudio(message.content) }}
+                    title="Play audio"
+                    className="ml-2 p-1 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-700"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M3 22v-20l18 10-18 10z" />
+                    </svg>
+                  </button>
+                )}
+              </div>
               <div className={`text-xs mt-1 ${
                 message.type === 'user' ? 'text-blue-100' : 'text-gray-500'
               }`}>
