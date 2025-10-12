@@ -1,5 +1,5 @@
 // Story Mode Service for generating financial narratives
-import { getFinancialInsights } from './aiService'
+import { getFinancialInsights, OPENROUTER_API_URL } from './aiService'
 
 /**
  * Generate a financial story narrative from user data
@@ -18,10 +18,10 @@ export const generateFinancialStory = async (transactions, savings, aiInsight, b
     try {
       // Try to get AI-generated story
       const insights = await getFinancialInsights(transactions, savings)
-      return generateStaticStory(storyData, balance, insights)
+        return generateStaticStory(storyData, balance, insights, transactions)
     } catch (error) {
       console.error('AI service unavailable, using static story:', error)
-      return generateStaticStory(storyData, balance, aiInsight)
+  return generateStaticStory(storyData, balance, aiInsight, transactions)
     }
 
   } catch (error) {
@@ -87,8 +87,54 @@ const getRecentAchievement = (transactions, savings, balance) => {
 /**
  * Generate static story when AI is unavailable
  */
-const generateStaticStory = (storyData, balance, aiInsight) => {
-  return aiInsight
+/**
+ * Generate static story when AI is unavailable
+ */
+const generateStaticStory = async (storyData, balance, aiInsight, transactions = [], model = import.meta.env.DEFAULT_AI_MODEL || "google/gemini-2.5-flash") => {
+  // Format transactions into a concise history string (date - type - category - amount)
+  const formattedTransactions = (transactions || []).slice(-50).map(t => {
+    const date = t.date ? new Date(t.date).toLocaleDateString() : 'unknown date'
+    const type = t.type || 'unknown'
+    const category = t.category || 'uncategorized'
+    const amount = typeof t.amount === 'number' ? `$${t.amount.toFixed(2)}` : String(t.amount)
+    return `- ${date} | ${type} | ${category} | ${amount}`
+  }).join('\n') || 'No transactions available.'
+
+  const prompt = `Write a short, engaging 100-word story about a person's financial journey. Make it sound like a nostalgic simulation game narrative. Use the following data:\n\nFinancial Data:\n- Current Balance: $${balance.toLocaleString()}\n- Recent Insight: "${aiInsight}"\n- Top Spending Category: ${storyData.topCategory}\n- Savings Trend: ${storyData.savingsTrend}\n- Recent Achievement: ${storyData.recentAchievement}\n\nTransaction History (most recent 50):\n${formattedTransactions}\n\nWrite in second person ("You") and make it sound like a retro computer game story with vivid descriptions and details. Include specific details about their financial habits, achievements, and future potential. Keep it professional and nostalgic, like an old RPG game gameplay. Generate only the story and not text like "loading saved file" or "story:"`
+  const apiKey = import.meta.env.VITE_OPENROUTER_API_KEY
+  //const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions'
+  const response = await fetch(OPENROUTER_API_URL, {
+    method: 'POST',
+    headers: {
+      'Authorization': `Bearer ${apiKey}`,
+      'Content-Type': 'application/json',
+      'HTTP-Referer': window.location.origin,
+      'X-Title': 'RetroVault Financial AI'
+    },
+    body: JSON.stringify({
+      model: model,
+      messages: [
+        {
+          role: 'user',
+          content: prompt
+        }
+      ],
+    })
+  })
+
+  if (!response.ok) {
+    throw new Error(`OpenRouter API error: ${response.status} ${response.statusText}`)
+  }
+
+  const data = await response.json()
+  const content = data.choices?.[0]?.message?.content
+
+  if (!content) {
+    throw new Error('No content received from AI model')
+  }
+
+  // Parse the insights from the response
+  return content
 }
 
 /**
