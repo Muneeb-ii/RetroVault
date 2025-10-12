@@ -42,7 +42,7 @@ const HowItWorks = () => {
   return (
     <section id="howitworks" className="py-8 bg-gray-50">
   <div className="w-full px-4">
-        <div className="window retro-window-animate">
+        <div className="window retro-window-animate retro-scanlines">
           <div className="title-bar">
             <div className="title-bar-text">How It Works - Simple as 1-2-3</div>
             <div className="title-bar-controls">

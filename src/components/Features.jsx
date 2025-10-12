@@ -54,7 +54,7 @@ const Features = () => {
   return (
     <section id="features" className="py-8 bg-white">
   <div className="w-full px-4">
-        <div className="window retro-window-animate">
+        <div className="window retro-window-animate retro-scanlines">
           <div className="title-bar">
             <div className="title-bar-text">Features - Why RetroVault is Revolutionary</div>
             <div className="title-bar-controls">
