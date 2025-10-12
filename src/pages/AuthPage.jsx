@@ -92,28 +92,40 @@ const AuthPage = () => {
         backgroundRepeat: 'no-repeat'
       }}
     >
-      <div className="window max-w-md w-full bg-white/95 backdrop-blur-sm shadow-2xl">
+      <div className="window max-w-md w-full bg-white/95 backdrop-blur-sm shadow-2xl border-2 border-gray-300">
         <div className="title-bar">
           <div className="title-bar-text">🔐 RetroVault Login Portal</div>
           <div className="title-bar-controls">
             <button aria-label="Minimize"></button>
             <button aria-label="Maximize"></button>
-            <button aria-label="Close"></button>
+            <button 
+              aria-label="Close"
+              onClick={() => navigate('/')}
+              className="hover:bg-red-500 hover:text-white transition-colors"
+            ></button>
           </div>
         </div>
         
-        <div className="window-body">
+        <div className="window-body p-4">
           {/* Tab Switcher */}
-          <div className="flex mb-6">
+          <div className="flex mb-6 border-b border-gray-300">
             <button
               onClick={() => setIsLogin(true)}
-              className={`flex-1 mr-2 py-2 px-4 text-sm font-bold ${isLogin ? 'retro-tab-active' : 'retro-tab-inactive'}`}
+              className={`flex-1 py-3 px-4 text-sm font-bold border-b-2 transition-colors ${
+                isLogin 
+                  ? 'retro-tab-active border-blue-500 text-blue-700' 
+                  : 'retro-tab-inactive border-transparent text-gray-600 hover:text-gray-800'
+              }`}
             >
               🔑 Login
             </button>
             <button
               onClick={() => setIsLogin(false)}
-              className={`flex-1 ml-2 py-2 px-4 text-sm font-bold ${!isLogin ? 'retro-tab-active' : 'retro-tab-inactive'}`}
+              className={`flex-1 py-3 px-4 text-sm font-bold border-b-2 transition-colors ${
+                !isLogin 
+                  ? 'retro-tab-active border-blue-500 text-blue-700' 
+                  : 'retro-tab-inactive border-transparent text-gray-600 hover:text-gray-800'
+              }`}
             >
               📝 Sign Up
             </button>
@@ -122,38 +134,38 @@ const AuthPage = () => {
           {/* Email/Password Form */}
           <form onSubmit={handleEmailAuth} className="space-y-4">
             {!isLogin && (
-              <div className="field-row">
-                <label className="text-sm font-bold text-gray-700">Display Name</label>
+              <div className="field-row mb-4">
+                <label className="block text-sm font-bold text-gray-700 mb-1">Display Name</label>
                 <input
                   type="text"
                   value={displayName}
                   onChange={(e) => setDisplayName(e.target.value)}
-                  className="field w-full"
+                  className="field w-full px-3 py-2 text-sm"
                   placeholder="Enter your name"
                   required={!isLogin}
                 />
               </div>
             )}
 
-            <div className="field-row">
-              <label className="text-sm font-bold text-gray-700">Email Address</label>
+            <div className="field-row mb-4">
+              <label className="block text-sm font-bold text-gray-700 mb-1">Email Address</label>
               <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="field w-full"
+                className="field w-full px-3 py-2 text-sm"
                 placeholder="Enter your email"
                 required
               />
             </div>
 
-            <div className="field-row">
-              <label className="text-sm font-bold text-gray-700">Password</label>
+            <div className="field-row mb-4">
+              <label className="block text-sm font-bold text-gray-700 mb-1">Password</label>
               <input
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="field w-full"
+                className="field w-full px-3 py-2 text-sm"
                 placeholder="Enter your password"
                 required
                 minLength={6}
@@ -161,7 +173,7 @@ const AuthPage = () => {
             </div>
 
             {error && (
-              <div className="retro-info bg-red-100 border-red-300 text-red-700 p-2 text-sm">
+              <div className="retro-info bg-red-100 border-red-300 text-red-700 p-3 text-sm mb-4 rounded">
                 ❌ {error}
               </div>
             )}
@@ -169,7 +181,7 @@ const AuthPage = () => {
             <button
               type="submit"
               disabled={isLoading}
-              className="retro-button w-full py-2 text-lg font-bold"
+              className="retro-button w-full py-3 text-base font-bold mb-4"
             >
               {isLoading ? '⏳ Processing...' : (isLogin ? '🔑 Login' : '📝 Create Account')}
             </button>
@@ -186,16 +198,16 @@ const AuthPage = () => {
           <button
             onClick={handleGoogleAuth}
             disabled={isLoading}
-            className="retro-google-button w-full py-3 text-lg font-bold"
+            className="retro-google-button w-full py-3 text-base font-bold mb-4"
           >
             {isLoading ? '⏳ Processing...' : '🔑 Sign in with Google'}
           </button>
 
           {/* Back to Landing */}
-          <div className="text-center mt-4">
+          <div className="text-center mt-6">
             <a 
               href="/" 
-              className="text-sm text-blue-600 hover:underline"
+              className="text-sm text-blue-600 hover:underline font-medium"
             >
               ← Back to RetroVault Home
             </a>
