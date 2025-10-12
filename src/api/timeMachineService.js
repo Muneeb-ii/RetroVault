@@ -431,8 +431,8 @@ Write a futuristic forecast (3-4 sentences) that sounds like it's from a time-tr
 
     try {
       // Send our carefully-crafted prompt to OpenRouter and return the model's content
-      const model = 'google/gemini-2.5-flash'
-      const content = await runOpenRouterPrompt(prompt, model)
+      // runOpenRouterPrompt will try free models first, then fall back to Google Gemini
+      const content = await runOpenRouterPrompt(prompt)
       // Prefer returning the model content directly as the forecast
       return content
     } catch (error) {

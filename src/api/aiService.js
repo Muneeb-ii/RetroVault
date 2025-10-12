@@ -76,6 +76,16 @@ Provide 2 concise insights in this format:
 
   } catch (error) {
     console.error('Error generating AI insights:', error)
+    
+    // Try Google Gemini as fallback
+    try {
+      console.log('Attempting fallback to Google Gemini...')
+      const geminiInsights = await getFinancialInsightsWithGemini(transactions, savings)
+      return geminiInsights
+    } catch (geminiError) {
+      console.error('Google Gemini also failed:', geminiError)
+    }
+    
     // Return fallback insights on error
     return getFallbackInsights(transactions, savings)
   }
@@ -156,6 +166,117 @@ const parseAIResponse = (content) => {
 }
 
 /**
+ * Generate insights using Google Gemini as fallback
+ */
+const getFinancialInsightsWithGemini = async (transactions, savings) => {
+  const geminiApiKey = import.meta.env.VITE_GOOGLE_GEMINI_API_KEY
+  
+  if (!geminiApiKey || geminiApiKey === 'your_google_gemini_api_key_here') {
+    throw new Error('Google Gemini API key not configured')
+  }
+
+  // Calculate key statistics
+  const stats = calculateFinancialStats(transactions, savings)
+  
+  // Construct the prompt
+  const prompt = `Analyze the following user financial data and provide exactly 2 short, human-friendly insights about spending and savings trends. Keep each insight under 50 words and focus on actionable advice.
+
+Financial Data:
+- Total Income: $${stats.totalIncome}
+- Total Expenses: $${stats.totalExpenses}
+- Net Balance: $${stats.netBalance}
+- Top Spending Category: ${stats.topCategory} ($${stats.topCategoryAmount})
+- Average Monthly Savings: $${stats.avgSavings}
+- Savings Trend: ${stats.savingsTrend}
+
+Recent Transactions: ${JSON.stringify(transactions.slice(0, 5))}
+Savings History: ${JSON.stringify(savings)}
+
+Provide 2 concise insights in this format:
+1. [First insight about spending patterns]
+2. [Second insight about savings or financial health]`
+
+  const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${geminiApiKey}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      contents: [{
+        parts: [{
+          text: prompt
+        }]
+      }],
+      generationConfig: {
+        temperature: 0.7,
+        maxOutputTokens: 400,
+        topP: 0.8,
+        topK: 10
+      }
+    })
+  })
+
+  if (!response.ok) {
+    throw new Error(`Google Gemini API error: ${response.status}`)
+  }
+
+  const data = await response.json()
+  const content = data.candidates?.[0]?.content?.parts?.[0]?.text
+
+  if (!content) {
+    throw new Error('No content received from Google Gemini')
+  }
+
+  // Parse the insights from the response
+  const insights = parseAIResponse(content)
+  return insights
+}
+
+/**
+ * Run a prompt through Google Gemini as fallback
+ */
+const runPromptWithGemini = async (prompt) => {
+  const geminiApiKey = import.meta.env.VITE_GOOGLE_GEMINI_API_KEY
+  
+  if (!geminiApiKey || geminiApiKey === 'your_google_gemini_api_key_here') {
+    throw new Error('Google Gemini API key not configured')
+  }
+
+  const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${geminiApiKey}`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      contents: [{
+        parts: [{
+          text: prompt
+        }]
+      }],
+      generationConfig: {
+        temperature: 0.7,
+        maxOutputTokens: 1000,
+        topP: 0.8,
+        topK: 10
+      }
+    })
+  })
+
+  if (!response.ok) {
+    throw new Error(`Google Gemini API error: ${response.status}`)
+  }
+
+  const data = await response.json()
+  const content = data.candidates?.[0]?.content?.parts?.[0]?.text
+
+  if (!content) {
+    throw new Error('No content received from Google Gemini')
+  }
+
+  return content
+}
+
+/**
  * Generate fallback insights when AI is unavailable
  */
 const getFallbackInsights = (transactions, savings) => {
@@ -203,37 +324,70 @@ export const getAvailableModels = () => {
  * @param {string} model - The model id to use
  * @returns {Promise<string>} The content returned by the model
  */
-export const runOpenRouterPrompt = async (prompt, model = 'google/gemini-2.5-flash') => {
+export const runOpenRouterPrompt = async (prompt, preferredModel = null) => {
   try {
     const apiKey = import.meta.env.VITE_OPENROUTER_API_KEY
     if (!apiKey || apiKey === 'your_openrouter_api_key_here') {
       throw new Error('OpenRouter API key not configured')
     }
 
-    const response = await fetch(OPENROUTER_API_URL, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-        'HTTP-Referer': window.location.origin,
-        'X-Title': 'RetroVault Financial AI'
-      },
-      body: JSON.stringify({
-        model,
-        messages: [
-          { role: 'user', content: prompt }
-        ]
-      })
-    })
+    // Define free models in order of preference
+    const freeModels = [
+      'meta-llama/llama-3.1-8b-instruct',
+      'microsoft/phi-3-mini-128k-instruct',
+      'google/gemini-2.5-flash'
+    ]
 
-    if (!response.ok) {
-      throw new Error(`OpenRouter API error: ${response.status} ${response.statusText}`)
+    // Use preferred model if provided, otherwise try free models first
+    const modelsToTry = preferredModel ? [preferredModel, ...freeModels] : freeModels
+
+    let lastError = null
+    for (const model of modelsToTry) {
+      try {
+        console.log(`Trying model: ${model}`)
+        const response = await fetch(OPENROUTER_API_URL, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${apiKey}`,
+            'Content-Type': 'application/json',
+            'HTTP-Referer': window.location.origin,
+            'X-Title': 'RetroVault Financial AI'
+          },
+          body: JSON.stringify({
+            model,
+            messages: [
+              { role: 'user', content: prompt }
+            ]
+          })
+        })
+
+        if (response.ok) {
+          console.log(`Success with model: ${model}`)
+          const data = await response.json()
+          const content = data.choices?.[0]?.message?.content
+          if (!content) throw new Error('No content received from AI model')
+          return content
+        } else {
+          const errorText = await response.text()
+          console.warn(`Model ${model} failed:`, response.status, errorText)
+          lastError = new Error(`Model ${model} failed: ${response.status}`)
+          continue
+        }
+      } catch (error) {
+        console.warn(`Model ${model} error:`, error)
+        lastError = error
+        continue
+      }
     }
 
-    const data = await response.json()
-    const content = data.choices?.[0]?.message?.content
-    if (!content) throw new Error('No content received from AI model')
-    return content
+    // If all models failed, try Google Gemini as fallback
+    try {
+      console.log('All OpenRouter models failed, attempting Google Gemini fallback...')
+      return await runPromptWithGemini(prompt)
+    } catch (geminiError) {
+      console.error('Google Gemini also failed:', geminiError)
+      throw lastError || new Error('All models failed')
+    }
 
   } catch (error) {
     console.error('runOpenRouterPrompt error:', error)
