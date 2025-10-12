@@ -24,7 +24,9 @@ const Hero = () => {
             <div className="text-center">
               {/* Retro ASCII Art Header */}
               <div className="mb-3 retro-fade-in">
-                <div className="text-6xl font-bold text-gray-800 mb-1">■</div>
+                <div className="mb-1 flex justify-center">
+                  <img src="/src/assets/images/favicon.png" alt="RetroVault" className="w-16 h-16" />
+                </div>
                 <div className="text-2xl font-bold text-blue-600 mb-2 retro-text-reveal">RetroVault</div>
               </div>
               
