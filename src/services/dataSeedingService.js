@@ -189,6 +189,22 @@ export class DataSeedingService {
             description: 'Coffee shop',
             transaction_date: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
             account_id: primaryAccount._id
+          },
+          {
+            _id: 'sample-tx-4',
+            type: 'deposit',
+            amount: 1200,
+            description: 'Salary payment',
+            transaction_date: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+            account_id: primaryAccount._id
+          },
+          {
+            _id: 'sample-tx-5',
+            type: 'withdrawal',
+            amount: 75,
+            description: 'Gas station',
+            transaction_date: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+            account_id: primaryAccount._id
           }
         ]
         

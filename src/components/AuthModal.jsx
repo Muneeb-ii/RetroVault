@@ -1,6 +1,6 @@
 // Retro-styled authentication modal component
 import { useState } from 'react'
-import { useAuthInit } from '../hooks/useAuthInit'
+import { authService } from '../services/authService'
 import { play as playSound } from '../utils/soundPlayer'
 
 const AuthModal = ({ isOpen, onClose }) => {
@@ -10,35 +10,41 @@ const AuthModal = ({ isOpen, onClose }) => {
   const [displayName, setDisplayName] = useState('')
   const [error, setError] = useState('')
   
-  const { signInWithEmail, signUpWithEmail, signInAndSeedIfNeeded, isLoading } = useAuthInit()
+  const [isLoading, setIsLoading] = useState(false)
 
   const handleEmailAuth = async (e) => {
     e.preventDefault()
     setError('')
+    setIsLoading(true)
     
     try {
       if (isSignUp) {
-        await signUpWithEmail(email, password, displayName)
+        await authService.authenticate('signup', { email, password, displayName })
         playSound('logon')
       } else {
-        await signInWithEmail(email, password)
+        await authService.authenticate('email', { email, password })
         playSound('logon')
       }
       onClose()
     } catch (error) {
       setError(error.message)
       playSound('error')
+    } finally {
+      setIsLoading(false)
     }
   }
 
   const handleGoogleAuth = async () => {
+    setIsLoading(true)
     try {
-      await signInAndSeedIfNeeded()
+      await authService.authenticate('google')
       playSound('logon')
       onClose()
     } catch (error) {
       setError(error.message)
       playSound('error')
+    } finally {
+      setIsLoading(false)
     }
   }
 

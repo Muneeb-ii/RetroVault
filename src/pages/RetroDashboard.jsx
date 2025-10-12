@@ -1,7 +1,5 @@
 // RetroVault Dashboard - Firestore as Single Source of Truth
 import { useNavigate } from 'react-router-dom'
-import { signOut } from 'firebase/auth'
-import { auth } from '../firebaseClient'
 import { useUnifiedData } from '../contexts/UnifiedDataContext'
 import TopNav from '../components/TopNav'
 import SideBar from '../components/SideBar'

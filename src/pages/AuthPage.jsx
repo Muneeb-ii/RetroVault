@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { onAuthStateChanged } from 'firebase/auth'
 import { auth } from '../firebaseClient'
-import { useFirebaseAuth } from '../hooks/useFirebaseAuth'
+import { authService } from '../services/authService'
 import authPageBg from '../assets/images/authPage.png'
 
 const AuthPage = () => {
@@ -14,7 +14,7 @@ const AuthPage = () => {
   const [error, setError] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   
-  const { signUpEmail, loginEmail, loginGoogle } = useFirebaseAuth()
+  // Authentication functions using authService
   const navigate = useNavigate()
 
   // Redirect if already authenticated
@@ -40,12 +40,12 @@ const AuthPage = () => {
       
       if (isLogin) {
         console.log('🔑 [AUTH_PAGE] Attempting email login...')
-        await loginEmail(email, password)
+        await authService.authenticate('email', { email, password })
         console.log('✅ [AUTH_PAGE] Email login successful')
       } else {
         console.log('📝 [AUTH_PAGE] Attempting email sign-up...')
         console.log('👤 [AUTH_PAGE] Display name:', displayName)
-        await signUpEmail(email, password, displayName)
+        await authService.authenticate('signup', { email, password, displayName })
         console.log('✅ [AUTH_PAGE] Email sign-up successful')
       }
       // Navigation will be handled by the useEffect above
@@ -67,7 +67,7 @@ const AuthPage = () => {
 
     try {
       console.log('🔄 [AUTH_PAGE] Starting Google authentication...')
-      await loginGoogle()
+      await authService.authenticate('google')
       console.log('✅ [AUTH_PAGE] Google authentication successful')
       // Navigation will be handled by the useEffect above
     } catch (error) {

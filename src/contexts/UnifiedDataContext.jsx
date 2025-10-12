@@ -238,14 +238,16 @@ export const UnifiedDataProvider = ({ children }) => {
       }
     }
 
-    // Calculate derived data
-    const totalIncome = transactions
-      .filter(t => t.type === 'income')
-      .reduce((sum, t) => sum + (t.amount || 0), 0)
+    // Calculate derived data - handle different transaction type formats
+    const incomeTransactions = transactions.filter(t => 
+      t.type === 'income' || t.type === 'deposit'
+    )
+    const expenseTransactions = transactions.filter(t => 
+      t.type === 'expense' || t.type === 'withdrawal'
+    )
     
-    const totalExpenses = transactions
-      .filter(t => t.type === 'expense')
-      .reduce((sum, t) => sum + (t.amount || 0), 0)
+    const totalIncome = incomeTransactions.reduce((sum, t) => sum + (t.amount || 0), 0)
+    const totalExpenses = expenseTransactions.reduce((sum, t) => sum + Math.abs(t.amount || 0), 0)
     
     const totalSavings = totalIncome - totalExpenses
     const balance = userProfile.financialSummary?.totalBalance || 0
@@ -275,10 +277,10 @@ export const UnifiedDataProvider = ({ children }) => {
         monthlyData[monthKey] = { income: 0, expenses: 0 }
       }
       
-      if (transaction.type === 'income') {
+      if (transaction.type === 'income' || transaction.type === 'deposit') {
         monthlyData[monthKey].income += transaction.amount
       } else {
-        monthlyData[monthKey].expenses += transaction.amount
+        monthlyData[monthKey].expenses += Math.abs(transaction.amount)
       }
     })
     
@@ -336,11 +338,11 @@ export const UnifiedDataProvider = ({ children }) => {
     const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
     
     let balance = transactions
-      .filter(t => t.type === 'income')
+      .filter(t => t.type === 'income' || t.type === 'deposit')
       .reduce((sum, t) => sum + (t.amount || 0), 0) -
       transactions
-      .filter(t => t.type === 'expense')
-      .reduce((sum, t) => sum + (t.amount || 0), 0)
+      .filter(t => t.type === 'expense' || t.type === 'withdrawal')
+      .reduce((sum, t) => sum + Math.abs(t.amount || 0), 0)
     
     days.forEach((day, index) => {
       const targetDate = new Date()
@@ -357,12 +359,12 @@ export const UnifiedDataProvider = ({ children }) => {
       })
       
       const dayIncome = dayTransactions
-        .filter(t => t.type === 'income')
+        .filter(t => t.type === 'income' || t.type === 'deposit')
         .reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0)
       
       const dayExpenses = dayTransactions
-        .filter(t => t.type === 'expense')
-        .reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0)
+        .filter(t => t.type === 'expense' || t.type === 'withdrawal')
+        .reduce((sum, t) => sum + Math.abs(parseFloat(t.amount) || 0), 0)
       
       const dailyChange = dayIncome - dayExpenses
       balance += dailyChange

@@ -1,23 +1,11 @@
 // Navigation bar component for RetroVault
-import { useState, useEffect } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
-import { onAuthStateChanged } from 'firebase/auth'
-import { auth } from '../firebaseClient'
-import { useAuthInit } from '../hooks/useAuthInit'
+import { useUnifiedData } from '../contexts/UnifiedDataContext'
 import { play as playSound } from '../utils/soundPlayer'
 
 const NavBar = () => {
-  const [user, setUser] = useState(null)
-  const [isLoading, setIsLoading] = useState(false)
-  const { signInAndSeedIfNeeded, signOut, isLoading: authLoading } = useAuthInit()
+  const { user, signOut, isLoading } = useUnifiedData()
   const navigate = useNavigate()
-
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      setUser(user)
-    })
-    return unsubscribe
-  }, [])
 
   const handleSignIn = () => {
     try { playSound('click1') } catch (e) {}
@@ -26,13 +14,11 @@ const NavBar = () => {
 
   const handleSignOut = async () => {
     try {
-      setIsLoading(true)
       await signOut()
       playSound('logoff')
+      navigate('/')
     } catch (error) {
       console.error('Sign out error:', error)
-    } finally {
-      setIsLoading(false)
     }
   }
 
@@ -88,14 +74,14 @@ const NavBar = () => {
                 <button
                   onClick={handleDashboard}
                   className="retro-button px-4 py-2 text-sm font-medium"
-                  disabled={isLoading || authLoading}
+                  disabled={isLoading || false}
                 >
                   Dashboard
                 </button>
                 <button
                   onClick={handleSignOut}
                   className="retro-button px-4 py-2 text-sm font-medium"
-                  disabled={isLoading || authLoading}
+                  disabled={isLoading || false}
                 >
                   Sign Out
                 </button>
@@ -104,9 +90,9 @@ const NavBar = () => {
               <button
                 onClick={handleSignIn}
                 className="retro-button px-4 py-2 text-sm font-medium"
-                disabled={isLoading || authLoading}
+                disabled={isLoading || false}
               >
-                {isLoading || authLoading ? 'Processing...' : 'Sign In'}
+                {isLoading || false ? 'Processing...' : 'Sign In'}
               </button>
             )}
           </div>
