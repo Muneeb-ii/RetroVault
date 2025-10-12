@@ -54,7 +54,10 @@ const ExpensesTool = ({ financialData, transactions: contextTransactions, accoun
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    if (!financialData?.user) {
+    console.log('🔍 [EXPENSES] Form submitted:', { user, newTransaction })
+    
+    if (!user) {
+      console.log('❌ [EXPENSES] No user found')
       setMessage('❌ User not authenticated')
       return
     }
@@ -68,13 +71,18 @@ const ExpensesTool = ({ financialData, transactions: contextTransactions, accoun
       type: newTransaction.type
     })
     
+    console.log('🔍 [EXPENSES] Validation result:', validation)
+    
     if (!validation.isValid) {
+      console.log('❌ [EXPENSES] Validation failed:', validation.errors)
       setMessage(`❌ ${validation.errors.join(', ')}`)
       return
     }
     
     try {
       setIsSaving(true)
+      console.log('🔍 [EXPENSES] Starting save process...')
+      
       const transactionData = {
         userId: user.uid,
         accountId: accounts[0]?.id || 'default',
@@ -85,17 +93,23 @@ const ExpensesTool = ({ financialData, transactions: contextTransactions, accoun
         merchant: newTransaction.description,
         date: new Date(newTransaction.date).toISOString()
       }
+      
+      console.log('🔍 [EXPENSES] Transaction data:', transactionData)
 
       if (editingTransaction) {
         // Update existing transaction using unified service
+        console.log('🔍 [EXPENSES] Updating transaction:', editingTransaction.id)
         await updateTransaction(editingTransaction.id, transactionData)
-    setMessage('✅ Transaction updated successfully!')
-    playSound('success')
+        console.log('✅ [EXPENSES] Transaction updated successfully')
+        setMessage('✅ Transaction updated successfully!')
+        playSound('success')
       } else {
         // Add new transaction using unified service
+        console.log('🔍 [EXPENSES] Creating new transaction')
         await createTransaction(transactionData)
-  setMessage('✅ Transaction added successfully!')
-  playSound('success')
+        console.log('✅ [EXPENSES] Transaction created successfully')
+        setMessage('✅ Transaction added successfully!')
+        playSound('success')
       }
       
       // Reset form

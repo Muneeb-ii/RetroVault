@@ -54,7 +54,7 @@ const GoalsTool = ({ financialData, user, onClose, onDataUpdate }) => {
 
   const handleSubmit = async (e) => {
     e.preventDefault()
-    if (!financialData?.user) {
+    if (!user) {
       setMessage('❌ User not authenticated')
       return
     }

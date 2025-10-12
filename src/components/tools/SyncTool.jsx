@@ -33,7 +33,7 @@ const SyncTool = ({ financialData, user, onClose, onDataUpdate }) => {
   }
 
   const performSync = async (syncType = 'full') => {
-    if (!financialData?.user) return
+    if (!user) return
     
     try {
       setIsSyncing(true)

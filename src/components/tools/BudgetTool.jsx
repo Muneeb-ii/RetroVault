@@ -65,7 +65,7 @@ const BudgetTool = ({ financialData, transactions, user, onClose, onDataUpdate }
   }
 
   const saveBudgets = async () => {
-    if (!financialData?.user) {
+    if (!user) {
       setMessage('❌ User not authenticated')
       return
     }

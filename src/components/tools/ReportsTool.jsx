@@ -48,7 +48,7 @@ const ReportsTool = ({ financialData, transactions, user, onClose, onDataUpdate 
   }
 
   const generateReport = async (reportType) => {
-    if (!financialData?.user) return
+    if (!user) return
     
     try {
       // play click sound for starting generation

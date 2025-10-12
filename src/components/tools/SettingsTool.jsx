@@ -77,7 +77,7 @@ const SettingsTool = ({ financialData, transactions, accounts, user, onClose, on
   }, [financialData])
 
   const loadSettings = async () => {
-    if (!financialData?.user) return
+    if (!user) return
     
     try {
       setIsLoading(true)
@@ -101,7 +101,7 @@ const SettingsTool = ({ financialData, transactions, accounts, user, onClose, on
   }
 
   const saveSettings = async () => {
-    if (!financialData?.user) return
+    if (!user) return
     
     try {
       setIsSaving(true)
