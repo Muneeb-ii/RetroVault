@@ -6,11 +6,25 @@
 /* Global retro styling */
 body {
   font-family: 'Courier New', monospace;
-  background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+  /* Use the existing authPage.png as the default wallpaper image (falls back to gradient) */
+  /* fixed path: index.css is in src/, so assets are in ./assets/images/ */
+  background-image: url('./assets/images/authPage.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-attachment: fixed;
+  /* Fallback gradient if images are missing */
+  background-color: #1e3c72;
+  background-blend-mode: normal;
   min-height: 100vh;
   margin: 0;
   padding: 0;
   position: relative;
+}
+
+/* Helper to make page containers transparent so the body wallpaper shows through */
+.page-bg-transparent {
+  background: transparent !important;
 }
 
 /* Subtle retro desktop wallpaper pattern */
@@ -133,9 +147,11 @@ body::before {
 
 /* Retro window styling */
 .retro-window {
-  background: #c0c0c0;
-  border: 2px outset #c0c0c0;
-  box-shadow: 2px 2px 0px #000000;
+  /* more translucent window so wallpaper shows through more */
+  background-color: rgba(192,192,192,0.6);
+  border: 1px solid rgba(200,200,200,0.35);
+  box-shadow: 0 6px 18px rgba(0,0,0,0.18);
+  backdrop-filter: blur(4px);
 }
 
 /* Subtle scanlines for windows */
@@ -202,17 +218,19 @@ body::before {
 
 /* Retro chart container */
 .retro-chart {
-  background: #ffffff;
-  border: 2px inset #c0c0c0;
+  background-color: rgba(255,255,255,0.78);
+  border: 1px solid rgba(200,200,200,0.35);
   padding: 6px;
+  backdrop-filter: blur(2px);
 }
 
 /* Retro info box */
 .retro-info {
-  background: #ffffff;
-  border: 2px inset #c0c0c0;
+  background-color: rgba(255,255,255,0.7);
+  border: 1px solid rgba(200,200,200,0.35);
   padding: 8px;
   font-weight: bold;
+  backdrop-filter: blur(2px);
 }
 
 /* Retro sidebar button */
@@ -302,10 +320,11 @@ body::before {
 
 /* Retro popup window */
 .retro-popup {
-  background: #c0c0c0;
-  border: 2px outset #c0c0c0;
-  box-shadow: 2px 2px 0px #000000;
+  background-color: rgba(192,192,192,0.6);
+  border: 1px solid rgba(180,180,180,0.4);
+  box-shadow: 0 6px 14px rgba(0,0,0,0.14);
   font-family: 'Courier New', monospace;
+  backdrop-filter: blur(3px);
 }
 
 /* Retro forecast button */
@@ -387,10 +406,11 @@ body::before {
 }
 
 .retro-feature-card {
-  background: #f0f0f0;
-  border: 2px outset #c0c0c0;
-  box-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+  background-color: rgba(240,240,240,0.7);
+  border: 1px solid rgba(200,200,200,0.3);
+  box-shadow: 0 4px 10px rgba(0,0,0,0.1);
   transition: all 0.2s ease;
+  backdrop-filter: blur(2px);
 }
 
 .retro-feature-card:hover {
@@ -489,11 +509,21 @@ body::before {
 
 /* Retro story container */
 .story-container {
-  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-  border: 3px inset #c0c0c0;
-  box-shadow: inset 2px 2px 4px rgba(0,0,0,0.1);
+  background-color: rgba(248,249,250,0.72);
+  border: 1px solid rgba(200,200,200,0.35);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.55);
   padding: 20px;
   position: relative;
+  backdrop-filter: blur(2px);
+}
+
+/* Top navigation translucency */
+.top-nav {
+  /* match retro-window style: light translucent background */
+  background-color: rgba(192,192,192,0.6);
+  border: 1px solid rgba(200,200,200,0.35);
+  box-shadow: 0 6px 18px rgba(0,0,0,0.18);
+  backdrop-filter: blur(3px);
 }
 
 .story-container::before {

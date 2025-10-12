@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { play as playSound } from '../../utils/soundPlayer'
 import { doc, updateDoc, getDoc, setDoc } from 'firebase/firestore'
 import { db } from '../../firebaseClient'
 
@@ -84,6 +85,7 @@ const SyncTool = ({ financialData, onClose, onDataUpdate }) => {
 
       setSyncStatus('success')
       setMessage('✅ Sync completed successfully!')
+  playSound('success')
       
       // Trigger data reload
       setTimeout(() => {
@@ -95,6 +97,7 @@ const SyncTool = ({ financialData, onClose, onDataUpdate }) => {
       console.error('Error during sync:', error)
       setSyncStatus('error')
       setMessage('❌ Sync failed. Please try again.')
+  playSound('error')
       
       // Log failed sync
       const now = new Date().toISOString()
@@ -219,7 +222,7 @@ const SyncTool = ({ financialData, onClose, onDataUpdate }) => {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <button
             className="retro-button px-4 py-3 text-center"
-            onClick={() => performSync('full')}
+            onClick={() => { playSound('click1'); performSync('full') }}
             disabled={isSyncing}
           >
             <div className="text-2xl mb-2">🔄</div>
@@ -229,7 +232,7 @@ const SyncTool = ({ financialData, onClose, onDataUpdate }) => {
           
           <button
             className="retro-button px-4 py-3 text-center"
-            onClick={() => performSync('incremental')}
+            onClick={() => { playSound('click1'); performSync('incremental') }}
             disabled={isSyncing}
           >
             <div className="text-2xl mb-2">⚡</div>
@@ -239,7 +242,7 @@ const SyncTool = ({ financialData, onClose, onDataUpdate }) => {
           
           <button
             className="retro-button px-4 py-3 text-center"
-            onClick={forceSync}
+            onClick={() => { playSound('click1'); forceSync() }}
             disabled={isSyncing}
           >
             <div className="text-2xl mb-2">🔨</div>
@@ -249,7 +252,7 @@ const SyncTool = ({ financialData, onClose, onDataUpdate }) => {
           
           <button
             className="retro-button px-4 py-3 text-center"
-            onClick={onDataUpdate}
+            onClick={() => { playSound('click1'); onDataUpdate() }}
             disabled={isSyncing}
           >
             <div className="text-2xl mb-2">🔄</div>
@@ -265,7 +268,7 @@ const SyncTool = ({ financialData, onClose, onDataUpdate }) => {
           <div className="text-center font-bold text-sm">SYNC HISTORY</div>
           <button
             className="retro-button text-xs px-2 py-1"
-            onClick={clearSyncHistory}
+            onClick={() => { playSound('click1'); clearSyncHistory() }}
           >
             🗑️ Clear
           </button>
@@ -309,7 +312,7 @@ const SyncTool = ({ financialData, onClose, onDataUpdate }) => {
       <div className="flex space-x-4 justify-center">
         <button
           className="retro-button px-6 py-3 text-lg font-bold"
-          onClick={onClose}
+          onClick={() => { playSound('click1'); onClose() }}
         >
           ✕ Close
         </button>

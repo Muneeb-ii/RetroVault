@@ -3,6 +3,7 @@ import { useFinancialData } from '../../contexts/FinancialDataContext'
 import { getFinancialInsights, getAvailableModels } from '../../api/aiService'
 import { calculateFinancialInsights, formatDataForAI } from '../../utils/financialDataHelpers'
 import { ElevenLabsClient } from '@elevenlabs/elevenlabs-js'
+import { play as playSound } from '../../utils/soundPlayer'
 
 const ElizaTool = ({ financialData, onClose, onDataUpdate }) => {
   const [messages, setMessages] = useState([])
@@ -553,7 +554,7 @@ Respond as Eliza with specific, data-driven advice:`
                 <div className="flex-1 whitespace-pre-wrap text-sm">{message.content}</div>
                 {message.type === 'bot' && (
                   <button
-                    onClick={() => { stopPlayback(); playElizaAudio(message.content) }}
+                    onClick={() => { stopPlayback(); playSound('click1'); playElizaAudio(message.content) }}
                     title="Play audio"
                     className="ml-2 p-1 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-700"
                   >

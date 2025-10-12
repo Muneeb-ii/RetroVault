@@ -7,6 +7,7 @@ import {
   validateTransaction
 } from '../../api/unifiedFirestoreService'
 import { safeTimestamp } from '../../utils/timestampUtils'
+import { play as playSound } from '../../utils/soundPlayer'
 
 const ExpensesTool = ({ financialData, onClose, onDataUpdate }) => {
   const [transactions, setTransactions] = useState([])
@@ -86,11 +87,13 @@ const ExpensesTool = ({ financialData, onClose, onDataUpdate }) => {
       if (editingTransaction) {
         // Update existing transaction using unified service
         await updateTransaction(editingTransaction.id, transactionData)
-        setMessage('✅ Transaction updated successfully!')
+    setMessage('✅ Transaction updated successfully!')
+    playSound('success')
       } else {
         // Add new transaction using unified service
         await createTransaction(transactionData)
-        setMessage('✅ Transaction added successfully!')
+  setMessage('✅ Transaction added successfully!')
+  playSound('success')
       }
       
       // Reset form
@@ -108,7 +111,8 @@ const ExpensesTool = ({ financialData, onClose, onDataUpdate }) => {
       onDataUpdate()
     } catch (error) {
       console.error('Error saving transaction:', error)
-      setMessage('❌ Failed to save transaction')
+  setMessage('❌ Failed to save transaction')
+  playSound('error')
     } finally {
       setIsSaving(false)
     }
@@ -131,12 +135,14 @@ const ExpensesTool = ({ financialData, onClose, onDataUpdate }) => {
     
     try {
       await deleteTransaction(transactionId)
-      setMessage('Transaction deleted successfully!')
+  setMessage('Transaction deleted successfully!')
+  playSound('success')
       setTimeout(() => setMessage(''), 3000)
       onDataUpdate()
     } catch (error) {
       console.error('Error deleting transaction:', error)
-      setMessage('Failed to delete transaction')
+  setMessage('Failed to delete transaction')
+  playSound('error')
     }
   }
 
@@ -174,7 +180,7 @@ const ExpensesTool = ({ financialData, onClose, onDataUpdate }) => {
       <div className="text-center mb-6">
         <button
           className="retro-button px-6 py-3 text-lg font-bold"
-          onClick={() => setShowAddForm(true)}
+          onClick={() => { playSound('click1'); setShowAddForm(true) }}
         >
           ➕ Add New Transaction
         </button>
@@ -257,23 +263,14 @@ const ExpensesTool = ({ financialData, onClose, onDataUpdate }) => {
                 type="submit"
                 className="retro-button px-6 py-2"
                 disabled={isSaving}
+                onClick={() => playSound('click1')}
               >
                 {isSaving ? '⏳ Saving...' : '💾 Save Transaction'}
               </button>
               <button
                 type="button"
                 className="retro-button px-6 py-2"
-                onClick={() => {
-                  setShowAddForm(false)
-                  setEditingTransaction(null)
-                  setNewTransaction({
-                    description: '',
-                    amount: '',
-                    category: 'Other',
-                    type: 'expense',
-                    date: new Date().toISOString().split('T')[0]
-                  })
-                }}
+                onClick={() => { playSound('click1'); setShowAddForm(false); setEditingTransaction(null); setNewTransaction({ description: '', amount: '', category: 'Other', type: 'expense', date: new Date().toISOString().split('T')[0] }) }}
               >
                 ✕ Cancel
               </button>
@@ -320,13 +317,13 @@ const ExpensesTool = ({ financialData, onClose, onDataUpdate }) => {
                   <div className="flex space-x-1 mt-1">
                     <button
                       className="retro-button text-xs px-2 py-1"
-                      onClick={() => handleEdit(transaction)}
+                      onClick={() => { playSound('click1'); handleEdit(transaction) }}
                     >
                       Edit
                     </button>
                     <button
                       className="retro-button text-xs px-2 py-1"
-                      onClick={() => handleDelete(transaction.id)}
+                      onClick={() => { playSound('click1'); handleDelete(transaction.id) }}
                     >
                       Delete
                     </button>

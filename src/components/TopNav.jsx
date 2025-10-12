@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { setMuted, play as playSound } from '../utils/soundPlayer'
 import { Link, useLocation } from 'react-router-dom'
 
 const TopNav = () => {
@@ -13,14 +14,14 @@ const TopNav = () => {
   ]
 
   return (
-    <div className="retro-window mb-4">
+    <div className="retro-window mb-4 top-nav">
       {/* Header Banner */}
-      <div className="bg-retro-blue text-white p-2 text-center font-retro text-sm">
+      <div className="bg-retro-blue p-2 text-center font-retro text-sm" style={{ background: 'transparent' }}>
         💾 RetroVault — Rewind your finances. Fast-forward your future.
       </div>
       
       {/* Navigation Tabs */}
-      <div className="flex bg-retro-gray border-b-2 border-gray-400">
+  <div className="flex bg-retro-gray border-b-2 border-gray-400" style={{ background: 'transparent' }}>
         {tabs.map((tab) => (
           <Link
             key={tab.path}
@@ -37,7 +38,12 @@ const TopNav = () => {
         <div className="p-2">
           <button
             className="sound-button"
-            onClick={() => setIsMuted(!isMuted)}
+            onClick={() => {
+              const next = !isMuted
+              setIsMuted(next)
+              setMuted(next)
+              playSound('click1')
+            }}
           >
             {isMuted ? '🔇 Mute' : '🔊 Sound'}
           </button>
