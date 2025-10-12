@@ -132,23 +132,21 @@ const ElizaTool = ({ financialData, onClose, onDataUpdate }) => {
         return "I don't have access to your financial data yet. Please ensure your account is properly connected and try again."
       }
 
-      // Use OpenRouter AI service with rich financial context
+      // Try Google Gemini first
+      try {
+        console.log('Attempting Google Gemini first...')
+        const geminiResponse = await callGoogleGemini(userMessage, insights)
+        return geminiResponse
+      } catch (geminiError) {
+        console.log('Google Gemini failed, trying OpenRouter...')
+      }
+
+      // Fallback to OpenRouter AI service
       const response = await callOpenRouterAI(userMessage, insights)
       return response
 
     } catch (error) {
       console.error('Error generating AI response:', error)
-      
-      // Try Google Gemini as fallback
-      try {
-        console.log('Attempting fallback to Google Gemini...')
-        // Recalculate insights for Gemini fallback
-        const fallbackInsights = await calculateFinancialInsights(financialData)
-        const geminiResponse = await callGoogleGemini(userMessage, fallbackInsights)
-        return geminiResponse
-      } catch (geminiError) {
-        console.error('Google Gemini also failed:', geminiError)
-      }
       
       // Try using the existing AI service as fallback
       try {

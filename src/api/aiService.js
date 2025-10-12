@@ -8,9 +8,18 @@ export const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions
  * @param {string} model - AI model to use (default: google/gemini-1.5-pro)
  * @returns {Promise<Array<string>>} Array of 2 short insights
  */
-export const getFinancialInsights = async (transactions, savings, model = 'meta-llama/llama-3.1-8b-instruct') => {
+export const getFinancialInsights = async (transactions, savings, model = null) => {
   try {
-    // Get API key from environment
+    // Try Google Gemini first
+    try {
+      console.log('Attempting Google Gemini first...')
+      const geminiInsights = await getFinancialInsightsWithGemini(transactions, savings)
+      return geminiInsights
+    } catch (geminiError) {
+      console.log('Google Gemini failed, trying OpenRouter free models...')
+    }
+
+    // Fallback to OpenRouter free models
     const apiKey = import.meta.env.VITE_OPENROUTER_API_KEY
     
     if (!apiKey || apiKey === 'your_openrouter_api_key_here') {
@@ -39,52 +48,69 @@ Provide 2 concise insights in this format:
 1. [First insight about spending patterns]
 2. [Second insight about savings or financial health]`
 
-    // Make API request
-    const response = await fetch(OPENROUTER_API_URL, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${apiKey}`,
-        'Content-Type': 'application/json',
-        'HTTP-Referer': window.location.origin,
-        'X-Title': 'RetroVault Financial AI'
-      },
-      body: JSON.stringify({
-        model: model,
-        messages: [
-          {
-            role: 'user',
-            content: prompt
+    // Define free models in order of preference
+    const freeModels = [
+      'meta-llama/llama-3.1-8b-instruct',
+      'microsoft/phi-3-mini-128k-instruct',
+      'google/gemini-2.5-flash'
+    ]
+
+    // Use preferred model if provided, otherwise try free models
+    const modelsToTry = model ? [model, ...freeModels] : freeModels
+
+    let lastError = null
+    for (const modelToTry of modelsToTry) {
+      try {
+        console.log(`Trying OpenRouter model: ${modelToTry}`)
+        const response = await fetch(OPENROUTER_API_URL, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${apiKey}`,
+            'Content-Type': 'application/json',
+            'HTTP-Referer': window.location.origin,
+            'X-Title': 'RetroVault Financial AI'
+          },
+          body: JSON.stringify({
+            model: modelToTry,
+            messages: [
+              {
+                role: 'user',
+                content: prompt
+              }
+            ],
+          })
+        })
+
+        if (response.ok) {
+          console.log(`Success with OpenRouter model: ${modelToTry}`)
+          const data = await response.json()
+          const content = data.choices?.[0]?.message?.content
+
+          if (!content) {
+            throw new Error('No content received from AI model')
           }
-        ],
-      })
-    })
 
-    if (!response.ok) {
-      throw new Error(`OpenRouter API error: ${response.status} ${response.statusText}`)
+          // Parse the insights from the response
+          const insights = parseAIResponse(content)
+          return insights
+        } else {
+          const errorText = await response.text()
+          console.warn(`OpenRouter model ${modelToTry} failed:`, response.status, errorText)
+          lastError = new Error(`OpenRouter model ${modelToTry} failed: ${response.status}`)
+          continue
+        }
+      } catch (error) {
+        console.warn(`OpenRouter model ${modelToTry} error:`, error)
+        lastError = error
+        continue
+      }
     }
 
-    const data = await response.json()
-    const content = data.choices?.[0]?.message?.content
-
-    if (!content) {
-      throw new Error('No content received from AI model')
-    }
-
-    // Parse the insights from the response
-    const insights = parseAIResponse(content)
-    return insights
+    // If all OpenRouter models failed, throw the last error
+    throw lastError || new Error('All OpenRouter models failed')
 
   } catch (error) {
     console.error('Error generating AI insights:', error)
-    
-    // Try Google Gemini as fallback
-    try {
-      console.log('Attempting fallback to Google Gemini...')
-      const geminiInsights = await getFinancialInsightsWithGemini(transactions, savings)
-      return geminiInsights
-    } catch (geminiError) {
-      console.error('Google Gemini also failed:', geminiError)
-    }
     
     // Return fallback insights on error
     return getFallbackInsights(transactions, savings)
@@ -326,6 +352,15 @@ export const getAvailableModels = () => {
  */
 export const runOpenRouterPrompt = async (prompt, preferredModel = null) => {
   try {
+    // Try Google Gemini first
+    try {
+      console.log('Attempting Google Gemini first...')
+      return await runPromptWithGemini(prompt)
+    } catch (geminiError) {
+      console.log('Google Gemini failed, trying OpenRouter free models...')
+    }
+
+    // Fallback to OpenRouter free models
     const apiKey = import.meta.env.VITE_OPENROUTER_API_KEY
     if (!apiKey || apiKey === 'your_openrouter_api_key_here') {
       throw new Error('OpenRouter API key not configured')
@@ -338,13 +373,13 @@ export const runOpenRouterPrompt = async (prompt, preferredModel = null) => {
       'google/gemini-2.5-flash'
     ]
 
-    // Use preferred model if provided, otherwise try free models first
+    // Use preferred model if provided, otherwise try free models
     const modelsToTry = preferredModel ? [preferredModel, ...freeModels] : freeModels
 
     let lastError = null
     for (const model of modelsToTry) {
       try {
-        console.log(`Trying model: ${model}`)
+        console.log(`Trying OpenRouter model: ${model}`)
         const response = await fetch(OPENROUTER_API_URL, {
           method: 'POST',
           headers: {
@@ -362,32 +397,26 @@ export const runOpenRouterPrompt = async (prompt, preferredModel = null) => {
         })
 
         if (response.ok) {
-          console.log(`Success with model: ${model}`)
+          console.log(`Success with OpenRouter model: ${model}`)
           const data = await response.json()
           const content = data.choices?.[0]?.message?.content
           if (!content) throw new Error('No content received from AI model')
           return content
         } else {
           const errorText = await response.text()
-          console.warn(`Model ${model} failed:`, response.status, errorText)
-          lastError = new Error(`Model ${model} failed: ${response.status}`)
+          console.warn(`OpenRouter model ${model} failed:`, response.status, errorText)
+          lastError = new Error(`OpenRouter model ${model} failed: ${response.status}`)
           continue
         }
       } catch (error) {
-        console.warn(`Model ${model} error:`, error)
+        console.warn(`OpenRouter model ${model} error:`, error)
         lastError = error
         continue
       }
     }
 
-    // If all models failed, try Google Gemini as fallback
-    try {
-      console.log('All OpenRouter models failed, attempting Google Gemini fallback...')
-      return await runPromptWithGemini(prompt)
-    } catch (geminiError) {
-      console.error('Google Gemini also failed:', geminiError)
-      throw lastError || new Error('All models failed')
-    }
+    // If all OpenRouter models failed, throw the last error
+    throw lastError || new Error('All models failed')
 
   } catch (error) {
     console.error('runOpenRouterPrompt error:', error)

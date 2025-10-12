@@ -94,11 +94,6 @@ const getRecentAchievement = (transactions, savings, balance) => {
  */
 const generateStaticStory = async (storyData, balance, aiInsight, transactions = [], preferredModel = null) => {
   try {
-    const apiKey = import.meta.env.VITE_OPENROUTER_API_KEY
-    if (!apiKey || apiKey === 'your_openrouter_api_key_here') {
-      throw new Error('OpenRouter API key not configured')
-    }
-
     // Format transactions into a concise history string (date - type - category - amount)
     const formattedTransactions = (transactions || []).slice(-50).map(t => {
       const date = t.date ? new Date(t.date).toLocaleDateString() : 'unknown date'
@@ -110,6 +105,20 @@ const generateStaticStory = async (storyData, balance, aiInsight, transactions =
 
     const prompt = `Write a short, engaging 100-word story about a person's financial journey. Make it sound like a nostalgic simulation game narrative. Use the following data:\n\nFinancial Data:\n- Current Balance: $${balance.toLocaleString()}\n- Recent Insight: "${aiInsight}"\n- Top Spending Category: ${storyData.topCategory}\n- Savings Trend: ${storyData.savingsTrend}\n- Recent Achievement: ${storyData.recentAchievement}\n\nTransaction History (most recent 50):\n${formattedTransactions}\n\nWrite in second person ("You") and make it sound like a retro computer game story with vivid descriptions and details. Include specific details about their financial habits, achievements, and future potential. Keep it professional and nostalgic, like an old RPG game gameplay. Generate only the story and not text like "loading saved file" or "story:"`
 
+    // Try Google Gemini first
+    try {
+      console.log('Attempting Google Gemini first for story generation...')
+      return await runPromptWithGemini(prompt)
+    } catch (geminiError) {
+      console.log('Google Gemini failed, trying OpenRouter free models...')
+    }
+
+    // Fallback to OpenRouter free models
+    const apiKey = import.meta.env.VITE_OPENROUTER_API_KEY
+    if (!apiKey || apiKey === 'your_openrouter_api_key_here') {
+      throw new Error('OpenRouter API key not configured')
+    }
+
     // Define free models in order of preference (same as aiService.js)
     const freeModels = [
       'meta-llama/llama-3.1-8b-instruct',
@@ -117,13 +126,13 @@ const generateStaticStory = async (storyData, balance, aiInsight, transactions =
       'google/gemini-2.5-flash'
     ]
 
-    // Use preferred model if provided, otherwise try free models first
+    // Use preferred model if provided, otherwise try free models
     const modelsToTry = preferredModel ? [preferredModel, ...freeModels] : freeModels
 
     let lastError = null
     for (const model of modelsToTry) {
       try {
-        console.log(`Trying model for story generation: ${model}`)
+        console.log(`Trying OpenRouter model for story generation: ${model}`)
         const response = await fetch(OPENROUTER_API_URL, {
           method: 'POST',
           headers: {
@@ -141,32 +150,26 @@ const generateStaticStory = async (storyData, balance, aiInsight, transactions =
         })
 
         if (response.ok) {
-          console.log(`Success with model: ${model}`)
+          console.log(`Success with OpenRouter model: ${model}`)
           const data = await response.json()
           const content = data.choices?.[0]?.message?.content
           if (!content) throw new Error('No content received from AI model')
           return content
         } else {
           const errorText = await response.text()
-          console.warn(`Model ${model} failed:`, response.status, errorText)
-          lastError = new Error(`Model ${model} failed: ${response.status}`)
+          console.warn(`OpenRouter model ${model} failed:`, response.status, errorText)
+          lastError = new Error(`OpenRouter model ${model} failed: ${response.status}`)
           continue
         }
       } catch (error) {
-        console.warn(`Model ${model} error:`, error)
+        console.warn(`OpenRouter model ${model} error:`, error)
         lastError = error
         continue
       }
     }
 
-    // If all OpenRouter models failed, try Google Gemini as fallback
-    try {
-      console.log('All OpenRouter models failed, attempting Google Gemini fallback for story...')
-      return await runPromptWithGemini(prompt)
-    } catch (geminiError) {
-      console.error('Google Gemini also failed:', geminiError)
-      throw lastError || new Error('All models failed')
-    }
+    // If all OpenRouter models failed, throw the last error
+    throw lastError || new Error('All models failed')
 
   } catch (error) {
     console.error('generateStaticStory error:', error)
