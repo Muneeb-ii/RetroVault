@@ -1,6 +1,43 @@
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts'
 import { safeTimestamp } from '../utils/timestampUtils'
 
+// Custom tooltip for weekly balance chart
+const WeeklyBalanceTooltip = ({ active, payload, label }) => {
+  if (active && payload && payload.length) {
+    const data = payload[0].payload
+    return (
+      <div className="retro-info p-3 border-2 border-gray-400 bg-white shadow-lg">
+        <div className="font-bold text-sm mb-2">{label}</div>
+        <div className="space-y-1 text-xs">
+          <div className="flex justify-between">
+            <span className="font-bold">Balance:</span>
+            <span className="text-blue-600">${data.balance.toLocaleString()}</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="font-bold">Income:</span>
+            <span className="text-green-600">+${data.income.toLocaleString()}</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="font-bold">Expenses:</span>
+            <span className="text-red-600">-${data.expenses.toLocaleString()}</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="font-bold">Net Change:</span>
+            <span className={data.netChange >= 0 ? 'text-green-600' : 'text-red-600'}>
+              {data.netChange >= 0 ? '+' : ''}${data.netChange.toLocaleString()}
+            </span>
+          </div>
+          <div className="flex justify-between">
+            <span className="font-bold">Transactions:</span>
+            <span className="text-gray-600">{data.transactionCount}</span>
+          </div>
+        </div>
+      </div>
+    )
+  }
+  return null
+}
+
 const MainPanel = ({ data, dataSource = 'Firestore' }) => {
   if (!data) {
     return (
@@ -101,7 +138,7 @@ const MainPanel = ({ data, dataSource = 'Firestore' }) => {
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis dataKey="day" />
             <YAxis />
-            <Tooltip />
+            <Tooltip content={<WeeklyBalanceTooltip />} />
             <Bar dataKey="balance" fill="#4A90E2" />
           </BarChart>
         </ResponsiveContainer>

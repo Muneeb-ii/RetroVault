@@ -149,15 +149,24 @@ const generateWeeklyBalanceFromTransactions = (transactions) => {
       new Date(t.date) >= new Date(Date.now() - (7 - index) * 24 * 60 * 60 * 1000)
     )
     
-    const dailyChange = recentTransactions.reduce((sum, t) => 
-      sum + (t.type === 'income' ? t.amount : -t.amount), 0
-    )
+    const dayIncome = recentTransactions
+      .filter(t => t.type === 'income')
+      .reduce((sum, t) => sum + t.amount, 0)
     
+    const dayExpenses = recentTransactions
+      .filter(t => t.type === 'expense')
+      .reduce((sum, t) => sum + t.amount, 0)
+    
+    const dailyChange = dayIncome - dayExpenses
     balance += dailyChange / 7 // Spread over the week
     
     weeklyData.push({
       day,
-      balance: Math.max(0, Math.round(balance))
+      balance: Math.max(0, Math.round(balance)),
+      income: Math.round(dayIncome),
+      expenses: Math.round(dayExpenses),
+      netChange: Math.round(dailyChange),
+      transactionCount: recentTransactions.length
     })
   })
   

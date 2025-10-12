@@ -109,6 +109,23 @@ export const FinancialDataProvider = ({ children }) => {
           totalIncome: 0,
           totalExpenses: 0,
           totalSavings: 0
+        },
+        
+        // Sync and system status
+        syncStatus: {
+          lastSync: userProfile.syncStatus?.lastSync || null,
+          isConsistent: userProfile.syncStatus?.isConsistent || true,
+          dataSource: userProfile.dataSource || 'Firestore',
+          autoSync: userProfile.settings?.autoSync || false
+        },
+        
+        // User preferences and settings
+        userSettings: {
+          currency: userProfile.settings?.currency || 'USD',
+          dateFormat: userProfile.settings?.dateFormat || 'MM/DD/YYYY',
+          notifications: userProfile.settings?.notifications || true,
+          theme: userProfile.settings?.theme || 'retro',
+          timezone: userProfile.settings?.timezone || 'America/New_York'
         }
       }
       
@@ -176,13 +193,13 @@ export const FinancialDataProvider = ({ children }) => {
     // Handle empty or invalid data
     if (!transactions || !Array.isArray(transactions) || transactions.length === 0) {
       return [
-        { day: 'Mon', balance: 0 },
-        { day: 'Tue', balance: 0 },
-        { day: 'Wed', balance: 0 },
-        { day: 'Thu', balance: 0 },
-        { day: 'Fri', balance: 0 },
-        { day: 'Sat', balance: 0 },
-        { day: 'Sun', balance: 0 }
+        { day: 'Mon', balance: 0, income: 0, expenses: 0, netChange: 0, transactionCount: 0 },
+        { day: 'Tue', balance: 0, income: 0, expenses: 0, netChange: 0, transactionCount: 0 },
+        { day: 'Wed', balance: 0, income: 0, expenses: 0, netChange: 0, transactionCount: 0 },
+        { day: 'Thu', balance: 0, income: 0, expenses: 0, netChange: 0, transactionCount: 0 },
+        { day: 'Fri', balance: 0, income: 0, expenses: 0, netChange: 0, transactionCount: 0 },
+        { day: 'Sat', balance: 0, income: 0, expenses: 0, netChange: 0, transactionCount: 0 },
+        { day: 'Sun', balance: 0, income: 0, expenses: 0, netChange: 0, transactionCount: 0 }
       ]
     }
 
@@ -216,18 +233,27 @@ export const FinancialDataProvider = ({ children }) => {
         return transactionDate >= targetDate && transactionDate < nextDay
       })
       
-      // Calculate net change for this day
-      const dailyChange = dayTransactions.reduce((sum, t) => {
-        const amount = parseFloat(t.amount) || 0
-        return sum + (t.type === 'income' ? amount : -amount)
-      }, 0)
+      // Calculate income and expenses for this day
+      const dayIncome = dayTransactions
+        .filter(t => t.type === 'income')
+        .reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0)
+      
+      const dayExpenses = dayTransactions
+        .filter(t => t.type === 'expense')
+        .reduce((sum, t) => sum + (parseFloat(t.amount) || 0), 0)
+      
+      const dailyChange = dayIncome - dayExpenses
       
       // Update balance for this day
       balance += dailyChange
       
       weeklyData.push({
         day,
-        balance: Math.max(0, Math.round(balance))
+        balance: Math.max(0, Math.round(balance)),
+        income: Math.round(dayIncome),
+        expenses: Math.round(dayExpenses),
+        netChange: Math.round(dailyChange),
+        transactionCount: dayTransactions.length
       })
     })
     

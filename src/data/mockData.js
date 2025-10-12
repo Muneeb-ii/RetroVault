@@ -99,9 +99,19 @@ export const generateWeeklyBalance = (transactions) => {
     const variation = getRandomAmount(-50, 100)
     balance += variation
     
+    // Generate mock income and expenses for this day
+    const dayIncome = Math.random() > 0.7 ? getRandomAmount(50, 200) : 0
+    const dayExpenses = Math.random() > 0.3 ? getRandomAmount(20, 150) : 0
+    const netChange = dayIncome - dayExpenses
+    const transactionCount = Math.floor(Math.random() * 5) + 1
+    
     weeklyData.push({
       day,
-      balance: Math.max(0, balance) // Ensure balance doesn't go negative
+      balance: Math.max(0, balance), // Ensure balance doesn't go negative
+      income: dayIncome,
+      expenses: dayExpenses,
+      netChange: netChange,
+      transactionCount: transactionCount
     })
   })
   

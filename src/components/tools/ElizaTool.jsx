@@ -125,7 +125,7 @@ const ElizaTool = ({ financialData, onClose, onDataUpdate }) => {
   const generateContextualResponse = async (userMessage) => {
     try {
       // Calculate comprehensive financial insights
-      const insights = calculateFinancialInsights(financialData)
+      const insights = await calculateFinancialInsights(financialData)
       
       if (!insights) {
         return "I don't have access to your financial data yet. Please ensure your account is properly connected and try again."
@@ -142,7 +142,7 @@ const ElizaTool = ({ financialData, onClose, onDataUpdate }) => {
       try {
         console.log('Attempting fallback to Google Gemini...')
         // Recalculate insights for Gemini fallback
-        const fallbackInsights = calculateFinancialInsights(financialData)
+        const fallbackInsights = await calculateFinancialInsights(financialData)
         const geminiResponse = await callGoogleGemini(userMessage, fallbackInsights)
         return geminiResponse
       } catch (geminiError) {
@@ -212,7 +212,7 @@ const ElizaTool = ({ financialData, onClose, onDataUpdate }) => {
     }
 
     // Format comprehensive financial data for AI
-    const formattedData = formatDataForAI(insights)
+    const formattedData = formatDataForAI(insights, financialData)
 
     // Build conversation context
     const chatContext = conversationHistory
@@ -337,7 +337,7 @@ Respond as Eliza with specific, data-driven advice:`
     }
 
     // Format comprehensive financial data for AI
-    const formattedData = formatDataForAI(insights)
+    const formattedData = formatDataForAI(insights, financialData)
 
     // Build conversation context
     const chatContext = conversationHistory

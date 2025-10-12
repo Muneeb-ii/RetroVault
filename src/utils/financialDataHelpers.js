@@ -6,7 +6,7 @@
 /**
  * Calculate comprehensive financial statistics
  */
-export const calculateFinancialInsights = (financialData) => {
+export const calculateFinancialInsights = async (financialData) => {
   if (!financialData) return null
 
   const transactions = financialData.transactions || []
@@ -57,7 +57,10 @@ export const calculateFinancialInsights = (financialData) => {
   const savingsAnalysis = analyzeSavingsTrends(savings)
   
   // Budget analysis
-  const budgetAnalysis = analyzeBudgetPerformance(financialData)
+  const budgetAnalysis = await analyzeBudgetPerformance(financialData)
+  
+  // Goals analysis
+  const goalsAnalysis = await analyzeGoalsProgress(financialData)
   
   // Transaction patterns
   const transactionPatterns = analyzeTransactionPatterns(transactions)
@@ -85,6 +88,7 @@ export const calculateFinancialInsights = (financialData) => {
     incomeAnalysis,
     savingsAnalysis,
     budgetAnalysis,
+    goalsAnalysis,
     transactionPatterns,
     healthScore,
     
@@ -265,13 +269,207 @@ const analyzeSavingsTrends = (savings) => {
 /**
  * Analyze budget performance
  */
-const analyzeBudgetPerformance = (financialData) => {
-  // This would integrate with budget data if available
-  return {
-    hasBudgets: false,
-    budgetPerformance: 'Not available',
-    overspentCategories: [],
-    underspentCategories: []
+const analyzeBudgetPerformance = async (financialData) => {
+  try {
+    // Import the budget service
+    const { getUserBudgets } = await import('../api/unifiedFirestoreService')
+    
+    if (!financialData?.user?.uid) {
+      return {
+        hasBudgets: false,
+        budgetPerformance: 'Not available - User not authenticated',
+        overspentCategories: [],
+        underspentCategories: []
+      }
+    }
+
+    // Fetch user budgets
+    const userBudgets = await getUserBudgets(financialData.user.uid)
+    
+    if (!userBudgets || userBudgets.length === 0) {
+      return {
+        hasBudgets: false,
+        budgetPerformance: 'No budgets set',
+        overspentCategories: [],
+        underspentCategories: []
+      }
+    }
+
+    // Calculate spending by category
+    const transactions = financialData.transactions || []
+    const categorySpending = {}
+    
+    transactions
+      .filter(t => t.type === 'expense')
+      .forEach(t => {
+        categorySpending[t.category] = (categorySpending[t.category] || 0) + t.amount
+      })
+
+    // Analyze budget performance
+    const overspentCategories = []
+    const underspentCategories = []
+    let totalBudget = 0
+    let totalSpent = 0
+    let budgetPerformance = 'Good'
+
+    userBudgets.forEach(budget => {
+      const spent = categorySpending[budget.category] || 0
+      const budgetAmount = budget.amount
+      const percentage = budgetAmount > 0 ? (spent / budgetAmount) * 100 : 0
+      
+      totalBudget += budgetAmount
+      totalSpent += spent
+      
+      if (percentage > 100) {
+        overspentCategories.push({
+          category: budget.category,
+          budget: budgetAmount,
+          spent: spent,
+          overage: spent - budgetAmount,
+          percentage: percentage
+        })
+      } else if (percentage < 50) {
+        underspentCategories.push({
+          category: budget.category,
+          budget: budgetAmount,
+          spent: spent,
+          remaining: budgetAmount - spent,
+          percentage: percentage
+        })
+      }
+    })
+
+    // Determine overall performance
+    const overallPercentage = totalBudget > 0 ? (totalSpent / totalBudget) * 100 : 0
+    if (overallPercentage > 100) {
+      budgetPerformance = 'Over budget'
+    } else if (overallPercentage > 90) {
+      budgetPerformance = 'Near limit'
+    } else if (overallPercentage < 50) {
+      budgetPerformance = 'Under budget'
+    }
+
+    return {
+      hasBudgets: true,
+      budgetPerformance,
+      totalBudget,
+      totalSpent,
+      overallPercentage,
+      overspentCategories,
+      underspentCategories,
+      budgetCount: userBudgets.length
+    }
+
+  } catch (error) {
+    console.error('Error analyzing budget performance:', error)
+    return {
+      hasBudgets: false,
+      budgetPerformance: 'Error loading budgets',
+      overspentCategories: [],
+      underspentCategories: []
+    }
+  }
+}
+
+/**
+ * Analyze goals progress
+ */
+const analyzeGoalsProgress = async (financialData) => {
+  try {
+    // Import the goals service
+    const { getUserGoals } = await import('../api/unifiedFirestoreService')
+    
+    if (!financialData?.user?.uid) {
+      return {
+        hasGoals: false,
+        goalsProgress: 'Not available - User not authenticated',
+        activeGoals: [],
+        completedGoals: [],
+        overdueGoals: []
+      }
+    }
+
+    // Fetch user goals
+    const userGoals = await getUserGoals(financialData.user.uid)
+    
+    if (!userGoals || userGoals.length === 0) {
+      return {
+        hasGoals: false,
+        goalsProgress: 'No goals set',
+        activeGoals: [],
+        completedGoals: [],
+        overdueGoals: []
+      }
+    }
+
+    // Analyze goals progress
+    const activeGoals = []
+    const completedGoals = []
+    const overdueGoals = []
+    let totalProgress = 0
+    let totalGoals = userGoals.length
+
+    userGoals.forEach(goal => {
+      const progress = goal.targetAmount > 0 ? (goal.currentAmount / goal.targetAmount) * 100 : 0
+      const targetDate = new Date(goal.targetDate)
+      const today = new Date()
+      const isOverdue = targetDate < today && !goal.isCompleted
+      const isCompleted = goal.isCompleted || progress >= 100
+      
+      totalProgress += progress
+      
+      const goalInfo = {
+        id: goal.id,
+        title: goal.title,
+        category: goal.category,
+        priority: goal.priority,
+        targetAmount: goal.targetAmount,
+        currentAmount: goal.currentAmount,
+        progress: Math.min(progress, 100),
+        targetDate: goal.targetDate,
+        daysRemaining: Math.ceil((targetDate - today) / (1000 * 60 * 60 * 24)),
+        isOverdue,
+        isCompleted
+      }
+      
+      if (isCompleted) {
+        completedGoals.push(goalInfo)
+      } else if (isOverdue) {
+        overdueGoals.push(goalInfo)
+      } else {
+        activeGoals.push(goalInfo)
+      }
+    })
+
+    const averageProgress = totalGoals > 0 ? totalProgress / totalGoals : 0
+    const goalsProgress = averageProgress >= 100 ? 'All goals completed' : 
+                         averageProgress >= 75 ? 'Excellent progress' :
+                         averageProgress >= 50 ? 'Good progress' :
+                         averageProgress >= 25 ? 'Moderate progress' : 'Getting started'
+
+    return {
+      hasGoals: true,
+      goalsProgress,
+      totalGoals,
+      completedGoals: completedGoals.length,
+      activeGoals: activeGoals.length,
+      overdueGoals: overdueGoals.length,
+      averageProgress,
+      activeGoals,
+      completedGoals,
+      overdueGoals,
+      highPriorityGoals: userGoals.filter(g => g.priority === 'High').length
+    }
+
+  } catch (error) {
+    console.error('Error analyzing goals progress:', error)
+    return {
+      hasGoals: false,
+      goalsProgress: 'Error loading goals',
+      activeGoals: [],
+      completedGoals: [],
+      overdueGoals: []
+    }
   }
 }
 
@@ -449,7 +647,7 @@ const generateFinancialRecommendations = (data) => {
 /**
  * Format data for AI consumption
  */
-export const formatDataForAI = (insights) => {
+export const formatDataForAI = (insights, financialData = null) => {
   if (!insights) return 'No financial data available'
 
   return `
@@ -465,6 +663,44 @@ SPENDING ANALYSIS:
 - Daily Average Spending: $${(insights.spendingAnalysis?.averageDaily || 0).toFixed(2)}
 - Spending Trend: ${insights.spendingAnalysis?.spendingTrend || 'stable'}
 - Unusual Transactions: ${insights.spendingAnalysis?.unusualSpending?.length || 0} large purchases
+
+BUDGET ANALYSIS:
+- Budget Status: ${insights.budgetAnalysis?.hasBudgets ? 'Active budgets set' : 'No budgets configured'}
+- Budget Performance: ${insights.budgetAnalysis?.budgetPerformance || 'Not available'}
+- Total Budget: $${(insights.budgetAnalysis?.totalBudget || 0).toLocaleString()}
+- Total Spent vs Budget: $${(insights.budgetAnalysis?.totalSpent || 0).toLocaleString()} (${(insights.budgetAnalysis?.overallPercentage || 0).toFixed(1)}%)
+- Overspent Categories: ${insights.budgetAnalysis?.overspentCategories?.length || 0}
+- Underspent Categories: ${insights.budgetAnalysis?.underspentCategories?.length || 0}
+${insights.budgetAnalysis?.overspentCategories?.length > 0 ? 
+  `- Over Budget Categories: ${insights.budgetAnalysis.overspentCategories.map(c => 
+    `${c.category} ($${c.overage.toFixed(2)} over)`
+  ).join(', ')}` : ''}
+${insights.budgetAnalysis?.underspentCategories?.length > 0 ? 
+  `- Under Budget Categories: ${insights.budgetAnalysis.underspentCategories.map(c => 
+    `${c.category} ($${c.remaining.toFixed(2)} remaining)`
+  ).join(', ')}` : ''}
+
+GOALS ANALYSIS:
+- Goals Status: ${insights.goalsAnalysis?.hasGoals ? 'Active goals set' : 'No goals configured'}
+- Goals Progress: ${insights.goalsAnalysis?.goalsProgress || 'Not available'}
+- Total Goals: ${insights.goalsAnalysis?.totalGoals || 0}
+- Completed Goals: ${insights.goalsAnalysis?.completedGoals || 0}
+- Active Goals: ${insights.goalsAnalysis?.activeGoals || 0}
+- Overdue Goals: ${insights.goalsAnalysis?.overdueGoals || 0}
+- Average Progress: ${(insights.goalsAnalysis?.averageProgress || 0).toFixed(1)}%
+- High Priority Goals: ${insights.goalsAnalysis?.highPriorityGoals || 0}
+${insights.goalsAnalysis?.activeGoals?.length > 0 ? 
+  `- Active Goals: ${insights.goalsAnalysis.activeGoals.map(g => 
+    `${g.title} (${g.progress.toFixed(1)}% - ${g.daysRemaining} days left)`
+  ).join(', ')}` : ''}
+${insights.goalsAnalysis?.overdueGoals?.length > 0 ? 
+  `- Overdue Goals: ${insights.goalsAnalysis.overdueGoals.map(g => 
+    `${g.title} (${g.progress.toFixed(1)}% - ${Math.abs(g.daysRemaining)} days overdue)`
+  ).join(', ')}` : ''}
+${insights.goalsAnalysis?.completedGoals?.length > 0 ? 
+  `- Completed Goals: ${insights.goalsAnalysis.completedGoals.map(g => 
+    `${g.title} (100%)`
+  ).join(', ')}` : ''}
 
 INCOME ANALYSIS:
 - Average Income per Transaction: $${(insights.incomeAnalysis?.averageIncome || 0).toLocaleString()}
@@ -482,6 +718,19 @@ TRANSACTION PATTERNS:
 - Most Active Time: ${insights.transactionPatterns?.mostActiveTime || 'None'}
 - Average Transaction Size: $${(insights.transactionPatterns?.averageTransactionSize || 0).toFixed(2)}
 - Transaction Frequency: ${insights.transactionPatterns?.transactionFrequency || 'none'}
+
+SYSTEM STATUS:
+- Data Source: ${financialData?.syncStatus?.dataSource || 'Unknown'}
+- Last Sync: ${financialData?.syncStatus?.lastSync ? new Date(financialData.syncStatus.lastSync).toLocaleString() : 'Never'}
+- Data Consistency: ${financialData?.syncStatus?.isConsistent ? '✅ Consistent' : '⚠️ Inconsistent'}
+- Auto Sync: ${financialData?.syncStatus?.autoSync ? 'Enabled' : 'Disabled'}
+
+USER PREFERENCES:
+- Currency: ${financialData?.userSettings?.currency || 'USD'}
+- Date Format: ${financialData?.userSettings?.dateFormat || 'MM/DD/YYYY'}
+- Theme: ${financialData?.userSettings?.theme || 'retro'}
+- Notifications: ${financialData?.userSettings?.notifications ? 'Enabled' : 'Disabled'}
+- Timezone: ${financialData?.userSettings?.timezone || 'America/New_York'}
 
 RECENT ACTIVITY:
 ${(insights.recentTransactions || []).slice(0, 5).map(t => 
