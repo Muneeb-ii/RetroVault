@@ -194,3 +194,47 @@ export const getAvailableModels = () => {
     { id: 'meta-llama/llama-3.1-8b-instruct', name: 'Llama 3.1 8B' }
   ]
 }
+
+/**
+ * Run a raw prompt through OpenRouter and return the model's content string
+ * @param {string} prompt - The prompt to send to the model
+ * @param {string} model - The model id to use
+ * @returns {Promise<string>} The content returned by the model
+ */
+export const runOpenRouterPrompt = async (prompt, model = 'google/gemini-2.5-flash') => {
+  try {
+    const apiKey = import.meta.env.VITE_OPENROUTER_API_KEY
+    if (!apiKey || apiKey === 'your_openrouter_api_key_here') {
+      throw new Error('OpenRouter API key not configured')
+    }
+
+    const response = await fetch(OPENROUTER_API_URL, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+        'HTTP-Referer': window.location.origin,
+        'X-Title': 'RetroVault Financial AI'
+      },
+      body: JSON.stringify({
+        model,
+        messages: [
+          { role: 'user', content: prompt }
+        ]
+      })
+    })
+
+    if (!response.ok) {
+      throw new Error(`OpenRouter API error: ${response.status} ${response.statusText}`)
+    }
+
+    const data = await response.json()
+    const content = data.choices?.[0]?.message?.content
+    if (!content) throw new Error('No content received from AI model')
+    return content
+
+  } catch (error) {
+    console.error('runOpenRouterPrompt error:', error)
+    throw error
+  }
+}

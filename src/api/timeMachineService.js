@@ -1,6 +1,38 @@
 // Enhanced Time Machine Service with Advanced Financial Projections
-import { getFinancialInsights } from './aiService'
+import { getFinancialInsights, runOpenRouterPrompt } from './aiService'
 
+import { ElevenLabsClient, play } from '@elevenlabs/elevenlabs-js';
+
+   export const playStoryAudio = async (story) => {
+    const elevenlabs = new ElevenLabsClient({
+    apiKey: import.meta.env.VITE_ELEVENLABS_API_KEY,
+   });
+     try {
+       
+        const audio = await elevenlabs.textToSpeech.convert("EXAVITQu4vr4xnSDxMaL", {
+          text: story,
+          modelId: "eleven_multilingual_v2",
+        });
+   
+        const chunks= [];
+        for await (const chunk of audio) {
+          chunks.push(chunk);
+        }
+        const blob = new Blob(chunks, { type: 'audio/mpeg' });
+        const audioUrl = URL.createObjectURL(blob);
+       
+        const audioElement = new Audio(audioUrl);
+        await audioElement.play();
+       
+        // Optional: cleanup
+        audioElement.addEventListener('ended', () => {
+          URL.revokeObjectURL(audioUrl);
+        });
+       
+     } catch (error) {
+       console.error('Error playing audio:', error);
+     }
+   };
 /**
  * Comprehensive data validation for Time Machine calculations
  */
@@ -398,10 +430,13 @@ Financial Data:
 Write a futuristic forecast (3-4 sentences) that sounds like it's from a time-traveling financial advisor. Include specific amounts, dates, and encouraging milestones. Make it sound exciting and achievable.`
 
     try {
-      const insights = await getFinancialInsights([], [])
-      return generateStaticForecast(projections, currentBalance, savingsIncrease, scenario)
+      // Send our carefully-crafted prompt to OpenRouter and return the model's content
+      const model = 'google/gemini-2.5-flash'
+      const content = await runOpenRouterPrompt(prompt, model)
+      // Prefer returning the model content directly as the forecast
+      return content
     } catch (error) {
-      console.error('AI service unavailable, using static forecast:', error)
+      console.error('AI service unavailable or errored, using static forecast:', error)
       return generateStaticForecast(projections, currentBalance, savingsIncrease, scenario)
     }
 
