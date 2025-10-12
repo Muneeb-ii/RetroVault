@@ -40,7 +40,7 @@ const HowItWorks = () => {
   ]
 
   return (
-    <section id="howitworks" className="py-8 bg-gray-50">
+    <section id="howitworks" className="py-8" style={{background: 'linear-gradient(135deg, #1e3c72 0%, #2a5298 100%)'}}>
   <div className="w-full px-4">
         <div className="window retro-window-animate retro-scanlines">
           <div className="title-bar">
