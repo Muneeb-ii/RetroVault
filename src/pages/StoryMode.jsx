@@ -23,7 +23,7 @@ const playStoryAudio = async (story) => {
   try {
     
      const audio = await elevenlabs.textToSpeech.convert("EXAVITQu4vr4xnSDxMaL", {
-       text: story.join(''),
+       text: story,
        modelId: "eleven_multilingual_v2",
      });
 

@@ -1,10 +1,8 @@
 import { useState } from 'react'
 import { Link, useLocation } from 'react-router-dom'
-import AIModelSelector from './AIModelSelector'
 
 const TopNav = () => {
   const [isMuted, setIsMuted] = useState(false)
-  const [selectedModel, setSelectedModel] = useState('google/gemini-1.5-pro')
   const location = useLocation()
 
   const tabs = [
@@ -34,14 +32,6 @@ const TopNav = () => {
             {tab.name}
           </Link>
         ))}
-        
-        {/* AI Model Selector */}
-        <div className="ml-auto p-2">
-          <AIModelSelector 
-            selectedModel={selectedModel}
-            onModelChange={setSelectedModel}
-          />
-        </div>
         
         {/* Sound Toggle */}
         <div className="p-2">
