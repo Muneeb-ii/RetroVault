@@ -121,37 +121,42 @@ Provide 2 concise insights in this format:
  * Calculate key financial statistics
  */
 const calculateFinancialStats = (transactions, savings) => {
-  const totalIncome = transactions
-    .filter(t => t.type === 'income')
-    .reduce((sum, t) => sum + t.amount, 0)
+  // Defensive coercion: ensure arrays
+  const tx = Array.isArray(transactions) ? transactions : []
+  const sv = Array.isArray(savings) ? savings : []
+
+  const totalIncome = tx
+    .filter(t => t && t.type === 'income')
+    .reduce((sum, t) => sum + (Number(t.amount) || 0), 0)
   
-  const totalExpenses = transactions
-    .filter(t => t.type === 'expense')
-    .reduce((sum, t) => sum + t.amount, 0)
+  const totalExpenses = tx
+    .filter(t => t && t.type === 'expense')
+    .reduce((sum, t) => sum + (Number(t.amount) || 0), 0)
   
   const netBalance = totalIncome - totalExpenses
   
   // Calculate top spending category
   const categoryTotals = {}
-  transactions
-    .filter(t => t.type === 'expense')
+  tx
+    .filter(t => t && t.type === 'expense')
     .forEach(t => {
-      categoryTotals[t.category] = (categoryTotals[t.category] || 0) + t.amount
+      const cat = t.category || 'Other'
+      categoryTotals[cat] = (categoryTotals[cat] || 0) + (Number(t.amount) || 0)
     })
   
-  const topCategory = Object.keys(categoryTotals).reduce((a, b) => 
-    categoryTotals[a] > categoryTotals[b] ? a : b, 'None'
-  )
+  const topCategory = Object.keys(categoryTotals).length > 0
+    ? Object.keys(categoryTotals).reduce((a, b) => categoryTotals[a] > categoryTotals[b] ? a : b)
+    : 'None'
   
   const topCategoryAmount = categoryTotals[topCategory] || 0
   
   // Calculate savings statistics
-  const avgSavings = savings.length > 0 
-    ? savings.reduce((sum, s) => sum + s.amount, 0) / savings.length 
+  const avgSavings = sv.length > 0 
+    ? sv.reduce((sum, s) => sum + (Number(s.amount) || 0), 0) / sv.length 
     : 0
   
-  const savingsTrend = savings.length >= 2 
-    ? savings[savings.length - 1].amount > savings[0].amount ? 'increasing' : 'decreasing'
+  const savingsTrend = sv.length >= 2 
+    ? (Number(sv[sv.length - 1].amount || 0) > Number(sv[0].amount || 0) ? 'increasing' : 'decreasing')
     : 'stable'
   
   return {

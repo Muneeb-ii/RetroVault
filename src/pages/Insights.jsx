@@ -6,7 +6,7 @@ import { getFinancialInsights } from '../api/aiService'
 
 const Insights = () => {
   const { financialData, isLoading, error } = useFinancialData()
-  const [insights, setInsights] = useState('')
+  const [insights, setInsights] = useState([])
   const [isGenerating, setIsGenerating] = useState(false)
 
   // Generate insights when component mounts
@@ -18,14 +18,18 @@ const Insights = () => {
 
   const generateInsights = async () => {
     if (!financialData) return
-    
+
     setIsGenerating(true)
     try {
-      const aiInsights = await getFinancialInsights(financialData)
-      setInsights(aiInsights)
+      // Pass transactions and savings arrays explicitly to the AI service
+      const transactions = Array.isArray(financialData.transactions) ? financialData.transactions : []
+      const savings = Array.isArray(financialData.savings) ? financialData.savings : []
+      const aiInsights = await getFinancialInsights(transactions, savings)
+      // Ensure we store an array for consistent rendering
+      setInsights(Array.isArray(aiInsights) ? aiInsights : [String(aiInsights)])
     } catch (error) {
       console.error('Error generating insights:', error)
-      setInsights('Unable to generate AI insights at this time. Please try again later.')
+      setInsights(['Unable to generate AI insights at this time. Please try again later.'])
     } finally {
       setIsGenerating(false)
     }
