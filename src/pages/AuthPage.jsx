@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import { onAuthStateChanged } from 'firebase/auth'
 import { auth } from '../firebaseClient'
 import { useFirebaseAuth } from '../hooks/useFirebaseAuth'
+import authPageBg from '../assets/images/authPage.png'
 
 const AuthPage = () => {
   const [isLogin, setIsLogin] = useState(true)
@@ -82,8 +83,16 @@ const AuthPage = () => {
   }
 
   return (
-    <div className="min-h-screen retro-auth-bg flex items-center justify-center p-4">
-      <div className="window max-w-md w-full">
+    <div 
+      className="min-h-screen flex items-center justify-center p-4"
+      style={{
+        backgroundImage: `url(${authPageBg})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat'
+      }}
+    >
+      <div className="window max-w-md w-full bg-white/95 backdrop-blur-sm shadow-2xl">
         <div className="title-bar">
           <div className="title-bar-text">🔐 RetroVault Login Portal</div>
           <div className="title-bar-controls">
