@@ -3,7 +3,7 @@ import TopNav from '../components/TopNav'
 import SideBar from '../components/SideBar'
 import { useFinancialData } from '../contexts/FinancialDataContext'
 import { generateFinancialStory, generateStoryMetadata } from '../api/storyService'
-// import { ElevenLabsClient, play } from '@elevenlabs/elevenlabs-js';
+import { ElevenLabsClient, play } from '@elevenlabs/elevenlabs-js';
 
 const StoryMode = () => {
   const { financialData, isLoading, error } = useFinancialData()
@@ -12,37 +12,35 @@ const StoryMode = () => {
   const [isGenerating, setIsGenerating] = useState(false)
   const [isPlaying, setIsPlaying] = useState(false)
   const [loadingProgress, setLoadingProgress] = useState(0)
-  // const elevenlabs = new ElevenLabsClient({
-  //   apiKey: import.meta.env.VITE_ELEVENLABS_API_KEY,
-  // });
+  const [isAudioLoading, setIsAudioLoading] = useState(false)
+  const [audioLoadingProgress, setAudioLoadingProgress] = useState(0)
+   const elevenlabs = new ElevenLabsClient({
+     apiKey: import.meta.env.VITE_ELEVENLABS_API_KEY,
+   });
 
 const playStoryAudio = async (story) => {
   console.log(story)
   try {
-    // ElevenLabs functionality temporarily disabled
-    console.log('Audio playback temporarily disabled - ElevenLabs not available');
-    return;
     
-    // const audio = await elevenlabs.textToSpeech.convert("EXAVITQu4vr4xnSDxMaL", {
-    //   text: story.join(''),
-    //   modelId: "eleven_multilingual_v2",
-    // });
+     const audio = await elevenlabs.textToSpeech.convert("EXAVITQu4vr4xnSDxMaL", {
+       text: story.join(''),
+       modelId: "eleven_multilingual_v2",
+     });
 
-    // const chunks= [];
-    // for await (const chunk of audio) {
-    //   chunks.push(chunk);
-    // }
-
-    // const blob = new Blob(chunks, { type: 'audio/mpeg' });
-    // const audioUrl = URL.createObjectURL(blob);
+     const chunks= [];
+     for await (const chunk of audio) {
+       chunks.push(chunk);
+     }
+     const blob = new Blob(chunks, { type: 'audio/mpeg' });
+     const audioUrl = URL.createObjectURL(blob);
     
-    // const audioElement = new Audio(audioUrl);
-    // await audioElement.play();
+     const audioElement = new Audio(audioUrl);
+     await audioElement.play();
     
-    // // Optional: cleanup
-    // audioElement.addEventListener('ended', () => {
-    //   URL.revokeObjectURL(audioUrl);
-    // });
+     // Optional: cleanup
+     audioElement.addEventListener('ended', () => {
+       URL.revokeObjectURL(audioUrl);
+     });
     
   } catch (error) {
     console.error('Error playing audio:', error);
@@ -96,10 +94,22 @@ const playStoryAudio = async (story) => {
   }
 
   const playStory = async () => {
-    
-    setIsPlaying(true)
-       
+    // Show 2 second loading filler while we request audio
+    setIsAudioLoading(true)
+    setAudioLoadingProgress(0)
+    const start = Date.now()
+    const duration = 2000
+    const intv = setInterval(() => {
+      const elapsed = Date.now() - start
+      const pct = Math.min(100, Math.round((elapsed / duration) * 100))
+      setAudioLoadingProgress(pct)
+      if (elapsed >= duration) {
+        clearInterval(intv)
+        setIsAudioLoading(false)
+      }
+    }, 100)
 
+    setIsPlaying(true)
     await playStoryAudio(story)
     // Simulate audio playback with visual feedback
     setTimeout(() => {
@@ -234,6 +244,24 @@ const playStoryAudio = async (story) => {
                       <div className="story-metadata-card">
                         <div className="text-lg font-bold text-orange-600">{metadata.difficulty}</div>
                         <div className="text-xs">Level</div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Audio Loading Overlay (2s) */}
+                {isAudioLoading && (
+                  <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+                    <div className="retro-window p-6 max-w-md mx-4">
+                      <div className="text-center font-bold mb-4">🔊 Preparing Story Audio</div>
+                      <div className="retro-boot-screen text-center">
+                        <div className="mb-4">Warming up audio engines...</div>
+                        <div className="flex items-center justify-center">
+                          <div className="retro-progress-bar w-56">
+                            <div className="retro-progress-fill" style={{ width: `${audioLoadingProgress}%` }} />
+                          </div>
+                        </div>
+                        <div className="text-xs mt-2">{audioLoadingProgress}%</div>
                       </div>
                     </div>
                   </div>

@@ -7,6 +7,7 @@ import TopNav from '../components/TopNav'
 import SideBar from '../components/SideBar'
 import { useFinancialData } from '../contexts/FinancialDataContext'
 import { 
+  playStoryAudio,
   generateTimeMachineForecast, 
   calculateAdvancedProjections as calculateProjectionsService, 
   generateAdvancedMilestones,
@@ -34,6 +35,8 @@ const TimeMachine = () => {
   const [aiForecast, setAiForecast] = useState('')
   const [showAiForecast, setShowAiForecast] = useState(false)
   const [isGeneratingForecast, setIsGeneratingForecast] = useState(false)
+  const [isAudioLoading, setIsAudioLoading] = useState(false)
+  const [audioLoadingProgress, setAudioLoadingProgress] = useState(0)
   const [activeTab, setActiveTab] = useState('projections')
   const [dataValidation, setDataValidation] = useState({ isValid: true, errors: [], warnings: [] })
   const [calculationValidation, setCalculationValidation] = useState({ isValid: true, errors: [], warnings: [] })
@@ -95,9 +98,22 @@ const TimeMachine = () => {
     
     const currentMonthlyIncome = totalIncome / monthsOfData
     const currentMonthlyExpenses = totalExpenses / monthsOfData
-    const currentMonthlySavings = Math.max(0, currentMonthlyIncome - currentMonthlyExpenses)
-    
-    const newMonthlySavings = Math.max(0, currentMonthlySavings * (1 + savingsIncrease / 100))
+
+    // Allow currentMonthlySavings to be negative (deficit). Savings should directly
+    // add to net worth: positive savings increase net worth each month, negative
+    // savings reduce net worth. Do not clamp to 0 here so the projection can show
+    // improvements when the user increases savings from a deficit.
+    const currentMonthlySavings = currentMonthlyIncome - currentMonthlyExpenses
+
+    let newMonthlySavings
+    if (currentMonthlySavings >= 0) {
+      // Positive savings: scale up/down by the percentage
+      newMonthlySavings = currentMonthlySavings * (1 + savingsIncrease / 100)
+    } else {
+      // Negative savings (deficit): a positive savingsIncrease should reduce the deficit
+      // Example: current = -100, savingsIncrease = 50 -> new = -100 * (1 - 0.5) = -50
+      newMonthlySavings = currentMonthlySavings * (1 - savingsIncrease / 100)
+    }
     
     // Step 3: Validate calculation parameters
     const calculationParams = {
@@ -128,9 +144,10 @@ const TimeMachine = () => {
         scenario.inflation
       )
       
-      setProjections(projectionData)
+    // Attach computed savings values for UI display
+    setProjections(prev => ({ ...projectionData, currentMonthlySavings: Math.round(currentMonthlySavings), newMonthlySavings: Math.round(newMonthlySavings) }))
       
-      // Calculate milestones
+    // Calculate milestones
       const newMilestones = generateAdvancedMilestones(
         currentBalance, 
         newMonthlySavings, 
@@ -182,7 +199,29 @@ const TimeMachine = () => {
         selectedScenario
       )
       setAiForecast(forecast)
-      setShowAiForecast(true)
+      // Start audio loading UI for 3 seconds while we request audio playback
+      setIsAudioLoading(true)
+      setAudioLoadingProgress(0)
+      // Start audio playback request concurrently
+      try {
+        playStoryAudio(forecast).catch(err => console.error('playStoryAudio error:', err))
+      } catch (err) {
+        console.error('Error initiating audio playback:', err)
+      }
+
+      // Animate progress for 3 seconds
+      const start = Date.now()
+      const duration = 3000
+      const interval = setInterval(() => {
+        const elapsed = Date.now() - start
+        const pct = Math.min(100, Math.round((elapsed / duration) * 100))
+        setAudioLoadingProgress(pct)
+        if (elapsed >= duration) {
+          clearInterval(interval)
+          setIsAudioLoading(false)
+          setShowAiForecast(true)
+        }
+      }, 100)
     } catch (error) {
       console.error('Error generating AI forecast:', error)
       setAiForecast(`🚀 FUTURE FORECAST: At this rate, you'll reach $${projections.summary?.finalBalance?.toLocaleString()} by ${new Date(Date.now() + timeRange * 365 * 24 * 60 * 60 * 1000).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}. Your disciplined approach to saving will compound into significant wealth over time!`)
@@ -199,16 +238,21 @@ const TimeMachine = () => {
   // Prepare chart data for different visualizations
   const prepareChartData = () => {
     if (!projections || !projections.projections || projections.projections.length === 0) return []
-    
-    return projections.projections
-      .filter((_, index) => index % 12 === 0) // Yearly data points
-      .map((point, index) => ({
-        year: index,
+    // Take yearly points (every 12 months), map to readable year and ensure ascending order
+    const yearly = projections.projections
+      .filter((_, index) => index % 12 === 0)
+      .map((point) => ({
+        // Use the projection's date for an accurate year label when available
+        year: point.date ? new Date(point.date).getFullYear() : (point.year || 0),
         balance: point.balance || 0,
         realValue: point.realValue || 0,
         contributions: point.totalContributions || 0,
         interest: point.totalInterest || 0
       }))
+
+    // Sort by year ascending to ensure chart x-axis is increasing
+    yearly.sort((a, b) => a.year - b.year)
+    return yearly
   }
 
   const prepareContributionData = () => {
@@ -343,7 +387,7 @@ const TimeMachine = () => {
                 <select
                   value={timeRange}
                   onChange={(e) => setTimeRange(parseInt(e.target.value))}
-                  className="retro-input w-full text-sm"
+                  className="retro-input w-full text-xs"
                 >
                   <option value={5}>5 Years</option>
                   <option value={10}>10 Years</option>
@@ -381,7 +425,7 @@ const TimeMachine = () => {
               <div className="retro-info">
                 <div className="text-sm font-bold mb-2">SAVINGS ADJUSTMENT</div>
                 <div className="text-xs text-gray-600 mb-2">
-                  Current: ${projections?.summary?.totalContributions ? Math.round(projections.summary.totalContributions / (timeRange * 12)) : 0}/month
+                  Current: ${projections?.currentMonthlySavings ?? Math.round((financialData?.balance || 0) * 0)} /month
                 </div>
                 <input
                   type="range"
@@ -425,8 +469,7 @@ const TimeMachine = () => {
                 { id: 'projections', label: '📊 Projections', icon: '📈' },
                 { id: 'milestones', label: '🎯 Milestones', icon: '🏆' },
                 { id: 'retirement', label: '👴 Retirement', icon: '💰' },
-                { id: 'analysis', label: '🔍 Analysis', icon: '📋' },
-                { id: 'validation', label: '✅ Validation', icon: '🔍' }
+                { id: 'analysis', label: '🔍 Analysis', icon: '📋' }
               ].map(tab => (
                 <button
                   key={tab.id}
@@ -484,7 +527,7 @@ const TimeMachine = () => {
                       <ComposedChart data={prepareChartData()}>
                         <CartesianGrid strokeDasharray="3 3" />
                         <XAxis dataKey="year" />
-                        <YAxis />
+                        <YAxis domain={["dataMin", "dataMax"]} />
                         <Tooltip 
                           formatter={(value, name) => [
                             `$${value.toLocaleString()}`, 
@@ -635,132 +678,7 @@ const TimeMachine = () => {
               </div>
             )}
 
-            {activeTab === 'validation' && (
-              <div className="space-y-6">
-                {/* Data Quality Overview */}
-                <div className="retro-chart">
-                  <div className="text-center font-bold mb-4 text-sm">DATA QUALITY OVERVIEW</div>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="text-center">
-                      <div className="text-2xl font-bold text-green-600 mb-1">
-                        {financialData?.transactions?.length || 0}
-                      </div>
-                      <div className="text-xs text-gray-600">Transactions</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-2xl font-bold text-blue-600 mb-1">
-                        {financialData?.accounts?.length || 0}
-                      </div>
-                      <div className="text-xs text-gray-600">Accounts</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-2xl font-bold text-purple-600 mb-1">
-                        ${(financialData?.balance || 0).toLocaleString()}
-                      </div>
-                      <div className="text-xs text-gray-600">Current Balance</div>
-                    </div>
-                  </div>
-                </div>
 
-                {/* Data Validation Results */}
-                <div className="retro-chart">
-                  <div className="text-center font-bold mb-4 text-sm">VALIDATION RESULTS</div>
-                  
-                  {/* Data Validation */}
-                  <div className="mb-4">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm font-bold">Data Validation</span>
-                      <span className={`text-sm font-bold ${
-                        dataValidation.isValid ? 'text-green-600' : 'text-red-600'
-                      }`}>
-                        {dataValidation.isValid ? '✅ PASSED' : '❌ FAILED'}
-                      </span>
-                    </div>
-                    
-                    {dataValidation.errors.length > 0 && (
-                      <div className="bg-red-50 p-3 rounded mb-2">
-                        <div className="text-xs font-bold text-red-800 mb-1">Errors:</div>
-                        <ul className="text-xs text-red-700 space-y-1">
-                          {dataValidation.errors.map((error, index) => (
-                            <li key={index}>• {error}</li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-                    
-                    {dataValidation.warnings.length > 0 && (
-                      <div className="bg-yellow-50 p-3 rounded">
-                        <div className="text-xs font-bold text-yellow-800 mb-1">Warnings:</div>
-                        <ul className="text-xs text-yellow-700 space-y-1">
-                          {dataValidation.warnings.map((warning, index) => (
-                            <li key={index}>• {warning}</li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Calculation Validation */}
-                  <div className="mb-4">
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-sm font-bold">Calculation Validation</span>
-                      <span className={`text-sm font-bold ${
-                        calculationValidation.isValid ? 'text-green-600' : 'text-red-600'
-                      }`}>
-                        {calculationValidation.isValid ? '✅ PASSED' : '❌ FAILED'}
-                      </span>
-                    </div>
-                    
-                    {calculationValidation.errors.length > 0 && (
-                      <div className="bg-red-50 p-3 rounded mb-2">
-                        <div className="text-xs font-bold text-red-800 mb-1">Errors:</div>
-                        <ul className="text-xs text-red-700 space-y-1">
-                          {calculationValidation.errors.map((error, index) => (
-                            <li key={index}>• {error}</li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-                    
-                    {calculationValidation.warnings.length > 0 && (
-                      <div className="bg-yellow-50 p-3 rounded">
-                        <div className="text-xs font-bold text-yellow-800 mb-1">Warnings:</div>
-                        <ul className="text-xs text-yellow-700 space-y-1">
-                          {calculationValidation.warnings.map((warning, index) => (
-                            <li key={index}>• {warning}</li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Data Quality Score */}
-                  <div className="text-center">
-                    <div className="text-sm font-bold mb-2">Overall Data Quality</div>
-                    <div className={`text-3xl font-bold ${
-                      dataValidation.isValid && dataValidation.warnings.length === 0 
-                        ? 'text-green-600' 
-                        : dataValidation.warnings.length > 0 
-                          ? 'text-yellow-600' 
-                          : 'text-red-600'
-                    }`}>
-                      {dataValidation.isValid && dataValidation.warnings.length === 0 
-                        ? '95%' 
-                        : dataValidation.warnings.length > 0 
-                          ? '75%' 
-                          : '25%'}
-                    </div>
-                    <div className="text-xs text-gray-600">
-                      {dataValidation.isValid && dataValidation.warnings.length === 0 
-                        ? 'Excellent - High confidence projections' 
-                        : dataValidation.warnings.length > 0 
-                          ? 'Good - Some limitations noted' 
-                          : 'Poor - Limited reliability'}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
 
             {/* AI Forecast Button */}
             <div className="text-center mt-6">
@@ -788,6 +706,24 @@ const TimeMachine = () => {
                   </div>
                   <div className="text-sm leading-relaxed">
                     {aiForecast}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Audio Loading Overlay (3s) */}
+            {isAudioLoading && (
+              <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-60">
+                <div className="retro-window p-6 max-w-md mx-4">
+                  <div className="text-center font-bold mb-4">🔊 Preparing Forecast Audio</div>
+                  <div className="retro-boot-screen text-center">
+                    <div className="mb-4">Loading audio engine... please wait</div>
+                    <div className="flex items-center justify-center">
+                      <div className="retro-progress-bar w-64">
+                        <div className="retro-progress-fill" style={{ width: `${audioLoadingProgress}%` }} />
+                      </div>
+                    </div>
+                    <div className="text-xs mt-2">{audioLoadingProgress}%</div>
                   </div>
                 </div>
               </div>
