@@ -5,7 +5,7 @@ import {
 } from 'recharts'
 import TopNav from '../components/TopNav'
 import SideBar from '../components/SideBar'
-import { useFinancialData } from '../contexts/FinancialDataContext'
+import { useUnifiedData } from '../contexts/UnifiedDataContext'
 import { 
   playStoryAudio,
   generateTimeMachineForecast, 
@@ -20,7 +20,7 @@ import {
 } from '../api/timeMachineService'
 
 const TimeMachine = () => {
-  const { financialData, isLoading, error } = useFinancialData()
+  const { financialData, isLoading, error } = useUnifiedData()
   
   // State management
   const [savingsIncrease, setSavingsIncrease] = useState(0)

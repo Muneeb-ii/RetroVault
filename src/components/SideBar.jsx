@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { useFinancialData } from '../contexts/FinancialDataContext'
+import { useUnifiedData } from '../contexts/UnifiedDataContext'
 import ErrorBoundary from './ErrorBoundary'
 import { safeTimestamp } from '../utils/timestampUtils'
 import BudgetTool from './tools/BudgetTool'
@@ -12,7 +12,7 @@ import ElizaTool from './tools/ElizaTool'
 import { play as playSound } from '../utils/soundPlayer'
 
 const SideBar = () => {
-  const { financialData, loadUserData } = useFinancialData()
+  const { financialData, refreshData } = useUnifiedData()
   const [activeTool, setActiveTool] = useState(null)
   const [isToolOpen, setIsToolOpen] = useState(false)
 
@@ -51,7 +51,7 @@ const SideBar = () => {
   const handleDataUpdate = () => {
     // Reload data after any changes
     if (financialData?.user) {
-      loadUserData(financialData.user.uid)
+      refreshData()
     }
   }
 

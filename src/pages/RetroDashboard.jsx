@@ -2,7 +2,7 @@
 import { useNavigate } from 'react-router-dom'
 import { signOut } from 'firebase/auth'
 import { auth } from '../firebaseClient'
-import { useFinancialData } from '../contexts/FinancialDataContext'
+import { useUnifiedData } from '../contexts/UnifiedDataContext'
 import TopNav from '../components/TopNav'
 import SideBar from '../components/SideBar'
 import MainPanel from '../components/MainPanel'
@@ -10,7 +10,7 @@ import { play as playSound } from '../utils/soundPlayer'
 import { useEffect } from 'react'
 
 const RetroDashboard = () => {
-  const { user, financialData, isLoading, error, loadingMessage } = useFinancialData()
+  const { user, financialData, isLoading, error, loadingMessage, signOut } = useUnifiedData()
   const navigate = useNavigate()
 
   // Play startup sound when dashboard is shown and user data is ready
@@ -22,7 +22,7 @@ const RetroDashboard = () => {
 
   const handleSignOut = async () => {
     try {
-      await signOut(auth)
+      await signOut()
       playSound('logoff')
       console.log('👋 User signed out')
       navigate('/')

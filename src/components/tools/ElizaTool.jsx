@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react'
-import { useFinancialData } from '../../contexts/FinancialDataContext'
+import { useUnifiedData } from '../../contexts/UnifiedDataContext'
 import { getFinancialInsights, getAvailableModels } from '../../api/aiService'
 import { calculateFinancialInsights, formatDataForAI } from '../../utils/financialDataHelpers'
 import { ElevenLabsClient } from '@elevenlabs/elevenlabs-js'
@@ -11,7 +11,7 @@ const ElizaTool = ({ financialData, onClose, onDataUpdate }) => {
   const [isTyping, setIsTyping] = useState(false)
   const [conversationHistory, setConversationHistory] = useState([])
   const messagesEndRef = useRef(null)
-  const { user } = useFinancialData()
+  const { user } = useUnifiedData()
   const audioRef = useRef(null)
   const currentAudioUrlRef = useRef(null)
 

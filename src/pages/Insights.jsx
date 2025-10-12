@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react'
 import TopNav from '../components/TopNav'
 import SideBar from '../components/SideBar'
-import { useFinancialData } from '../contexts/FinancialDataContext'
+import { useUnifiedData } from '../contexts/UnifiedDataContext'
 import { getFinancialInsights } from '../api/aiService'
 
 const Insights = () => {
-  const { financialData, isLoading, error } = useFinancialData()
+  const { financialData, isLoading, error } = useUnifiedData()
   const [insights, setInsights] = useState([])
   const [isGenerating, setIsGenerating] = useState(false)
 

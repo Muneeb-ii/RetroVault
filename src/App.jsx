@@ -6,7 +6,7 @@ import TimeMachine from './pages/TimeMachine'
 import Insights from './pages/Insights'
 import StoryMode from './pages/StoryMode'
 import ProtectedRoute from './routes/ProtectedRoute'
-import { FinancialDataProvider } from './contexts/FinancialDataContext'
+import { UnifiedDataProvider } from './contexts/UnifiedDataContext'
 
 function App() {
   return (
@@ -18,33 +18,33 @@ function App() {
         {/* Authentication Page */}
         <Route path="/auth" element={<AuthPage />} />
         
-        {/* Protected Dashboard Routes with Financial Data Context */}
+        {/* Protected Dashboard Routes with Unified Data Context */}
         <Route path="/dashboard" element={
           <ProtectedRoute>
-            <FinancialDataProvider>
+            <UnifiedDataProvider>
               <RetroDashboard />
-            </FinancialDataProvider>
+            </UnifiedDataProvider>
           </ProtectedRoute>
         } />
         <Route path="/time" element={
           <ProtectedRoute>
-            <FinancialDataProvider>
+            <UnifiedDataProvider>
               <TimeMachine />
-            </FinancialDataProvider>
+            </UnifiedDataProvider>
           </ProtectedRoute>
         } />
         <Route path="/insights" element={
           <ProtectedRoute>
-            <FinancialDataProvider>
+            <UnifiedDataProvider>
               <Insights />
-            </FinancialDataProvider>
+            </UnifiedDataProvider>
           </ProtectedRoute>
         } />
         <Route path="/story" element={
           <ProtectedRoute>
-            <FinancialDataProvider>
+            <UnifiedDataProvider>
               <StoryMode />
-            </FinancialDataProvider>
+            </UnifiedDataProvider>
           </ProtectedRoute>
         } />
       </Routes>

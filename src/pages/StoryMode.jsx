@@ -1,12 +1,12 @@
 import { useState, useEffect } from 'react'
 import TopNav from '../components/TopNav'
 import SideBar from '../components/SideBar'
-import { useFinancialData } from '../contexts/FinancialDataContext'
+import { useUnifiedData } from '../contexts/UnifiedDataContext'
 import { generateFinancialStory, generateStoryMetadata } from '../api/storyService'
 import { ElevenLabsClient, play } from '@elevenlabs/elevenlabs-js';
 
 const StoryMode = () => {
-  const { financialData, isLoading, error } = useFinancialData()
+  const { financialData, isLoading, error } = useUnifiedData()
   const [story, setStory] = useState('')
   const [metadata, setMetadata] = useState(null)
   const [isGenerating, setIsGenerating] = useState(false)

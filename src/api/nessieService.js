@@ -1,12 +1,12 @@
 // Capital One Nessie API Service
-const NESSIE_API_BASE = 'http://api.reimaginebanking.com'
+// Updated to use the correct Nessie API endpoint: api.nessieisreal.com
+const NESSIE_API_BASE = 'http://api.nessieisreal.com'
 
 /**
- * Get all accounts for a customer
- * @param {string} customerId - Customer ID (default: test customer)
- * @returns {Promise<Array>} Array of account objects
+ * Get all customers (to find available customer IDs)
+ * @returns {Promise<Array>} Array of customer objects
  */
-export const getAccounts = async (customerId = '5d8c29a161c9d7000474a6ca') => {
+export const getCustomers = async () => {
   try {
     const apiKey = import.meta.env.VITE_NESSIE_API_KEY
     
@@ -14,17 +14,202 @@ export const getAccounts = async (customerId = '5d8c29a161c9d7000474a6ca') => {
       throw new Error('Nessie API key not configured')
     }
 
-    const response = await fetch(`${NESSIE_API_BASE}/customers/${customerId}/accounts?key=${apiKey}`)
+    console.log('🔍 [NESSIE] Fetching customers...')
+    const url = `${NESSIE_API_BASE}/customers?key=${apiKey}`
+    console.log(`🔍 [NESSIE] Request URL: ${url}`)
+
+    const response = await fetch(url)
     
     if (!response.ok) {
-      throw new Error(`Nessie API error: ${response.status} ${response.statusText}`)
+      const errorText = await response.text()
+      console.error(`❌ [NESSIE] API Error: ${response.status} ${response.statusText}`)
+      console.error(`❌ [NESSIE] Error details: ${errorText}`)
+      throw new Error(`Nessie API error: ${response.status} ${response.statusText} - ${errorText}`)
+    }
+
+    const customers = await response.json()
+    console.log(`✅ [NESSIE] Found ${customers.length} customers`)
+    return customers
+
+  } catch (error) {
+    console.error('❌ [NESSIE] Error fetching customers:', error)
+    throw error
+  }
+}
+
+/**
+ * Create a new customer
+ * @param {Object} customerData - Customer information
+ * @returns {Promise<Object>} Created customer object
+ */
+export const createCustomer = async (customerData) => {
+  try {
+    const apiKey = import.meta.env.VITE_NESSIE_API_KEY
+    
+    if (!apiKey || apiKey === 'your_nessie_api_key_here') {
+      throw new Error('Nessie API key not configured')
+    }
+
+    console.log('🔍 [NESSIE] Creating customer...')
+    const url = `${NESSIE_API_BASE}/customers?key=${apiKey}`
+    console.log(`🔍 [NESSIE] Request URL: ${url}`)
+
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(customerData)
+    })
+    
+    if (!response.ok) {
+      const errorText = await response.text()
+      console.error(`❌ [NESSIE] API Error: ${response.status} ${response.statusText}`)
+      console.error(`❌ [NESSIE] Error details: ${errorText}`)
+      throw new Error(`Nessie API error: ${response.status} ${response.statusText} - ${errorText}`)
+    }
+
+    const customer = await response.json()
+    console.log(`✅ [NESSIE] Created customer: ${customer._id}`)
+    return customer
+
+  } catch (error) {
+    console.error('❌ [NESSIE] Error creating customer:', error)
+    throw error
+  }
+}
+
+/**
+ * Create a new account for a customer
+ * @param {string} customerId - Customer ID
+ * @param {Object} accountData - Account information
+ * @returns {Promise<Object>} Created account object
+ */
+export const createAccount = async (customerId, accountData) => {
+  try {
+    const apiKey = import.meta.env.VITE_NESSIE_API_KEY
+    
+    if (!apiKey || apiKey === 'your_nessie_api_key_here') {
+      throw new Error('Nessie API key not configured')
+    }
+
+    console.log('🔍 [NESSIE] Creating account...')
+    const url = `${NESSIE_API_BASE}/customers/${customerId}/accounts?key=${apiKey}`
+    console.log(`🔍 [NESSIE] Request URL: ${url}`)
+
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(accountData)
+    })
+    
+    if (!response.ok) {
+      const errorText = await response.text()
+      console.error(`❌ [NESSIE] API Error: ${response.status} ${response.statusText}`)
+      console.error(`❌ [NESSIE] Error details: ${errorText}`)
+      throw new Error(`Nessie API error: ${response.status} ${response.statusText} - ${errorText}`)
+    }
+
+    const account = await response.json()
+    console.log(`✅ [NESSIE] Created account: ${account._id}`)
+    return account
+
+  } catch (error) {
+    console.error('❌ [NESSIE] Error creating account:', error)
+    throw error
+  }
+}
+
+/**
+ * Get all accounts for a customer
+ * @param {string} customerId - Customer ID
+ * @returns {Promise<Array>} Array of account objects
+ */
+export const getAccounts = async (customerId) => {
+  try {
+    const apiKey = import.meta.env.VITE_NESSIE_API_KEY
+    
+    if (!apiKey || apiKey === 'your_nessie_api_key_here') {
+      throw new Error('Nessie API key not configured')
+    }
+
+    console.log('🔍 [NESSIE] Attempting to fetch accounts...')
+    console.log(`🔍 [NESSIE] API Base: ${NESSIE_API_BASE}`)
+    console.log(`🔍 [NESSIE] Customer ID: ${customerId}`)
+    console.log(`🔍 [NESSIE] API Key: ${apiKey.substring(0, 8)}...`)
+
+    const url = `${NESSIE_API_BASE}/customers/${customerId}/accounts?key=${apiKey}`
+    console.log(`🔍 [NESSIE] Request URL: ${url}`)
+
+    const response = await fetch(url)
+    
+    console.log(`🔍 [NESSIE] Response status: ${response.status}`)
+    console.log(`🔍 [NESSIE] Response headers:`, Object.fromEntries(response.headers.entries()))
+    
+    if (!response.ok) {
+      const errorText = await response.text()
+      console.error(`❌ [NESSIE] API Error: ${response.status} ${response.statusText}`)
+      console.error(`❌ [NESSIE] Error details: ${errorText}`)
+      throw new Error(`Nessie API error: ${response.status} ${response.statusText} - ${errorText}`)
     }
 
     const accounts = await response.json()
+    console.log(`✅ [NESSIE] Successfully fetched ${accounts.length} accounts`)
     return accounts
 
   } catch (error) {
-    console.error('Error fetching accounts from Nessie:', error)
+    console.error('❌ [NESSIE] Error fetching accounts:', error)
+    
+    // Check if it's a network/DNS error
+    if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+      console.error('❌ [NESSIE] Network error - API endpoint may be down or DNS issue')
+    }
+    
+    throw error
+  }
+}
+
+/**
+ * Create a transaction for an account
+ * @param {string} accountId - Account ID
+ * @param {Object} transactionData - Transaction information
+ * @returns {Promise<Object>} Created transaction object
+ */
+export const createTransaction = async (accountId, transactionData) => {
+  try {
+    const apiKey = import.meta.env.VITE_NESSIE_API_KEY
+    
+    if (!apiKey || apiKey === 'your_nessie_api_key_here') {
+      throw new Error('Nessie API key not configured')
+    }
+
+    console.log('🔍 [NESSIE] Creating transaction...')
+    const url = `${NESSIE_API_BASE}/accounts/${accountId}/transactions?key=${apiKey}`
+    console.log(`🔍 [NESSIE] Request URL: ${url}`)
+
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(transactionData)
+    })
+    
+    if (!response.ok) {
+      const errorText = await response.text()
+      console.error(`❌ [NESSIE] API Error: ${response.status} ${response.statusText}`)
+      console.error(`❌ [NESSIE] Error details: ${errorText}`)
+      throw new Error(`Nessie API error: ${response.status} ${response.statusText} - ${errorText}`)
+    }
+
+    const transaction = await response.json()
+    console.log(`✅ [NESSIE] Created transaction: ${transaction._id}`)
+    return transaction
+
+  } catch (error) {
+    console.error('❌ [NESSIE] Error creating transaction:', error)
     throw error
   }
 }
