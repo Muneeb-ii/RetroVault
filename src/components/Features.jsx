@@ -31,12 +31,12 @@ const Features = () => {
       description: 'Your financial data is securely stored and consistent across all sessions. Sign in from anywhere and pick up exactly where you left off.',
       color: 'indigo'
     },
-    {
-      icon: '♦',
-      title: 'Retro Crypto Terminal',
-      description: 'Trade, track, and simulate cryptocurrencies inside a vintage command-line interface. Watch pixelated candlestick charts update in real time, execute mock trades, and explore how blockchain assets would\'ve looked on a 90s desktop.',
-      color: 'cyan'
-    }
+{
+  icon: '🤖',
+  title: 'Eliza Voice Assistant',
+  description: 'Chat with your personal AI financial companion in real-time. Eliza analyzes your spending habits, offers kind and encouraging advice, and speaks every response aloud with natural voice. Ask anything about your finances and get personalized suggestions that feel like talking to a trusted friend—accessible for all ages.',
+  color: 'purple'
+}
   ]
 
   const getColorClasses = (color) => {
