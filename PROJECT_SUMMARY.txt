@@ -1,0 +1,191 @@
+RetroVault — Project Summary
+
+Overview
+========
+RetroVault is a personal-finance web application styled after Windows 98-era desktop software but powered by modern web technologies and AI. The project blends nostalgic UI aesthetics (98.css, monospace fonts, CRT/scanline effects) with extensive data analysis, AI-driven insights, and time-based financial projections. The app supports both mock and real financial data (Capital One Nessie integration) and can run fully with mock data for local development. It uses Firebase for persistence, authentication, and admin server-side activities.
+
+High-level goals and user experience
+====================================
+- Offer a "financial time machine" where users can visualize projections, milestones, and AI-generated forecasts.
+- Provide per-user dashboards that feel like classic desktop windows, with translucent retro UI elements and interactive charts.
+- Supply AI-powered insights, stories, and voice playback of AI content (TTS via ElevenLabs).
+- Be hackathon-friendly: modular codebase, pluggable AI models, easy mock-data fallback.
+
+Tech Stack
+==========
+- Frontend: React (v18), Vite, TailwindCSS, 98.css
+- Charts: Recharts
+- State: Zustand
+- Backend Dev Server: Node.js + Express (server.js) - used for local API and sync tasks
+- Database: Firebase Firestore (client and admin code present)
+- Authentication: Firebase Auth (Google Sign-in support)
+- AI & TTS: OpenRouter/Google Gemini model selection patterns, ElevenLabs for TTS
+- External API: Capital One Nessie (real transaction syncing in optional mode)
+- Audio: browser Audio API + careful autoplay unlocking
+
+Key Features (detailed)
+=======================
+1) Retro-styled UI
+   - Uses 98.css + custom CSS in src/index.css to create a Windows-98-like look.
+   - CRT/scanline effects, retro buttons, inset/outset borders, and translucent windows.
+   - Global wallpaper support (authPage.png) with translucent retro-window classes that let wallpaper show through.
+
+2) Financial Dashboard
+   - Main dashboard (src/pages/RetroDashboard.jsx) shows user info, sign-out, and instantiates a MainPanel with charts and insights.
+   - Uses Recharts (LineChart, AreaChart, ComposedChart) to show projections and balances.
+   - Stores financial data in centralized contexts / Zustand store.
+
+3) Time Machine projections
+   - Core calculation in src/api/timeMachineService.js:
+     - calculateAdvancedProjections(principal, monthlyContribution, annualRate, years, inflation)
+       - Monthly compounding with inflation-adjustment for contributions
+       - Returns per-month projections and summary (final balance, real value, total contributions, interest)
+     - generateAdvancedMilestones(currentBalance, monthlySavings, annualRate, inflation)
+       - Generates milestone targets (10K, 25K, 50K, 100K, etc.) and estimates months/years to reach them, interest earned, and real value
+     - monteCarloSimulation: simple Monte Carlo for risk analysis
+     - generateTimeMachineForecast: builds an LLM prompt (OpenRouter) including milestone predictions and asks for a short inspirational forecast
+   - TimeMachine page (src/pages/TimeMachine.jsx) wires projections, milestones, retirement readiness, Monte Carlo, and audio playback of forecast.
+
+4) AI Insights & Story Mode
+   - src/api/aiService.js handles AI interaction and model selection (attempts Google Gemini first, falls back to OpenRouter free models, with ordered trial of models).
+   - getFinancialInsights(transactions, savings) computes stats (total income, expenses, top category, savings trend) and constructs prompts to receive short actionable insights; parseAIResponse extracts numbered suggestions.
+   - src/api/storyService.js builds narrative prompts and supports "Story Mode" which creates a 100-word nostalgic RPG-like narrative about the user's financial journey; includes transaction history when AI is available.
+   - Fallbacks: When AI is unavailable or keys are missing, static, friendly messages are generated.
+
+5) TTS playback and Eliza
+   - ElevenLabs TTS used to convert forecast/story/Eliza messages to audio and play in-browser.
+   - src/components/tools/ElizaTool.jsx manages per-message TTS, streaming conversion, playback, cleanup, and a play/stop UX.
+
+6) Sound Effects & Autoplay handling
+   - src/utils/soundPlayer.js centralizes sound asset mapping and play/stop logic.
+   - Handles browser autoplay blocking by queueing playback on blocked promises and unlocking on first user gesture (pointerdown/keydown).
+   - Main app attaches a global pointerdown/mousedown handler in src/main.jsx to play a click sound for mouse clicks and to unlock the audio queue.
+
+7) Real data integration (Nessie)
+   - src/api/nessieService.js integrates with Capital One's Nessie API (if available) to fetch accounts and transactions.
+   - Transactions are transformed and used to calculate spending breakdown, savings, and charts.
+   - Sync utility (api/syncNessieToFirestore.js) is provided for pushing Nessie data into Firestore.
+
+8) Firebase and Firestore
+   - src/firebaseClient.js initializes Firebase client (Auth + Firestore)
+   - src/firebaseAdmin.js exists for server-side admin tasks and serverless functions (Vercel environment uses admin SDK with service account JSON)
+   - Firestore security rules in project root (firestore.rules)
+
+9) Zustand store and data pipeline
+   - src/store/useFinancialStore.js contains logic to refresh data, attempt Nessie fetch, fall back to mock data, compute derived values (savings, weekly balances), and optionally call getFinancialInsights.
+   - Mock data generator in src/data/mockData.js to bootstrap development mode.
+
+10) Accessibility and UX
+    - Buttons have labels, simple keyboard unlock for TTS, responsive CSS adjustments for mobile, and progressive enhancement for missing APIs (mock fallbacks).
+
+Important files and responsibilities
+===================================
+Below is a concise file map with responsibilities and notable functions.
+
+Root-level
+- package.json — build/dev scripts (dev:full to run Vite + API concurrently), dependencies.
+- README.md — user-facing summary and quick-start instructions.
+- server.js — small Express server used as a local API (dev:api), plus Vercel serverless targets under /api.
+- vercel.json — serverless deployment config.
+- firestore.rules — Firestore security rules.
+
+src/
+- App.jsx — app routes and layout (top-level React Router setup).
+- main.jsx — app bootstrap (render), global pointer handlers to unlock audio and play click sounds via soundPlayer.
+- index.css — global retro styling, CRT/scanlines, wallpaper background, translucency, responsive rules.
+
+src/api/
+- aiService.js — AI helper for insights and prompt routing; attempts Gemini then OpenRouter, robust fallback; includes calculateFinancialStats and runOpenRouterPrompt.
+- timeMachineService.js — projections, milestones, retirement readiness, forecast prompt composition, story audio playback via ElevenLabs.
+- storyService.js — story generation using AI or static fallback, includes transaction history in prompts.
+- nessieService.js — Capital One Nessie API integration and transformation helpers.
+- syncNessieToFirestore.js (in root /api and src/api) — sync script to back up Nessie transactions to Firestore.
+
+src/components/
+- TopNav.jsx — top navigation bar (tabs, sound toggle), uses soundPlayer
+- NavBar.jsx — site navigation
+- SideBar.jsx — app sidebar with navigation and quick actions
+- MainPanel.jsx — primary dashboard content: charts, tables, quick stats
+- ElizaTool.jsx — chat-like assistant UI and TTS controls
+- Tools and other components — ReportsTool, TimeMachineTool, etc., which call play/stop on sounds and AI endpoints.
+
+src/pages/
+- RetroDashboard.jsx — user dashboard; shows loading & error states, plays startup sound, integrates MainPanel
+- TimeMachine.jsx — orchestrates projections, milestones, retirement readiness, Monte Carlo, AI forecast generation and audio playback
+- Insights.jsx — UI for requesting AI insights (calls getFinancialInsights with transactions and savings)
+- StoryMode.jsx — uses storyService to generate the narrative and show/play TTS
+- AuthPage.jsx / Landing.jsx — login and landing UX with wallpaper and translucent windows
+
+src/store/
+- useFinancialStore.js — primary Zustand store for data loading, persistence, derived calculations, AI pre-generation hooks
+
+src/utils/
+- soundPlayer.js — audio engine (play, stopAll, setMuted, unlockAudio), handles autoplay blocking with queueing
+- financialDataHelpers.js — extensive preprocessing to generate structured context for Eliza and AI prompts (analyze spending, income, savings, budgets, goals, etc.)
+- firestoreHelpers.js — small Firestore helper functions
+- timestampUtils.js — time helpers
+
+Assets
+- src/assets/images/ — wallpaper and UI images (authPage.png)
+- src/assets/sounds/ — startup.mp3, logon.mp3, logoff.mp3, success.mp3, error.mp3, click sounds, etc.
+
+Implementation notes and design decisions
+========================================
+1) AI resilience and model selection
+   - The code tries Google Gemini first (when API key is provided) and falls back to OpenRouter free models. OpenRouter calls iterate through a small list of free models to maximize chances of success.
+   - parseAIResponse attempts to parse numbered lines ("1. ... 2. ...") and falls back to sentence splitting if needed.
+   - Many AI functions gracefully degrade to static messages when no API key is present.
+
+2) Defensive programming
+   - Many helpers defensively coerce arrays and numbers (recent edits added more robust guards in aiService and other places), preventing runtime TypeErrors when data shapes vary.
+
+3) Audio handling & autoplay policies
+   - soundPlayer queues playback requests when blocked by autoplay policies and attaches a 'first gesture' listener to flush the queue on the user's first interaction.
+   - main.jsx installs a pointerdown handler to play click sounds for mouse interactions and to unlock audio for queued sounds.
+
+4) Time Machine modeling
+   - Projections compute monthly contributions adjusted for inflation, compound monthly interest, and calculate both nominal and real values.
+   - Milestones simulate month-by-month balances to find when common thresholds will be crossed and annotate interest earned and real value at that time.
+   - Monte Carlo simulation provides a simple distribution for risk analysis (median, p10, p90, etc.)
+
+5) Story Mode and Context Composition
+   - Story generation aggregates recent transactions into a formatted history and instructs the LLM to write in second-person, retro-game tone.
+   - The system intentionally includes transaction items, milestones, and insights so the model output can be grounded in the analytic results.
+
+Operational and Development Notes
+================================
+- Environment variables are required for real AI and Nessie integration; the app functions with mock data if keys are missing.
+- Dev run command: npm run dev:full (runs Vite dev server + API concurrently)
+- To deploy, follow README and configure Vercel plus Firebase service account.
+
+Testing, Maintenance & Next Steps
+===============================
+Suggested low-risk improvements (I can implement if you want):
+- Add unit tests (Vitest/Jest) for key algorithms: calculateAdvancedProjections, generateAdvancedMilestones, calculateFinancialStats, and monteCarloSimulation.
+- CI integration: GitHub Actions to run lint and tests.
+- Add telemetry/logging for AI prompt sizes and token usage (helpful if you add paid model usage).
+- Add structured prompt mode: pass JSON blob of milestones to the model and ask for JSON-formatted output for robust downstream parsing.
+- Persist mute state and audio preferences into localStorage for better UX.
+
+Security & Privacy
+==================
+- The project may handle sensitive financial data; ensure proper Firestore security rules (firestore.rules provided) and restrict service account keys in production.
+- Use environment variables in Vercel (do not commit .env files or keys to source control).
+
+Contact points and where to look for features
+=============================================
+- AI prompts and models: src/api/aiService.js, src/api/timeMachineService.js, src/api/storyService.js
+- TTS: src/api/timeMachineService.js (playStoryAudio) and src/components/tools/ElizaTool.jsx
+- Sound playback: src/utils/soundPlayer.js and src/main.jsx (global handlers)
+- Time Machine UI: src/pages/TimeMachine.jsx and MainPanel / TimeMachine-specific components
+- Persistence and backend: src/firebaseClient.js, src/firebaseAdmin.js, api/syncNessieToFirestore.js
+
+Appendix: Notable code snippets and descriptions
+===============================================
+- `calculateAdvancedProjections` (timeMachineService.js): monthly loop for months 0..totalMonths, adds inflation adjusted contributions, applies monthly interest, and collects totals per month with date fields.
+- `generateAdvancedMilestones` (timeMachineService.js): iterative monthly simulation up to 30 years to find when milestone amounts are reached, then records targetDate, totalContributions, interestEarned, realValue.
+- `runOpenRouterPrompt` (aiService.js): attempts Gemini first, then posts to OpenRouter with headers including Authorization and HTTP-Referer; iterates over fallback models; parses response. parseAIResponse tries to extract numbered lines.
+
+If you'd like a tailored section (e.g., developer onboarding checklist, detailed file-by-file explanations including function signatures, or example prompts that are sent to the AI), tell me which one and I'll expand the output further.
+
+End of summary
