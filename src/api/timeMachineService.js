@@ -3,56 +3,90 @@ import { getFinancialInsights, runOpenRouterPrompt } from './aiService'
 
 import { ElevenLabsClient, play } from '@elevenlabs/elevenlabs-js';
 
-   export const playStoryAudio = async (story) => {
-    const elevenlabs = new ElevenLabsClient({
+export const playStoryAudio = async (story) => {
+  const elevenlabs = new ElevenLabsClient({
     apiKey: import.meta.env.VITE_ELEVENLABS_API_KEY,
-   });
+  });
+  
+  let audioElement = null
+  let audioUrl = null
+  let cleanup = null
+  
+  try {
+    const audio = await elevenlabs.textToSpeech.convert("EXAVITQu4vr4xnSDxMaL", {
+      text: story,
+      modelId: "eleven_multilingual_v2",
+    });
+
+    const chunks= [];
+    for await (const chunk of audio) {
+      chunks.push(chunk);
+    }
+    const blob = new Blob(chunks, { type: 'audio/mpeg' });
+    audioUrl = URL.createObjectURL(blob);
    
-   let audioElement = null
-   let audioUrl = null
-   
-     try {
-       
-        const audio = await elevenlabs.textToSpeech.convert("EXAVITQu4vr4xnSDxMaL", {
-          text: story,
-          modelId: "eleven_multilingual_v2",
-        });
-   
-        const chunks= [];
-        for await (const chunk of audio) {
-          chunks.push(chunk);
+    audioElement = new Audio(audioUrl);
+    
+    // Create cleanup function with proper variable capture
+    cleanup = () => {
+      try {
+        if (audioUrl) {
+          URL.revokeObjectURL(audioUrl)
+          audioUrl = null
         }
-        const blob = new Blob(chunks, { type: 'audio/mpeg' });
-        audioUrl = URL.createObjectURL(blob);
-       
-        audioElement = new Audio(audioUrl);
-        
-        // Add cleanup listeners
-        const cleanup = () => {
-          if (audioUrl) {
-            URL.revokeObjectURL(audioUrl)
-            audioUrl = null
-          }
-          if (audioElement) {
-            audioElement.removeEventListener('ended', cleanup)
-            audioElement.removeEventListener('error', cleanup)
-            audioElement = null
-          }
+        if (audioElement) {
+          audioElement.removeEventListener('ended', cleanup)
+          audioElement.removeEventListener('error', cleanup)
+          audioElement.removeEventListener('abort', cleanup)
+          audioElement.pause()
+          audioElement.src = ''
+          audioElement = null
         }
-        
-        audioElement.addEventListener('ended', cleanup)
-        audioElement.addEventListener('error', cleanup)
-        
-        await audioElement.play();
-       
-     } catch (error) {
-       console.error('Error playing audio:', error);
-       // Cleanup on error
-       if (audioUrl) {
-         URL.revokeObjectURL(audioUrl)
-       }
-     }
-   };
+      } catch (cleanupError) {
+        console.warn('Error during audio cleanup:', cleanupError)
+      }
+    }
+    
+    // Add event listeners with proper error handling
+    audioElement.addEventListener('ended', cleanup)
+    audioElement.addEventListener('error', cleanup)
+    audioElement.addEventListener('abort', cleanup)
+    
+    // Add timeout to prevent hanging
+    const timeoutId = setTimeout(() => {
+      console.warn('Audio playback timeout, cleaning up')
+      if (cleanup) cleanup()
+    }, 30000) // 30 second timeout
+    
+    audioElement.addEventListener('ended', () => {
+      clearTimeout(timeoutId)
+      if (cleanup) cleanup()
+    })
+    
+    await audioElement.play();
+   
+  } catch (error) {
+    console.error('Error playing audio:', error);
+    // Safe cleanup on error
+    if (cleanup) {
+      cleanup()
+    } else {
+      // Fallback cleanup if cleanup function wasn't created
+      try {
+        if (audioUrl) {
+          URL.revokeObjectURL(audioUrl)
+        }
+        if (audioElement) {
+          audioElement.pause()
+          audioElement.src = ''
+        }
+      } catch (fallbackError) {
+        console.warn('Error during fallback cleanup:', fallbackError)
+      }
+    }
+    throw error // Re-throw to handle in calling code
+  }
+};
 /**
  * Comprehensive data validation for Time Machine calculations
  */
@@ -267,78 +301,101 @@ export const FINANCIAL_SCENARIOS = {
  * @returns {Object} Comprehensive projection data
  */
 export const calculateAdvancedProjections = (principal, monthlyContribution, annualRate, years = 30, inflation = 0.025) => {
-  // Validate inputs
-  if (typeof principal !== 'number' || isNaN(principal) || principal < 0) {
-    throw new Error('Invalid principal amount')
-  }
-  if (typeof monthlyContribution !== 'number' || isNaN(monthlyContribution)) {
-    throw new Error('Invalid monthly contribution')
-  }
-  if (typeof annualRate !== 'number' || isNaN(annualRate) || annualRate < -1 || annualRate > 1) {
-    throw new Error('Invalid annual rate (must be between -100% and 100%)')
-  }
-  if (typeof years !== 'number' || isNaN(years) || years <= 0 || years > 100) {
-    throw new Error('Invalid years (must be between 1 and 100)')
-  }
-  if (typeof inflation !== 'number' || isNaN(inflation) || inflation < -0.5 || inflation > 0.5) {
-    throw new Error('Invalid inflation rate (must be between -50% and 50%)')
-  }
+  try {
+    // Validate inputs with more comprehensive checks
+    if (typeof principal !== 'number' || isNaN(principal) || !isFinite(principal) || principal < 0) {
+      throw new Error('Invalid principal amount: must be a finite non-negative number')
+    }
+    if (typeof monthlyContribution !== 'number' || isNaN(monthlyContribution) || !isFinite(monthlyContribution)) {
+      throw new Error('Invalid monthly contribution: must be a finite number')
+    }
+    if (typeof annualRate !== 'number' || isNaN(annualRate) || !isFinite(annualRate) || annualRate < -1 || annualRate > 1) {
+      throw new Error('Invalid annual rate: must be between -100% and 100%')
+    }
+    if (typeof years !== 'number' || isNaN(years) || !isFinite(years) || years <= 0 || years > 100) {
+      throw new Error('Invalid years: must be between 1 and 100')
+    }
+    if (typeof inflation !== 'number' || isNaN(inflation) || !isFinite(inflation) || inflation < -0.5 || inflation > 0.5) {
+      throw new Error('Invalid inflation rate: must be between -50% and 50%')
+    }
+    
+    // Additional safety checks for extreme values
+    if (Math.abs(principal) > 1e12) {
+      throw new Error('Principal amount too large')
+    }
+    if (Math.abs(monthlyContribution) > 1e9) {
+      throw new Error('Monthly contribution too large')
+    }
 
-  const monthlyRate = annualRate / 12
-  const monthlyInflation = inflation / 12
-  const totalMonths = years * 12
-  
-  const projections = []
-  let balance = principal
-  let totalContributions = 0
-  let totalInterest = 0
-  
-  for (let month = 0; month <= totalMonths; month++) {
-    const year = Math.floor(month / 12)
-    const monthInYear = (month % 12) + 1
+    const monthlyRate = annualRate / 12
+    const monthlyInflation = inflation / 12
+    const totalMonths = years * 12
     
-    // Calculate inflation-adjusted contribution
-    const inflationAdjustedContribution = monthlyContribution * Math.pow(1 + monthlyInflation, month)
+    const projections = []
+    let balance = principal
+    let totalContributions = 0
+    let totalInterest = 0
     
-    // Add contribution first
-    if (month > 0) {
-      balance += inflationAdjustedContribution
-      totalContributions += inflationAdjustedContribution
+    for (let month = 0; month <= totalMonths; month++) {
+      const year = Math.floor(month / 12)
+      const monthInYear = (month % 12) + 1
+      
+      // Calculate inflation-adjusted contribution
+      const inflationAdjustedContribution = monthlyContribution * Math.pow(1 + monthlyInflation, month)
+      
+      // Add contribution first
+      if (month > 0) {
+        balance += inflationAdjustedContribution
+        totalContributions += inflationAdjustedContribution
+      }
+      
+      // Apply compound interest to the balance (including contributions)
+      if (month > 0) {
+        const interestEarned = balance * monthlyRate
+        balance += interestEarned
+        totalInterest += interestEarned
+      }
+      
+      // Calculate real vs nominal value
+      const inflationFactor = Math.pow(1 + monthlyInflation, month)
+      const realValue = balance / inflationFactor
+      
+      projections.push({
+        month,
+        year,
+        monthInYear,
+        balance: Math.round(balance),
+        realValue: Math.round(realValue),
+        contribution: month > 0 ? Math.round(inflationAdjustedContribution) : 0,
+        interest: month > 0 ? Math.round(balance * monthlyRate) : 0,
+        totalContributions: Math.round(totalContributions),
+        totalInterest: Math.round(totalInterest),
+        date: new Date(Date.now() + month * 30 * 24 * 60 * 60 * 1000)
+      })
     }
     
-    // Apply compound interest to the balance (including contributions)
-    if (month > 0) {
-      const interestEarned = balance * monthlyRate
-      balance += interestEarned
-      totalInterest += interestEarned
+    return {
+      projections,
+      summary: {
+        finalBalance: Math.round(balance),
+        finalRealValue: Math.round(balance / Math.pow(1 + monthlyInflation, totalMonths)),
+        totalContributions: Math.round(totalContributions),
+        totalInterest: Math.round(totalInterest),
+        years
+      }
     }
-    
-    // Calculate real vs nominal value
-    const inflationFactor = Math.pow(1 + monthlyInflation, month)
-    const realValue = balance / inflationFactor
-    
-    projections.push({
-      month,
-      year,
-      monthInYear,
-      balance: Math.round(balance),
-      realValue: Math.round(realValue),
-      contribution: month > 0 ? Math.round(inflationAdjustedContribution) : 0,
-      interest: month > 0 ? Math.round(balance * monthlyRate) : 0,
-      totalContributions: Math.round(totalContributions),
-      totalInterest: Math.round(totalInterest),
-      date: new Date(Date.now() + month * 30 * 24 * 60 * 60 * 1000)
-    })
-  }
-  
-  return {
-    projections,
-    summary: {
-      finalBalance: Math.round(balance),
-      finalRealValue: Math.round(balance / Math.pow(1 + monthlyInflation, totalMonths)),
-      totalContributions: Math.round(totalContributions),
-      totalInterest: Math.round(totalInterest),
-      years
+  } catch (error) {
+    console.error('Error in calculateAdvancedProjections:', error)
+    // Return safe fallback data
+    return {
+      projections: [],
+      summary: {
+        finalBalance: principal,
+        finalRealValue: principal,
+        totalContributions: 0,
+        totalInterest: 0,
+        years: 0
+      }
     }
   }
 }

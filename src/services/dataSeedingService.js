@@ -28,20 +28,59 @@ export class DataSeedingService {
     this.isSeeding = false
     this.seedingProgress = 0
     this.seedingMessage = ''
+    this.seedingPromise = null // Track ongoing seeding operation
+    this.seedingLock = false // Prevent concurrent seeding
+    this.seedingKey = null // Track which user is being seeded
   }
 
   /**
-   * Seed data for a new user
+   * Seed data for a new user with race condition protection
    * @param {string} userId - Firebase user ID
    * @param {Object} userInfo - User information
    * @param {boolean} forceRefresh - Force refresh even if data exists
    * @returns {Promise<Object>} Seeding result
    */
   async seedUserData(userId, userInfo, forceRefresh = false) {
+    // Check if already seeding for this specific user
+    const seedingKey = `${userId}-${forceRefresh}`
+    if (this.seedingLock && this.seedingKey === seedingKey) {
+      console.warn('⚠️ Data seeding already in progress for this user, waiting for completion...')
+      if (this.seedingPromise) {
+        return await this.seedingPromise
+      }
+    }
+
+    // Set lock to prevent concurrent seeding for this user
+    this.seedingLock = true
+    this.seedingKey = seedingKey
     this.isSeeding = true
     this.seedingProgress = 0
     this.seedingMessage = 'Initializing data seeding...'
 
+    // Create seeding promise to track operation
+    this.seedingPromise = this.performSeeding(userId, userInfo, forceRefresh)
+    
+    try {
+      const result = await this.seedingPromise
+      return result
+    } catch (error) {
+      console.error('❌ Data seeding failed:', error)
+      throw error
+    } finally {
+      // Always clean up state
+      this.seedingLock = false
+      this.seedingKey = null
+      this.isSeeding = false
+      this.seedingProgress = 100
+      this.seedingMessage = 'Data seeding completed'
+      this.seedingPromise = null
+    }
+  }
+
+  /**
+   * Perform the actual seeding operation
+   */
+  async performSeeding(userId, userInfo, forceRefresh) {
     try {
       console.log(`🌱 Starting data seeding for user: ${userId}`)
       
@@ -73,10 +112,6 @@ export class DataSeedingService {
     } catch (error) {
       console.error('❌ Data seeding failed:', error)
       throw error
-    } finally {
-      this.isSeeding = false
-      this.seedingProgress = 100
-      this.seedingMessage = 'Data seeding completed'
     }
   }
 
@@ -410,12 +445,15 @@ export class DataSeedingService {
   }
 
   /**
-   * Update seeding progress
+   * Update seeding progress with thread safety
    */
   updateProgress(progress, message) {
-    this.seedingProgress = progress
-    this.seedingMessage = message
-    console.log(`📊 Seeding Progress: ${progress}% - ${message}`)
+    // Only update if we're currently seeding to prevent race conditions
+    if (this.isSeeding) {
+      this.seedingProgress = progress
+      this.seedingMessage = message
+      console.log(`📊 Seeding Progress: ${progress}% - ${message}`)
+    }
   }
 
   /**

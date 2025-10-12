@@ -3,7 +3,7 @@ import { collection, getDocs, query, orderBy, where, addDoc } from 'firebase/fir
 import { db } from '../../firebaseClient'
 import { play } from '../../utils/soundPlayer'
 
-const ReportsTool = ({ financialData, onClose, onDataUpdate }) => {
+const ReportsTool = ({ financialData, transactions, user, onClose, onDataUpdate }) => {
   const [reports, setReports] = useState([])
   const [isLoading, setIsLoading] = useState(false)
   const [isGenerating, setIsGenerating] = useState(false)
@@ -24,15 +24,17 @@ const ReportsTool = ({ financialData, onClose, onDataUpdate }) => {
   ]
 
   useEffect(() => {
-    loadReports()
-  }, [financialData])
+    if (user) {
+      loadReports()
+    }
+  }, [user, financialData])
 
   const loadReports = async () => {
-    if (!financialData?.user) return
+    if (!user?.uid) return
     
     try {
       setIsLoading(true)
-      const reportsRef = collection(db, 'users', financialData.user.uid, 'reports')
+      const reportsRef = collection(db, 'users', user.uid, 'reports')
       const q = query(reportsRef, orderBy('createdAt', 'desc'))
       const snapshot = await getDocs(q)
       const reportsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
@@ -94,10 +96,10 @@ const ReportsTool = ({ financialData, onClose, onDataUpdate }) => {
         data: reportData,
         dateRange: dateRange,
         createdAt: new Date().toISOString(),
-        userId: financialData.user.uid
+        userId: user.uid
       }
 
-      const docRef = await addDoc(collection(db, 'users', financialData.user.uid, 'reports'), reportDoc)
+      const docRef = await addDoc(collection(db, 'users', user.uid, 'reports'), reportDoc)
       reportDoc.id = docRef.id
       
   setReports(prev => [reportDoc, ...prev])
@@ -244,7 +246,7 @@ const ReportsTool = ({ financialData, onClose, onDataUpdate }) => {
     const data = {
       report: report,
       generatedAt: new Date().toISOString(),
-      user: financialData.user.name
+      user: user.displayName || user.email
     }
     
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' })

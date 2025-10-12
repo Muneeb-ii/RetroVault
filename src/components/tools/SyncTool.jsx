@@ -3,7 +3,7 @@ import { play as playSound } from '../../utils/soundPlayer'
 import { doc, updateDoc, getDoc, setDoc } from 'firebase/firestore'
 import { db } from '../../firebaseClient'
 
-const SyncTool = ({ financialData, onClose, onDataUpdate }) => {
+const SyncTool = ({ financialData, user, onClose, onDataUpdate }) => {
   const [isSyncing, setIsSyncing] = useState(false)
   const [syncStatus, setSyncStatus] = useState('idle')
   const [message, setMessage] = useState('')
@@ -12,14 +12,16 @@ const SyncTool = ({ financialData, onClose, onDataUpdate }) => {
   const [syncProgress, setSyncProgress] = useState(0)
 
   useEffect(() => {
-    loadSyncHistory()
-  }, [financialData])
+    if (user) {
+      loadSyncHistory()
+    }
+  }, [user, financialData])
 
   const loadSyncHistory = async () => {
-    if (!financialData?.user) return
+    if (!user?.uid) return
     
     try {
-      const syncDoc = await getDoc(doc(db, 'users', financialData.user.uid, 'settings', 'sync'))
+      const syncDoc = await getDoc(doc(db, 'users', user.uid, 'settings', 'sync'))
       if (syncDoc.exists()) {
         const data = syncDoc.data()
         setLastSync(data.lastSync)
@@ -57,7 +59,7 @@ const SyncTool = ({ financialData, onClose, onDataUpdate }) => {
 
       // Update sync timestamp
       const now = new Date().toISOString()
-      await updateDoc(doc(db, 'users', financialData.user.uid, 'settings', 'sync'), {
+      await updateDoc(doc(db, 'users', user.uid, 'settings', 'sync'), {
         lastSync: now,
         syncType: syncType,
         status: 'success',

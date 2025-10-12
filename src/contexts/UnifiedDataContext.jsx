@@ -1,7 +1,7 @@
 // Unified Data Context for RetroVault
 // Single source of truth for all financial data across the application
 
-import { createContext, useContext, useState, useEffect } from 'react'
+import { createContext, useContext, useState, useEffect, useCallback } from 'react'
 import { onAuthStateChanged } from 'firebase/auth'
 import { auth } from '../firebaseClient'
 import { 
@@ -13,7 +13,8 @@ import {
   listenToUserTransactions
 } from '../api/unifiedFirestoreService'
 import { authService } from '../services/authService'
-import { dataSeedingService } from '../services/dataSeedingService'
+import { dataSeedingService, seedUserData } from '../services/dataSeedingService'
+import { getFinancialInsights } from '../api/aiService'
 
 const UnifiedDataContext = createContext()
 
@@ -41,6 +42,9 @@ export const UnifiedDataProvider = ({ children }) => {
   const [isSeeding, setIsSeeding] = useState(false)
   const [seedingProgress, setSeedingProgress] = useState(0)
   const [seedingMessage, setSeedingMessage] = useState('')
+  
+  // AI insights state
+  const [aiInsights, setAiInsights] = useState(['Your financial data is being analyzed...', 'AI insights will be available shortly.'])
 
   // Listen to auth state changes
   useEffect(() => {
@@ -59,7 +63,40 @@ export const UnifiedDataProvider = ({ children }) => {
       }
     })
     return unsubscribe
-  }, [])
+  }, []) // Empty dependency array is correct here - we only want this to run once
+
+  // Recalculate financial data when transactions or user profile changes
+  useEffect(() => {
+    if (userProfile || (transactions && transactions.length > 0)) {
+      console.log('🔄 [UNIFIED] Recalculating financial data due to data change')
+      // Just log the calculation, don't store it to avoid infinite loops
+      try {
+        const financialData = getFinancialData()
+        console.log('🔍 [UNIFIED] Updated financial data:', financialData)
+      } catch (error) {
+        console.error('❌ [UNIFIED] Error calculating financial data:', error)
+        // Don't throw here to prevent app crashes
+      }
+    }
+  }, [userProfile, transactions]) // Fixed: Use actual data dependencies instead of function
+
+  // Generate AI insights when transactions change
+  useEffect(() => {
+    if (transactions && transactions.length > 0) {
+      generateAiInsights()
+    }
+  }, [transactions])
+
+  // Generate AI insights function
+  const generateAiInsights = async () => {
+    try {
+      const insights = await getFinancialInsights(transactions, calculateSavingsFromTransactions(transactions))
+      setAiInsights(insights)
+    } catch (error) {
+      console.warn('Failed to generate AI insights:', error)
+      setAiInsights(['Your financial data is being analyzed...', 'AI insights will be available shortly.'])
+    }
+  }
 
   /**
    * Handle user authentication and data loading
@@ -100,10 +137,13 @@ export const UnifiedDataProvider = ({ children }) => {
     try {
       setLoadingMessage('Loading your financial data...')
       
-      // Load accounts and transactions in parallel
-      const [userAccounts, userTransactions] = await Promise.all([
+      // Load accounts and transactions in parallel with proper error handling
+      const [userAccounts, userTransactions] = await Promise.allSettled([
         getUserAccounts(userId, { activeOnly: true }),
         getUserTransactions(userId, { limitCount: 1000 }) // Increased to ensure we get all seeded transactions
+      ]).then(results => [
+        results[0].status === 'fulfilled' ? results[0].value : [],
+        results[1].status === 'fulfilled' ? results[1].value : []
       ])
 
       // Update state
@@ -113,8 +153,14 @@ export const UnifiedDataProvider = ({ children }) => {
       
       console.log('✅ [UNIFIED] User data loaded successfully:', {
         accountsCount: userAccounts.length,
-        transactionsCount: userTransactions.length
+        transactionsCount: userTransactions.length,
+        profileBalance: profile?.financialSummary?.totalBalance || 0,
+        hasProfile: !!profile
       })
+      
+      // Force a re-render by updating the financial data
+      const financialData = getFinancialData()
+      console.log('🔍 [UNIFIED] Computed financial data:', financialData)
       
     } catch (error) {
       console.error('❌ [UNIFIED] Error loading user data:', error)
@@ -192,7 +238,15 @@ export const UnifiedDataProvider = ({ children }) => {
       setAccounts(userAccounts)
       setTransactions(userTransactions)
       
-      console.log('✅ [UNIFIED] Data refreshed successfully')
+      console.log('✅ [UNIFIED] Data refreshed successfully:', {
+        accountsCount: userAccounts.length,
+        transactionsCount: userTransactions.length,
+        profileBalance: profile?.financialSummary?.totalBalance || 0
+      })
+      
+      // Force financial data recalculation
+      const financialData = getFinancialData()
+      console.log('🔍 [UNIFIED] Refreshed financial data:', financialData)
       
     } catch (error) {
       console.error('❌ [UNIFIED] Error refreshing data:', error)
@@ -231,17 +285,99 @@ export const UnifiedDataProvider = ({ children }) => {
   }
 
   /**
-   * Get computed financial data
+   * Get computed financial data with error handling
    */
-  const getFinancialData = () => {
-    console.log('🔍 [FINANCIAL DATA] Getting financial data:', {
-      hasUserProfile: !!userProfile,
-      transactionsCount: transactions?.length || 0,
-      userProfileBalance: userProfile?.financialSummary?.totalBalance || 0
-    })
-    
-    if (!userProfile) {
-      console.log('🔍 [FINANCIAL DATA] No user profile, returning zero data')
+  const getFinancialData = useCallback(() => {
+    try {
+      console.log('🔍 [FINANCIAL DATA] Getting financial data:', {
+        hasUserProfile: !!userProfile,
+        transactionsCount: transactions?.length || 0,
+        userProfileBalance: userProfile?.financialSummary?.totalBalance || 0
+      })
+      
+      if (!userProfile) {
+        console.log('🔍 [FINANCIAL DATA] No user profile, returning zero data')
+        return {
+          balance: 0,
+          totalIncome: 0,
+          totalExpenses: 0,
+          totalSavings: 0,
+          savings: [],
+          spendingBreakdown: [],
+          weeklyBalance: []
+        }
+      }
+
+      // If we have a user profile but no transactions yet, return profile data
+      if (!transactions || transactions.length === 0) {
+        console.log('🔍 [FINANCIAL DATA] No transactions yet, using profile data')
+        return {
+          balance: userProfile.financialSummary?.totalBalance || 0,
+          totalIncome: userProfile.financialSummary?.totalIncome || 0,
+          totalExpenses: userProfile.financialSummary?.totalExpenses || 0,
+          totalSavings: userProfile.financialSummary?.totalSavings || 0,
+          savings: [],
+          spendingBreakdown: [],
+          weeklyBalance: []
+        }
+      }
+
+      // Calculate derived data - handle different transaction type formats
+      // Add null/undefined checks to prevent runtime errors
+      const safeTransactions = Array.isArray(transactions) ? transactions : []
+      const incomeTransactions = safeTransactions.filter(t => 
+        t && typeof t === 'object' && (t.type === 'income' || t.type === 'deposit')
+      )
+      const expenseTransactions = safeTransactions.filter(t => 
+        t && typeof t === 'object' && (t.type === 'expense' || t.type === 'withdrawal')
+      )
+      
+      console.log('🔍 [FINANCIAL DATA] Transaction analysis:', {
+        totalTransactions: safeTransactions.length,
+        incomeTransactions: incomeTransactions.length,
+        expenseTransactions: expenseTransactions.length,
+        incomeSample: incomeTransactions.slice(0, 2),
+        expenseSample: expenseTransactions.slice(0, 2)
+      })
+      
+      // Standardize amount handling - ensure all amounts are positive for calculations
+      const totalIncome = incomeTransactions.reduce((sum, t) => {
+        const amount = Math.abs(Number(t?.amount) || 0)
+        return sum + amount
+      }, 0)
+      
+      const totalExpenses = expenseTransactions.reduce((sum, t) => {
+        const amount = Math.abs(Number(t?.amount) || 0)
+        return sum + amount
+      }, 0)
+      
+      console.log('🔍 [FINANCIAL DATA] Calculated totals:', {
+        totalIncome,
+        totalExpenses,
+        totalSavings: totalIncome - totalExpenses
+      })
+      
+      const totalSavings = totalIncome - totalExpenses
+      // Use calculated balance as single source of truth, with proper fallback logic
+      const calculatedBalance = totalSavings
+      const profileBalance = userProfile.financialSummary?.totalBalance || 0
+      // Use calculated balance if we have transactions, otherwise use profile balance
+      const balance = transactions && transactions.length > 0 ? calculatedBalance : profileBalance
+
+      return {
+        balance,
+        totalIncome,
+        totalExpenses,
+        totalSavings,
+        savings: calculateSavingsFromTransactions(transactions),
+        spendingBreakdown: calculateSpendingBreakdown(transactions),
+        weeklyBalance: generateWeeklyBalance(transactions, balance),
+        recentTransactions: transactions.slice(0, 5), // Add recent transactions
+        geminiInsight: aiInsights
+      }
+    } catch (error) {
+      console.error('❌ [FINANCIAL DATA] Error calculating financial data:', error)
+      // Return safe fallback data
       return {
         balance: 0,
         totalIncome: 0,
@@ -249,96 +385,65 @@ export const UnifiedDataProvider = ({ children }) => {
         totalSavings: 0,
         savings: [],
         spendingBreakdown: [],
-        weeklyBalance: []
+        weeklyBalance: [],
+        recentTransactions: [],
+        geminiInsight: aiInsights
       }
     }
-
-    // If we have a user profile but no transactions yet, return profile data
-    if (!transactions || transactions.length === 0) {
-      console.log('🔍 [FINANCIAL DATA] No transactions yet, using profile data')
-      return {
-        balance: userProfile.financialSummary?.totalBalance || 0,
-        totalIncome: userProfile.financialSummary?.totalIncome || 0,
-        totalExpenses: userProfile.financialSummary?.totalExpenses || 0,
-        totalSavings: userProfile.financialSummary?.totalSavings || 0,
-        savings: [],
-        spendingBreakdown: [],
-        weeklyBalance: []
-      }
-    }
-
-    // Calculate derived data - handle different transaction type formats
-    const incomeTransactions = transactions.filter(t => 
-      t.type === 'income' || t.type === 'deposit'
-    )
-    const expenseTransactions = transactions.filter(t => 
-      t.type === 'expense' || t.type === 'withdrawal'
-    )
-    
-    // Standardize amount handling - ensure all amounts are positive for calculations
-    const totalIncome = incomeTransactions.reduce((sum, t) => {
-      const amount = Math.abs(Number(t.amount) || 0)
-      return sum + amount
-    }, 0)
-    
-    const totalExpenses = expenseTransactions.reduce((sum, t) => {
-      const amount = Math.abs(Number(t.amount) || 0)
-      return sum + amount
-    }, 0)
-    
-    const totalSavings = totalIncome - totalExpenses
-    // Use calculated balance as single source of truth, fallback to profile balance
-    const calculatedBalance = totalSavings
-    const profileBalance = userProfile.financialSummary?.totalBalance || 0
-    const balance = calculatedBalance !== 0 ? calculatedBalance : profileBalance
-
-    return {
-      balance,
-      totalIncome,
-      totalExpenses,
-      totalSavings,
-      savings: calculateSavingsFromTransactions(transactions),
-      spendingBreakdown: calculateSpendingBreakdown(transactions),
-      weeklyBalance: generateWeeklyBalance(transactions, balance)
-    }
-  }
+  }, [userProfile, transactions])
 
   /**
    * Calculate savings from transactions
    */
   const calculateSavingsFromTransactions = (transactions) => {
-    const monthlyData = {}
-    
-    transactions.forEach(transaction => {
-      const date = new Date(transaction.date)
-      const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
+    try {
+      const monthlyData = {}
+      const safeTransactions = Array.isArray(transactions) ? transactions : []
       
-      if (!monthlyData[monthKey]) {
-        monthlyData[monthKey] = { income: 0, expenses: 0 }
-      }
-      
-      if (transaction.type === 'income' || transaction.type === 'deposit') {
-        monthlyData[monthKey].income += Math.abs(Number(transaction.amount) || 0)
-      } else {
-        monthlyData[monthKey].expenses += Math.abs(Number(transaction.amount) || 0)
-      }
-    })
+      safeTransactions.forEach(transaction => {
+        if (!transaction || typeof transaction !== 'object' || !transaction.date) {
+          console.warn('Invalid transaction data:', transaction)
+          return
+        }
+        
+        const date = new Date(transaction.date)
+        if (isNaN(date.getTime())) {
+          console.warn('Invalid transaction date:', transaction.date)
+          return
+        }
+        
+        const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
+        
+        if (!monthlyData[monthKey]) {
+          monthlyData[monthKey] = { income: 0, expenses: 0 }
+        }
+        
+        if (transaction.type === 'income' || transaction.type === 'deposit') {
+          monthlyData[monthKey].income += Math.abs(Number(transaction.amount) || 0)
+        } else {
+          monthlyData[monthKey].expenses += Math.abs(Number(transaction.amount) || 0)
+        }
+      })
     
-    // Calculate cumulative savings over time
-    const sortedMonths = Object.entries(monthlyData)
-      .sort(([a], [b]) => a.localeCompare(b))
-    
-    let cumulativeSavings = 0
-    return sortedMonths.map(([month, data]) => {
-      const monthlySavings = data.income - data.expenses
-      cumulativeSavings += monthlySavings
+      // Calculate cumulative savings over time
+      const sortedMonths = Object.entries(monthlyData)
+        .sort(([a], [b]) => a.localeCompare(b))
       
-      return {
-        month: new Date(month + '-01').toLocaleString('default', { month: 'short' }),
-        amount: Math.max(0, cumulativeSavings),
-        year: new Date(month + '-01').getFullYear()
-      }
-    })
+      let cumulativeSavings = 0
+      return sortedMonths.map(([month, data]) => {
+        const monthlySavings = data.income - data.expenses
+        cumulativeSavings += monthlySavings
+        
+        return {
+          month: new Date(month + '-01').toLocaleString('default', { month: 'short' }),
+          amount: Math.max(0, cumulativeSavings),
+          year: new Date(month + '-01').getFullYear()
+        }
+      })
+    } catch (error) {
+      console.error('Error calculating savings from transactions:', error)
+      return []
+    }
   }
 
   /**
@@ -449,6 +554,46 @@ export const UnifiedDataProvider = ({ children }) => {
     return colors[category] || '#95A5A6'
   }
 
+  /**
+   * Force data seeding for debugging
+   */
+  const forceDataSeeding = async () => {
+    if (!user) return
+    
+    try {
+      setIsLoading(true)
+      setLoadingMessage('Force seeding data...')
+      
+      const userInfo = {
+        name: user.displayName || 'User',
+        email: user.email || '',
+        photoURL: user.photoURL || null
+      }
+      
+      const seedingResult = await seedUserData(
+        user.uid, 
+        userInfo, 
+        true // Force refresh
+      ).catch(error => {
+        console.error('❌ [UNIFIED] Error in force seeding:', error)
+        return { success: false, error: error.message }
+      })
+      
+      if (seedingResult.success) {
+        await loadUserData(user.uid, seedingResult.userProfile)
+        console.log('✅ [UNIFIED] Force seeding completed')
+      } else {
+        throw new Error(seedingResult.error || 'Force seeding failed')
+      }
+      
+    } catch (error) {
+      console.error('❌ [UNIFIED] Error force seeding:', error)
+      setError(error.message)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
   // Context value
   const value = {
     // Core data
@@ -471,9 +616,11 @@ export const UnifiedDataProvider = ({ children }) => {
     refreshData,
     updateSummary,
     signOut,
+    forceDataSeeding,
     
     // Computed data
     financialData: getFinancialData(),
+    aiInsights,
     
     // Helper functions
     calculateSavingsFromTransactions,

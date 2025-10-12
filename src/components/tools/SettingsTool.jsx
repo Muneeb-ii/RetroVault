@@ -4,7 +4,7 @@ import { db } from '../../firebaseClient'
 import { safeTimestamp } from '../../utils/timestampUtils'
 import { play as playSound } from '../../utils/soundPlayer'
 
-const SettingsTool = ({ financialData, onClose, onDataUpdate }) => {
+const SettingsTool = ({ financialData, transactions, accounts, user, onClose, onDataUpdate }) => {
   const [settings, setSettings] = useState({
     currency: 'USD',
     dateFormat: 'MM/DD/YYYY',
@@ -81,7 +81,7 @@ const SettingsTool = ({ financialData, onClose, onDataUpdate }) => {
     
     try {
       setIsLoading(true)
-      const settingsDoc = await getDoc(doc(db, 'users', financialData.user.uid, 'settings', 'preferences'))
+      const settingsDoc = await getDoc(doc(db, 'users', user.uid, 'settings', 'preferences'))
       if (settingsDoc.exists()) {
         setSettings({ ...settings, ...settingsDoc.data() })
       }
@@ -105,7 +105,7 @@ const SettingsTool = ({ financialData, onClose, onDataUpdate }) => {
     
     try {
       setIsSaving(true)
-      await setDoc(doc(db, 'users', financialData.user.uid, 'settings', 'preferences'), {
+      await setDoc(doc(db, 'users', user.uid, 'settings', 'preferences'), {
         ...settings,
         lastUpdated: new Date().toISOString()
       })
@@ -143,9 +143,9 @@ const SettingsTool = ({ financialData, onClose, onDataUpdate }) => {
 
   const exportData = () => {
     const data = {
-      user: financialData.user,
-      transactions: financialData.transactions,
-      accounts: financialData.accounts,
+      user: user,
+      transactions: transactions,
+      accounts: accounts,
       settings: settings,
       exportDate: new Date().toISOString()
     }

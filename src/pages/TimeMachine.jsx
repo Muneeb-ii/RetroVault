@@ -5,6 +5,7 @@ import {
 } from 'recharts'
 import TopNav from '../components/TopNav'
 import SideBar from '../components/SideBar'
+import ErrorBoundary from '../components/ErrorBoundary'
 import { useUnifiedData } from '../contexts/UnifiedDataContext'
 import { 
   playStoryAudio,
@@ -51,6 +52,11 @@ const TimeMachine = () => {
   const calculateAdvancedProjections = () => {
     if (!financialData) {
       console.warn('No financial data available for projections')
+      setDataValidation({
+        isValid: false,
+        errors: ['No financial data available'],
+        warnings: []
+      })
       return
     }
     
@@ -58,7 +64,12 @@ const TimeMachine = () => {
       // Step 1: Validate and sanitize financial data
       const sanitizedData = sanitizeFinancialData(financialData)
       if (!sanitizedData) {
-        throw new Error('Failed to sanitize financial data')
+        setDataValidation({
+          isValid: false,
+          errors: ['Failed to sanitize financial data'],
+          warnings: []
+        })
+        return
       }
       
       const dataValidationResult = validateFinancialData(sanitizedData)
@@ -158,41 +169,61 @@ const TimeMachine = () => {
         )
         
         if (!projectionData || !projectionData.projections) {
-          throw new Error('Invalid projection data returned')
+          setDataValidation({
+            isValid: false,
+            errors: ['Invalid projection data returned'],
+            warnings: []
+          })
+          return
         }
         
         // Attach computed savings values for UI display
         setProjections(prev => ({ ...projectionData, currentMonthlySavings: Math.round(currentMonthlySavings), newMonthlySavings: Math.round(newMonthlySavings) }))
         
-        // Calculate milestones
-        const newMilestones = generateAdvancedMilestones(
-          currentBalance, 
-          newMonthlySavings, 
-          scenario.annualReturn, 
-          scenario.inflation
-        )
-        setMilestones(newMilestones)
+        // Calculate milestones with error handling
+        try {
+          const newMilestones = generateAdvancedMilestones(
+            currentBalance, 
+            newMonthlySavings, 
+            scenario.annualReturn, 
+            scenario.inflation
+          )
+          setMilestones(newMilestones)
+        } catch (milestoneError) {
+          console.warn('Error calculating milestones:', milestoneError)
+          setMilestones([])
+        }
         
-        // Calculate retirement readiness
-        const retirement = calculateRetirementReadiness(
-          currentAge,
-          retirementAge,
-          currentBalance,
-          newMonthlySavings,
-          scenario.annualReturn,
-          scenario.inflation
-        )
-        setRetirementData(retirement)
+        // Calculate retirement readiness with error handling
+        try {
+          const retirement = calculateRetirementReadiness(
+            currentAge,
+            retirementAge,
+            currentBalance,
+            newMonthlySavings,
+            scenario.annualReturn,
+            scenario.inflation
+          )
+          setRetirementData(retirement)
+        } catch (retirementError) {
+          console.warn('Error calculating retirement readiness:', retirementError)
+          setRetirementData(null)
+        }
         
-        // Calculate Monte Carlo simulation
-        const monteCarlo = monteCarloSimulation(
-          currentBalance,
-          newMonthlySavings,
-          scenario.annualReturn,
-          scenario.annualReturn * 0.15, // 15% volatility
-          timeRange
-        )
-        setMonteCarloData(monteCarlo)
+        // Calculate Monte Carlo simulation with error handling
+        try {
+          const monteCarlo = monteCarloSimulation(
+            currentBalance,
+            newMonthlySavings,
+            scenario.annualReturn,
+            scenario.annualReturn * 0.15, // 15% volatility
+            timeRange
+          )
+          setMonteCarloData(monteCarlo)
+        } catch (monteCarloError) {
+          console.warn('Error calculating Monte Carlo simulation:', monteCarloError)
+          setMonteCarloData(null)
+        }
       
       } catch (error) {
         console.error('Error in calculations:', error)
@@ -201,6 +232,11 @@ const TimeMachine = () => {
           errors: ['Calculation error: ' + error.message],
           warnings: []
         })
+        // Set safe fallback values
+        setProjections(null)
+        setMilestones([])
+        setRetirementData(null)
+        setMonteCarloData(null)
       }
     } catch (error) {
       console.error('Error in projection calculation:', error)
@@ -209,6 +245,11 @@ const TimeMachine = () => {
         errors: ['Projection calculation failed: ' + error.message],
         warnings: []
       })
+      // Set safe fallback values to prevent crashes
+      setProjections(null)
+      setMilestones([])
+      setRetirementData(null)
+      setMonteCarloData(null)
     }
   }
 
@@ -262,34 +303,54 @@ const TimeMachine = () => {
 
   // Prepare chart data for different visualizations
   const prepareChartData = () => {
-    if (!projections || !projections.projections || projections.projections.length === 0) return []
-    // Take yearly points (every 12 months), map to readable year and ensure ascending order
-    const yearly = projections.projections
-      .filter((_, index) => index % 12 === 0)
-      .map((point) => ({
-        // Use the projection's date for an accurate year label when available
-        year: point.date ? new Date(point.date).getFullYear() : (point.year || 0),
-        balance: point.balance || 0,
-        realValue: point.realValue || 0,
-        contributions: point.totalContributions || 0,
-        interest: point.totalInterest || 0
-      }))
+    try {
+      if (!projections || !projections.projections || !Array.isArray(projections.projections) || projections.projections.length === 0) {
+        console.warn('No valid projections data available for chart')
+        return []
+      }
+      
+      // Take yearly points (every 12 months), map to readable year and ensure ascending order
+      const yearly = projections.projections
+        .filter((_, index) => index % 12 === 0)
+        .map((point) => ({
+          // Use the projection's date for an accurate year label when available
+          year: point.date ? new Date(point.date).getFullYear() : (point.year || 0),
+          balance: point.balance || 0,
+          realValue: point.realValue || 0,
+          contributions: point.totalContributions || 0,
+          interest: point.totalInterest || 0
+        }))
 
-    // Sort by year ascending to ensure chart x-axis is increasing
-    yearly.sort((a, b) => a.year - b.year)
-    return yearly
+      // Sort by year ascending to ensure chart x-axis is increasing
+      yearly.sort((a, b) => a.year - b.year)
+      return yearly
+    } catch (error) {
+      console.error('Error preparing chart data:', error)
+      return []
+    }
   }
 
   const prepareContributionData = () => {
-    if (!projections || !projections.projections || projections.projections.length === 0) return []
-    
-    const final = projections.projections[projections.projections.length - 1]
-    if (!final) return []
-    
-    return [
-      { name: 'Contributions', value: final.totalContributions || 0, color: '#4A90E2' },
-      { name: 'Interest Earned', value: final.totalInterest || 0, color: '#7B68EE' }
-    ]
+    try {
+      if (!projections || !projections.projections || !Array.isArray(projections.projections) || projections.projections.length === 0) {
+        console.warn('No valid projections data available for contribution chart')
+        return []
+      }
+      
+      const final = projections.projections[projections.projections.length - 1]
+      if (!final) {
+        console.warn('No final projection data available')
+        return []
+      }
+      
+      return [
+        { name: 'Contributions', value: final.totalContributions || 0, color: '#4A90E2' },
+        { name: 'Interest Earned', value: final.totalInterest || 0, color: '#7B68EE' }
+      ]
+    } catch (error) {
+      console.error('Error preparing contribution data:', error)
+      return []
+    }
   }
 
   // Loading state
@@ -512,12 +573,12 @@ const TimeMachine = () => {
             {activeTab === 'projections' && (
               <div className="space-y-6">
                 {/* Key Metrics */}
-                {projections && (
+                {projections && projections.summary && (
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="retro-chart text-center">
                       <div className="text-sm font-bold mb-2">FINAL BALANCE</div>
                       <div className="text-2xl font-bold text-green-600 mb-1">
-                        ${projections.summary.finalBalance.toLocaleString()}
+                        ${(projections.summary.finalBalance || 0).toLocaleString()}
                       </div>
                       <div className="text-xs text-gray-600">
                         in {timeRange} years
@@ -526,7 +587,7 @@ const TimeMachine = () => {
                     <div className="retro-chart text-center">
                       <div className="text-sm font-bold mb-2">REAL VALUE</div>
                       <div className="text-2xl font-bold text-blue-600 mb-1">
-                        ${projections.summary.finalRealValue.toLocaleString()}
+                        ${(projections.summary.finalRealValue || 0).toLocaleString()}
                       </div>
                       <div className="text-xs text-gray-600">
                         inflation-adjusted
@@ -535,7 +596,7 @@ const TimeMachine = () => {
                     <div className="retro-chart text-center">
                       <div className="text-sm font-bold mb-2">INTEREST EARNED</div>
                       <div className="text-2xl font-bold text-purple-600 mb-1">
-                        ${projections.summary.totalInterest.toLocaleString()}
+                        ${(projections.summary.totalInterest || 0).toLocaleString()}
                       </div>
                       <div className="text-xs text-gray-600">
                         compound growth

@@ -12,7 +12,7 @@ import ElizaTool from './tools/ElizaTool'
 import { play as playSound } from '../utils/soundPlayer'
 
 const SideBar = () => {
-  const { financialData, refreshData } = useUnifiedData()
+  const { financialData, transactions, accounts, user, refreshData } = useUnifiedData()
   const [activeTool, setActiveTool] = useState(null)
   const [isToolOpen, setIsToolOpen] = useState(false)
 
@@ -89,7 +89,7 @@ const SideBar = () => {
           <div className="flex justify-between">
             <span className="retro-text-reveal" style={{animationDelay: '0.3s'}}>Data:</span>
             <span className="retro-fade-in-delay-3">
-              {financialData?.transactions?.length || 0} transactions
+              {transactions?.length || 0} transactions
             </span>
           </div>
         </div>
@@ -112,6 +112,9 @@ const SideBar = () => {
                 <ErrorBoundary>
                   {React.createElement(toolComponents[activeTool], {
                     financialData: financialData,
+                    transactions: transactions,
+                    accounts: accounts,
+                    user: user,
                     onClose: closeTool,
                     onDataUpdate: handleDataUpdate
                   })}

@@ -1,6 +1,6 @@
 // Capital One Nessie API Service
 // Updated to use the correct Nessie API endpoint: api.nessieisreal.com
-const NESSIE_API_BASE = 'http://api.nessieisreal.com'
+const NESSIE_API_BASE = 'https://api.nessieisreal.com'
 
 /**
  * Get all customers (to find available customer IDs)
@@ -11,7 +11,8 @@ export const getCustomers = async () => {
     const apiKey = import.meta.env.VITE_NESSIE_API_KEY
     
     if (!apiKey || apiKey === 'your_nessie_api_key_here') {
-      throw new Error('Nessie API key not configured')
+      console.warn('⚠️ [NESSIE] API key not configured, using mock data')
+      return [] // Return empty array instead of throwing
     }
 
     console.log('🔍 [NESSIE] Fetching customers...')
@@ -47,7 +48,8 @@ export const createCustomer = async (customerData) => {
     const apiKey = import.meta.env.VITE_NESSIE_API_KEY
     
     if (!apiKey || apiKey === 'your_nessie_api_key_here') {
-      throw new Error('Nessie API key not configured')
+      console.warn('⚠️ [NESSIE] API key not configured, using mock data')
+      return [] // Return empty array instead of throwing
     }
 
     console.log('🔍 [NESSIE] Creating customer...')
@@ -90,7 +92,8 @@ export const createAccount = async (customerId, accountData) => {
     const apiKey = import.meta.env.VITE_NESSIE_API_KEY
     
     if (!apiKey || apiKey === 'your_nessie_api_key_here') {
-      throw new Error('Nessie API key not configured')
+      console.warn('⚠️ [NESSIE] API key not configured, using mock data')
+      return [] // Return empty array instead of throwing
     }
 
     console.log('🔍 [NESSIE] Creating account...')
@@ -132,7 +135,8 @@ export const getAccounts = async (customerId) => {
     const apiKey = import.meta.env.VITE_NESSIE_API_KEY
     
     if (!apiKey || apiKey === 'your_nessie_api_key_here') {
-      throw new Error('Nessie API key not configured')
+      console.warn('⚠️ [NESSIE] API key not configured, using mock data')
+      return [] // Return empty array instead of throwing
     }
 
     console.log('🔍 [NESSIE] Attempting to fetch accounts...')
@@ -182,7 +186,8 @@ export const createTransaction = async (accountId, transactionData) => {
     const apiKey = import.meta.env.VITE_NESSIE_API_KEY
     
     if (!apiKey || apiKey === 'your_nessie_api_key_here') {
-      throw new Error('Nessie API key not configured')
+      console.warn('⚠️ [NESSIE] API key not configured, using mock data')
+      return [] // Return empty array instead of throwing
     }
 
     console.log('🔍 [NESSIE] Creating transaction...')
@@ -226,7 +231,8 @@ export const getTransactions = async (accountId, startDate = null, endDate = nul
     const apiKey = import.meta.env.VITE_NESSIE_API_KEY
     
     if (!apiKey || apiKey === 'your_nessie_api_key_here') {
-      throw new Error('Nessie API key not configured')
+      console.warn('⚠️ [NESSIE] API key not configured, using mock data')
+      return [] // Return empty array instead of throwing
     }
 
     // Default to last 30 days if no dates provided
@@ -263,7 +269,8 @@ export const getAccountDetails = async (accountId) => {
     const apiKey = import.meta.env.VITE_NESSIE_API_KEY
     
     if (!apiKey || apiKey === 'your_nessie_api_key_here') {
-      throw new Error('Nessie API key not configured')
+      console.warn('⚠️ [NESSIE] API key not configured, using mock data')
+      return [] // Return empty array instead of throwing
     }
 
     const response = await fetch(`${NESSIE_API_BASE}/accounts/${accountId}?key=${apiKey}`)

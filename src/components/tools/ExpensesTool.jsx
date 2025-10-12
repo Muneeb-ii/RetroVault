@@ -9,7 +9,7 @@ import {
 import { safeTimestamp } from '../../utils/timestampUtils'
 import { play as playSound } from '../../utils/soundPlayer'
 
-const ExpensesTool = ({ financialData, onClose, onDataUpdate }) => {
+const ExpensesTool = ({ financialData, transactions: contextTransactions, accounts, user, onClose, onDataUpdate }) => {
   const [transactions, setTransactions] = useState([])
   const [isLoading, setIsLoading] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
@@ -30,15 +30,17 @@ const ExpensesTool = ({ financialData, onClose, onDataUpdate }) => {
   ]
 
   useEffect(() => {
-    loadTransactions()
-  }, [financialData])
+    if (user) {
+      loadTransactions()
+    }
+  }, [user, financialData])
 
   const loadTransactions = async () => {
-    if (!financialData?.user) return
+    if (!user?.uid) return
     
     try {
       setIsLoading(true)
-      const transactionData = await getUserTransactions(financialData.user.uid, { 
+      const transactionData = await getUserTransactions(user.uid, { 
         limitCount: 50 
       })
       setTransactions(transactionData)
@@ -74,8 +76,8 @@ const ExpensesTool = ({ financialData, onClose, onDataUpdate }) => {
     try {
       setIsSaving(true)
       const transactionData = {
-        userId: financialData.user.uid,
-        accountId: financialData.accounts[0]?.id || 'default',
+        userId: user.uid,
+        accountId: accounts[0]?.id || 'default',
         amount: parseFloat(newTransaction.amount),
         type: newTransaction.type,
         category: newTransaction.category,

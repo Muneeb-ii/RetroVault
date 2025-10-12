@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react'
 import TopNav from '../components/TopNav'
 import SideBar from '../components/SideBar'
+import ErrorBoundary from '../components/ErrorBoundary'
 import { useUnifiedData } from '../contexts/UnifiedDataContext'
 import { generateFinancialStory, generateStoryMetadata } from '../api/storyService'
 import { ElevenLabsClient, play } from '@elevenlabs/elevenlabs-js';
 
 const StoryMode = () => {
-  const { financialData, isLoading, error } = useUnifiedData()
+  const { financialData, transactions, isLoading, error } = useUnifiedData()
   const [story, setStory] = useState('')
   const [metadata, setMetadata] = useState(null)
   const [isGenerating, setIsGenerating] = useState(false)
@@ -22,6 +23,7 @@ const playStoryAudio = async (story) => {
   console.log(story)
   let audioElement = null
   let audioUrl = null
+  let cleanup = null
   
   try {
      const audio = await elevenlabs.textToSpeech.convert("EXAVITQu4vr4xnSDxMaL", {
@@ -38,30 +40,64 @@ const playStoryAudio = async (story) => {
     
      audioElement = new Audio(audioUrl);
      
-     // Add cleanup listeners
-     const cleanup = () => {
-       if (audioUrl) {
-         URL.revokeObjectURL(audioUrl)
-         audioUrl = null
-       }
-       if (audioElement) {
-         audioElement.removeEventListener('ended', cleanup)
-         audioElement.removeEventListener('error', cleanup)
-         audioElement = null
+     // Create cleanup function with proper variable capture
+     cleanup = () => {
+       try {
+         if (audioUrl) {
+           URL.revokeObjectURL(audioUrl)
+           audioUrl = null
+         }
+         if (audioElement) {
+           audioElement.removeEventListener('ended', cleanup)
+           audioElement.removeEventListener('error', cleanup)
+           audioElement.removeEventListener('abort', cleanup)
+           audioElement.pause()
+           audioElement.src = ''
+           audioElement = null
+         }
+       } catch (cleanupError) {
+         console.warn('Error during audio cleanup:', cleanupError)
        }
      }
      
+     // Add event listeners with proper error handling
      audioElement.addEventListener('ended', cleanup)
      audioElement.addEventListener('error', cleanup)
+     audioElement.addEventListener('abort', cleanup)
+     
+     // Add timeout to prevent hanging
+     const timeoutId = setTimeout(() => {
+       console.warn('Audio playback timeout, cleaning up')
+       if (cleanup) cleanup()
+     }, 30000) // 30 second timeout
+     
+     audioElement.addEventListener('ended', () => {
+       clearTimeout(timeoutId)
+       if (cleanup) cleanup()
+     })
      
      await audioElement.play();
     
   } catch (error) {
     console.error('Error playing audio:', error);
-    // Cleanup on error
-    if (audioUrl) {
-      URL.revokeObjectURL(audioUrl)
+    // Safe cleanup on error
+    if (cleanup) {
+      cleanup()
+    } else {
+      // Fallback cleanup if cleanup function wasn't created
+      try {
+        if (audioUrl) {
+          URL.revokeObjectURL(audioUrl)
+        }
+        if (audioElement) {
+          audioElement.pause()
+          audioElement.src = ''
+        }
+      } catch (fallbackError) {
+        console.warn('Error during fallback cleanup:', fallbackError)
+      }
     }
+    throw error // Re-throw to handle in calling code
   }
 };
   // Generate story when component mounts
@@ -70,6 +106,39 @@ const playStoryAudio = async (story) => {
       generateStory()
     }
   }, [financialData])
+
+  // Cleanup audio resources on component unmount
+  useEffect(() => {
+    return () => {
+      // Cleanup any pending audio resources
+      try {
+        // Stop any playing audio
+        const audioElements = document.querySelectorAll('audio')
+        audioElements.forEach(audio => {
+          audio.pause()
+          audio.src = ''
+          audio.load() // Reset the audio element
+        })
+        
+        // Revoke any object URLs that might be hanging
+        if (window.audioCleanup) {
+          window.audioCleanup()
+          window.audioCleanup = null
+        }
+        
+        // Clear any pending timeouts
+        if (window.audioTimeout) {
+          clearTimeout(window.audioTimeout)
+          window.audioTimeout = null
+        }
+        
+        setIsPlaying(false)
+        setIsAudioLoading(false)
+      } catch (error) {
+        console.warn('Error during component cleanup:', error)
+      }
+    }
+  }, [])
 
   const generateStory = async () => {
     if (!financialData) return
@@ -93,14 +162,14 @@ const playStoryAudio = async (story) => {
     
     try {
       const storyText = await generateFinancialStory(
-        financialData.transactions,
-        financialData.savings,
+        transactions || [],
+        financialData.savings || [],
         financialData.aiInsight,
         financialData.balance
       )
       setStory(storyText)
       
-      const storyMeta = generateStoryMetadata(financialData.transactions, financialData.savings, financialData.balance)
+      const storyMeta = generateStoryMetadata(transactions || [], financialData.savings || [], financialData.balance)
       setMetadata(storyMeta)
     } catch (error) {
       console.error('Error generating story:', error)
@@ -112,27 +181,45 @@ const playStoryAudio = async (story) => {
   }
 
   const playStory = async () => {
-    // Show 2 second loading filler while we request audio
-    setIsAudioLoading(true)
-    setAudioLoadingProgress(0)
-    const start = Date.now()
-    const duration = 7000
-    const intv = setInterval(() => {
-      const elapsed = Date.now() - start
-      const pct = Math.min(100, Math.round((elapsed / duration) * 100))
-      setAudioLoadingProgress(pct)
-      if (elapsed >= duration) {
-        clearInterval(intv)
+    try {
+      // Show 2 second loading filler while we request audio
+      setIsAudioLoading(true)
+      setAudioLoadingProgress(0)
+      const start = Date.now()
+      const duration = 7000
+      const intv = setInterval(() => {
+        const elapsed = Date.now() - start
+        const pct = Math.min(100, Math.round((elapsed / duration) * 100))
+        setAudioLoadingProgress(pct)
+        if (elapsed >= duration) {
+          clearInterval(intv)
+          setIsAudioLoading(false)
+        }
+      }, 100)
+
+      setIsPlaying(true)
+      
+      // Store cleanup function globally for component unmount
+      window.audioCleanup = () => {
+        setIsPlaying(false)
         setIsAudioLoading(false)
       }
-    }, 100)
-
-    setIsPlaying(true)
-    await playStoryAudio(story)
-    // Simulate audio playback with visual feedback
-    setTimeout(() => {
+      
+      // Store timeout reference for cleanup
+      window.audioTimeout = setTimeout(() => {
+        setIsPlaying(false)
+        setIsAudioLoading(false)
+      }, 5000) // 5 second simulation
+      
+      await playStoryAudio(story)
+      
+    } catch (error) {
+      console.error('Error playing story audio:', error)
       setIsPlaying(false)
-    }, 5000) // 5 second simulation
+      setIsAudioLoading(false)
+      // Show user-friendly error message
+      alert('Unable to play audio. Please try again.')
+    }
   }
 
   // Loading state
@@ -192,7 +279,8 @@ const playStoryAudio = async (story) => {
       <div className="flex">
         <SideBar />
         <div className="flex-1">
-          <div className="retro-window p-4">
+          <ErrorBoundary>
+            <div className="retro-window p-4">
             <div className="text-center font-bold text-lg mb-4 text-retro-dark">
               📖 STORY MODE
             </div>
@@ -341,7 +429,8 @@ const playStoryAudio = async (story) => {
                 complete with achievements, milestones, and character progression.
               </div>
             </div>
-          </div>
+            </div>
+          </ErrorBoundary>
         </div>
       </div>
     </div>

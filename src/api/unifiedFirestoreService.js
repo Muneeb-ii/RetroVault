@@ -105,6 +105,15 @@ export const createUserProfile = async (userId, userData) => {
     
   } catch (error) {
     console.error('❌ Error creating user profile:', error)
+    // Handle specific Firestore errors gracefully
+    if (error.code === 'permission-denied') {
+      console.warn('⚠️ Permission denied creating user profile')
+      throw new Error('Permission denied: Unable to create user profile')
+    }
+    if (error.code === 'unavailable') {
+      console.warn('⚠️ Firestore unavailable for user profile creation')
+      throw new Error('Service unavailable: Please try again later')
+    }
     throw error
   }
 }
@@ -114,6 +123,11 @@ export const createUserProfile = async (userId, userData) => {
  */
 export const getUserProfile = async (userId) => {
   try {
+    // Validate userId
+    if (!userId) {
+      throw new Error('User ID is required')
+    }
+    
     const userRef = doc(collections.users(), userId)
     const userDoc = await getDoc(userRef)
     
@@ -123,7 +137,31 @@ export const getUserProfile = async (userId) => {
     return null
   } catch (error) {
     console.error('❌ Error getting user profile:', error)
-    throw error
+    // Handle specific Firestore errors gracefully
+    if (error.code === 'permission-denied') {
+      console.warn('⚠️ Permission denied for user profile')
+      // Return a default user profile to prevent app crashes
+      return {
+        id: userId,
+        profile: { name: 'User', email: '', photoURL: null },
+        financialSummary: { totalBalance: 0, totalIncome: 0, totalExpenses: 0, totalSavings: 0 },
+        dataSource: 'Default',
+        syncStatus: { lastSync: new Date(), isConsistent: false, needsRefresh: true, version: 1 },
+        preferences: { currency: 'USD', timezone: 'UTC', categories: [], notifications: {} },
+        metadata: { accountsCount: 0, transactionsCount: 0, dataVersion: '2.0' }
+      }
+    }
+    if (error.code === 'unavailable') {
+      console.warn('⚠️ Firestore unavailable for user profile')
+      return null
+    }
+    if (error.code === 'not-found') {
+      console.warn('⚠️ User profile not found')
+      return null
+    }
+    // For other errors, return null instead of throwing to prevent app crashes
+    console.warn('⚠️ Unexpected error getting user profile, returning null:', error.message)
+    return null
   }
 }
 
@@ -329,6 +367,11 @@ export const createTransaction = async (transactionData) => {
  */
 export const getUserTransactions = async (userId, options = {}) => {
   try {
+    // Validate userId
+    if (!userId) {
+      throw new Error('User ID is required')
+    }
+    
     const { 
       limitCount = 100, 
       startAfter = null, 
@@ -370,7 +413,22 @@ export const getUserTransactions = async (userId, options = {}) => {
     
   } catch (error) {
     console.error('❌ Error getting user transactions:', error)
-    throw error
+    // Return empty array instead of throwing to prevent app crashes
+    if (error.code === 'permission-denied') {
+      console.warn('⚠️ Permission denied for transactions, returning empty array')
+      return []
+    }
+    if (error.code === 'unavailable') {
+      console.warn('⚠️ Firestore unavailable, returning empty array')
+      return []
+    }
+    if (error.code === 'not-found') {
+      console.warn('⚠️ Transactions not found, returning empty array')
+      return []
+    }
+    // For other errors, return empty array instead of throwing
+    console.warn('⚠️ Unexpected error getting transactions, returning empty array:', error.message)
+    return []
   }
 }
 

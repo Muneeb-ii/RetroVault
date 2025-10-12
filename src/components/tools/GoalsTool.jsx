@@ -7,7 +7,7 @@ import {
 } from '../../api/unifiedFirestoreService'
 import { play as playSound } from '../../utils/soundPlayer'
 
-const GoalsTool = ({ financialData, onClose, onDataUpdate }) => {
+const GoalsTool = ({ financialData, user, onClose, onDataUpdate }) => {
   const [goals, setGoals] = useState([])
   const [isLoading, setIsLoading] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
@@ -32,15 +32,17 @@ const GoalsTool = ({ financialData, onClose, onDataUpdate }) => {
   const priorities = ['Low', 'Medium', 'High']
 
   useEffect(() => {
-    loadGoals()
-  }, [financialData])
+    if (user) {
+      loadGoals()
+    }
+  }, [user, financialData])
 
   const loadGoals = async () => {
-    if (!financialData?.user) return
+    if (!user?.uid) return
     
     try {
       setIsLoading(true)
-      const goalsData = await getUserGoals(financialData.user.uid)
+      const goalsData = await getUserGoals(user.uid)
       setGoals(goalsData)
     } catch (error) {
       console.error('Error loading goals:', error)
@@ -83,7 +85,7 @@ const GoalsTool = ({ financialData, onClose, onDataUpdate }) => {
         currentAmount: parseFloat(newGoal.currentAmount) || 0,
         targetDate: new Date(newGoal.targetDate).toISOString(),
         createdAt: new Date().toISOString(),
-        userId: financialData.user.uid,
+        userId: user.uid,
         isCompleted: false
       }
 
@@ -141,7 +143,7 @@ const GoalsTool = ({ financialData, onClose, onDataUpdate }) => {
     if (!confirm('Are you sure you want to delete this goal?')) return
     
     try {
-      await deleteDoc(doc(db, 'users', financialData.user.uid, 'goals', goalId))
+      await deleteDoc(doc(db, 'users', user.uid, 'goals', goalId))
   setMessage('Goal deleted successfully!')
   playSound('success')
       setTimeout(() => setMessage(''), 3000)
@@ -155,7 +157,7 @@ const GoalsTool = ({ financialData, onClose, onDataUpdate }) => {
 
   const updateProgress = async (goalId, newAmount) => {
     try {
-      await updateDoc(doc(db, 'users', financialData.user.uid, 'goals', goalId), {
+      await updateDoc(doc(db, 'users', user.uid, 'goals', goalId), {
         currentAmount: parseFloat(newAmount),
         isCompleted: parseFloat(newAmount) >= goals.find(g => g.id === goalId)?.targetAmount
       })

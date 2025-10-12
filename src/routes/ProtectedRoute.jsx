@@ -14,11 +14,16 @@ const ProtectedRoute = ({ children }) => {
       if (user) {
         console.log('🔒 User authenticated, allowing access to protected route')
         setIsAuthenticated(true)
+        setIsLoading(false)
       } else {
         console.log('🚫 User not authenticated, redirecting to landing')
-        navigate('/')
+        setIsAuthenticated(false)
+        setIsLoading(false)
+        // Add a small delay to prevent race conditions with data loading
+        setTimeout(() => {
+          navigate('/')
+        }, 100)
       }
-      setIsLoading(false)
     })
 
     return unsubscribe

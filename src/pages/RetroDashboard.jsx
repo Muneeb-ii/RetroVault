@@ -4,12 +4,24 @@ import { useUnifiedData } from '../contexts/UnifiedDataContext'
 import TopNav from '../components/TopNav'
 import SideBar from '../components/SideBar'
 import MainPanel from '../components/MainPanel'
+import ErrorBoundary from '../components/ErrorBoundary'
 import { play as playSound } from '../utils/soundPlayer'
 import { useEffect } from 'react'
 
 const RetroDashboard = () => {
-  const { user, financialData, isLoading, error, loadingMessage, signOut } = useUnifiedData()
+  const { user, financialData, isLoading, error, loadingMessage, signOut, transactions, userProfile, refreshData, forceDataSeeding } = useUnifiedData()
   const navigate = useNavigate()
+
+  // Debug logging
+  console.log('🔍 [DASHBOARD] Current state:', {
+    hasUser: !!user,
+    hasFinancialData: !!financialData,
+    isLoading,
+    hasError: !!error,
+    transactionsCount: transactions?.length || 0,
+    hasUserProfile: !!userProfile,
+    financialDataKeys: financialData ? Object.keys(financialData) : []
+  })
 
   // Play startup sound when dashboard is shown and user data is ready
   useEffect(() => {
@@ -107,7 +119,9 @@ const RetroDashboard = () => {
   return (
     <div className="min-h-screen p-4 retro-dashboard-fade">
       {/* Top Navigation */}
-      <TopNav />
+      <ErrorBoundary>
+        <TopNav />
+      </ErrorBoundary>
       
       {/* User Info */}
       <div className="retro-window mb-4 p-4 retro-fade-in">
@@ -130,20 +144,47 @@ const RetroDashboard = () => {
       {/* Main Content Area */}
       <div className="flex">
         {/* Sidebar */}
-        <SideBar />
+        <ErrorBoundary>
+          <SideBar />
+        </ErrorBoundary>
         
         {/* Main Panel */}
         <div className="flex-1">
           <div className="retro-window p-4 retro-window-animate">
-            <div className="text-center font-bold text-lg mb-4 text-retro-dark retro-text-reveal">
-              FINANCIAL DASHBOARD
+            <div className="flex justify-between items-center mb-4">
+              <div className="text-center font-bold text-lg text-retro-dark retro-text-reveal flex-1">
+                FINANCIAL DASHBOARD
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={refreshData}
+                  className="retro-button px-3 py-1 text-sm"
+                  disabled={isLoading}
+                >
+                  {isLoading ? '🔄' : '🔄'} Refresh Data
+                </button>
+                {/* Force Seed button hidden - data is already seeded */}
+              </div>
             </div>
-            {financialData && (
-              <MainPanel 
-                data={financialData}
-                dataSource="Firestore"
-              />
-            )}
+
+            <ErrorBoundary>
+              {(financialData || (transactions && transactions.length > 0)) && (
+                <MainPanel 
+                  data={financialData || {
+                    balance: userProfile?.financialSummary?.totalBalance || 0,
+                    totalIncome: userProfile?.financialSummary?.totalIncome || 0,
+                    totalExpenses: userProfile?.financialSummary?.totalExpenses || 0,
+                    totalSavings: userProfile?.financialSummary?.totalSavings || 0,
+                    savings: [],
+                    spendingBreakdown: [],
+                    weeklyBalance: [],
+                    recentTransactions: transactions?.slice(0, 5) || [],
+                    geminiInsight: ['Your financial data is being analyzed...', 'AI insights will be available shortly.']
+                  }}
+                  dataSource="Firestore"
+                />
+              )}
+            </ErrorBoundary>
           </div>
         </div>
       </div>

@@ -56,17 +56,11 @@ const MainPanel = ({ data, dataSource = 'Firestore' }) => {
   const savingsData = data.savings || []
   const balanceData = data.weeklyBalance || []
   
-  // Calculate totals from data with null checks
-  const transactions = data.transactions || []
-  const totalIncome = transactions
-    .filter(t => t.type === 'income' || t.type === 'deposit')
-    .reduce((sum, t) => sum + t.amount, 0)
+  // Use the calculated totals from financial data
+  const totalIncome = data.totalIncome || 0
+  const totalExpenses = data.totalExpenses || 0
   
-  const totalExpenses = transactions
-    .filter(t => t.type === 'expense' || t.type === 'withdrawal')
-    .reduce((sum, t) => sum + t.amount, 0)
-  
-  const recentTransactions = transactions.slice(0, 5)
+  const recentTransactions = data.recentTransactions || []
 
   return (
     <div className="flex-1 space-y-4 retro-dashboard-fade">
@@ -157,7 +151,15 @@ const MainPanel = ({ data, dataSource = 'Firestore' }) => {
               )}
             </div>
             <div className="text-sm retro-fade-in-delay-2">
-              {data.aiInsight}
+              {data.geminiInsight ? (
+                Array.isArray(data.geminiInsight) ? 
+                  data.geminiInsight.map((insight, index) => (
+                    <div key={index} className="mb-2">{insight}</div>
+                  )) : 
+                  data.geminiInsight
+              ) : (
+                'AI insights are being generated...'
+              )}
             </div>
           </div>
         </div>

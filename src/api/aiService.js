@@ -112,8 +112,17 @@ Provide 2 concise insights in this format:
   } catch (error) {
     console.error('Error generating AI insights:', error)
     
-    // Return fallback insights on error
-    return getFallbackInsights(transactions, savings)
+    // Return fallback insights on error with additional error handling
+    try {
+      return getFallbackInsights(transactions, savings)
+    } catch (fallbackError) {
+      console.error('Fallback insights also failed:', fallbackError)
+      // Ultimate fallback - return safe default insights
+      return [
+        "Your financial data is being analyzed. Please check back later for personalized insights.",
+        "We're working on generating insights from your financial patterns. Thank you for your patience."
+      ]
+    }
   }
 }
 
@@ -121,52 +130,66 @@ Provide 2 concise insights in this format:
  * Calculate key financial statistics
  */
 const calculateFinancialStats = (transactions, savings) => {
-  // Defensive coercion: ensure arrays
-  const tx = Array.isArray(transactions) ? transactions : []
-  const sv = Array.isArray(savings) ? savings : []
+  try {
+    // Defensive coercion: ensure arrays
+    const tx = Array.isArray(transactions) ? transactions : []
+    const sv = Array.isArray(savings) ? savings : []
 
-  const totalIncome = tx
-    .filter(t => t && t.type === 'income')
-    .reduce((sum, t) => sum + (Number(t.amount) || 0), 0)
+    const totalIncome = tx
+      .filter(t => t && typeof t === 'object' && t.type === 'income')
+      .reduce((sum, t) => sum + (Number(t.amount) || 0), 0)
+    
+    const totalExpenses = tx
+      .filter(t => t && typeof t === 'object' && t.type === 'expense')
+      .reduce((sum, t) => sum + (Number(t.amount) || 0), 0)
   
-  const totalExpenses = tx
-    .filter(t => t && t.type === 'expense')
-    .reduce((sum, t) => sum + (Number(t.amount) || 0), 0)
-  
-  const netBalance = totalIncome - totalExpenses
-  
-  // Calculate top spending category
-  const categoryTotals = {}
-  tx
-    .filter(t => t && t.type === 'expense')
-    .forEach(t => {
-      const cat = t.category || 'Other'
-      categoryTotals[cat] = (categoryTotals[cat] || 0) + (Number(t.amount) || 0)
-    })
-  
-  const topCategory = Object.keys(categoryTotals).length > 0
-    ? Object.keys(categoryTotals).reduce((a, b) => categoryTotals[a] > categoryTotals[b] ? a : b)
-    : 'None'
-  
-  const topCategoryAmount = categoryTotals[topCategory] || 0
-  
-  // Calculate savings statistics
-  const avgSavings = sv.length > 0 
-    ? sv.reduce((sum, s) => sum + (Number(s.amount) || 0), 0) / sv.length 
-    : 0
-  
-  const savingsTrend = sv.length >= 2 
-    ? (Number(sv[sv.length - 1].amount || 0) > Number(sv[0].amount || 0) ? 'increasing' : 'decreasing')
-    : 'stable'
-  
-  return {
-    totalIncome,
-    totalExpenses,
-    netBalance,
-    topCategory,
-    topCategoryAmount,
-    avgSavings,
-    savingsTrend
+    const netBalance = totalIncome - totalExpenses
+    
+    // Calculate top spending category
+    const categoryTotals = {}
+    tx
+      .filter(t => t && typeof t === 'object' && t.type === 'expense')
+      .forEach(t => {
+        const cat = t.category || 'Other'
+        categoryTotals[cat] = (categoryTotals[cat] || 0) + (Number(t.amount) || 0)
+      })
+    
+    const topCategory = Object.keys(categoryTotals).length > 0
+      ? Object.keys(categoryTotals).reduce((a, b) => categoryTotals[a] > categoryTotals[b] ? a : b)
+      : 'None'
+    
+    const topCategoryAmount = categoryTotals[topCategory] || 0
+    
+    // Calculate savings statistics
+    const avgSavings = sv.length > 0 
+      ? sv.reduce((sum, s) => sum + (Number(s.amount) || 0), 0) / sv.length 
+      : 0
+    
+    const savingsTrend = sv.length >= 2 
+      ? (Number(sv[sv.length - 1].amount || 0) > Number(sv[0].amount || 0) ? 'increasing' : 'decreasing')
+      : 'stable'
+    
+    return {
+      totalIncome,
+      totalExpenses,
+      netBalance,
+      topCategory,
+      topCategoryAmount,
+      avgSavings,
+      savingsTrend
+    }
+  } catch (error) {
+    console.error('Error calculating financial stats:', error)
+    // Return safe defaults
+    return {
+      totalIncome: 0,
+      totalExpenses: 0,
+      netBalance: 0,
+      topCategory: 'None',
+      topCategoryAmount: 0,
+      avgSavings: 0,
+      savingsTrend: 'stable'
+    }
   }
 }
 
@@ -420,11 +443,12 @@ export const runOpenRouterPrompt = async (prompt, preferredModel = null) => {
       }
     }
 
-    // If all OpenRouter models failed, throw the last error
-    throw lastError || new Error('All models failed')
-
+    // If all OpenRouter models failed, provide a helpful fallback
+    console.warn('All OpenRouter models failed, using fallback response')
+    return `I apologize, but I'm currently unable to process your request. All AI models are temporarily unavailable. Please try again later or contact support if the issue persists.`
   } catch (error) {
     console.error('runOpenRouterPrompt error:', error)
-    throw error
+    // Return a graceful fallback instead of throwing
+    return `I apologize, but I'm currently unable to process your request due to a technical issue. Please try again later.`
   }
 }

@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react'
 import TopNav from '../components/TopNav'
 import SideBar from '../components/SideBar'
+import ErrorBoundary from '../components/ErrorBoundary'
 import { useUnifiedData } from '../contexts/UnifiedDataContext'
 import { getFinancialInsights } from '../api/aiService'
 
 const Insights = () => {
-  const { financialData, isLoading, error } = useUnifiedData()
+  const { financialData, transactions, accounts, isLoading, error } = useUnifiedData()
   const [insights, setInsights] = useState([])
   const [isGenerating, setIsGenerating] = useState(false)
 
@@ -22,9 +23,9 @@ const Insights = () => {
     setIsGenerating(true)
     try {
       // Pass transactions and savings arrays explicitly to the AI service
-      const transactions = Array.isArray(financialData.transactions) ? financialData.transactions : []
+      const transactionsArray = Array.isArray(transactions) ? transactions : []
       const savings = Array.isArray(financialData.savings) ? financialData.savings : []
-      const aiInsights = await getFinancialInsights(transactions, savings)
+      const aiInsights = await getFinancialInsights(transactionsArray, savings)
       // Ensure we store an array for consistent rendering
       setInsights(Array.isArray(aiInsights) ? aiInsights : [String(aiInsights)])
     } catch (error) {
@@ -103,8 +104,8 @@ const Insights = () => {
                 <div className="text-lg font-bold mb-2">Your Financial Overview</div>
                 <div className="text-sm text-gray-600">
                   Balance: ${financialData.balance.toLocaleString()} | 
-                  Transactions: {financialData.transactions.length} | 
-                  Accounts: {financialData.accounts.length}
+                  Transactions: {transactions?.length || 0} | 
+                  Accounts: {accounts?.length || 0}
                 </div>
               </div>
             </div>

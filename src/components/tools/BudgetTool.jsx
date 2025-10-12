@@ -7,7 +7,7 @@ import {
 } from '../../api/unifiedFirestoreService'
 import { play as playSound } from '../../utils/soundPlayer'
 
-const BudgetTool = ({ financialData, onClose, onDataUpdate }) => {
+const BudgetTool = ({ financialData, transactions, user, onClose, onDataUpdate }) => {
   const [budgets, setBudgets] = useState({})
   const [isLoading, setIsLoading] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
@@ -19,15 +19,17 @@ const BudgetTool = ({ financialData, onClose, onDataUpdate }) => {
   ]
 
   useEffect(() => {
-    loadBudgets()
-  }, [financialData])
+    if (user) {
+      loadBudgets()
+    }
+  }, [user, financialData])
 
   const loadBudgets = async () => {
-    if (!financialData?.user) return
+    if (!user?.uid) return
     
     try {
       setIsLoading(true)
-      const userBudgets = await getUserBudgets(financialData.user.uid)
+      const userBudgets = await getUserBudgets(user.uid)
       
       if (userBudgets.length > 0) {
         // Convert array to object format for display
@@ -40,7 +42,7 @@ const BudgetTool = ({ financialData, onClose, onDataUpdate }) => {
         // Initialize with default budgets based on current spending
         const defaultBudgets = {}
         categories.forEach(category => {
-          const categorySpending = financialData.transactions
+          const categorySpending = transactions
             ?.filter(t => t.type === 'expense' && t.category === category)
             ?.reduce((sum, t) => sum + t.amount, 0) || 0
           defaultBudgets[category] = Math.max(categorySpending * 1.2, 100) // 20% buffer
@@ -84,7 +86,7 @@ const BudgetTool = ({ financialData, onClose, onDataUpdate }) => {
       }
       
       // Get existing budgets to check for updates
-      const existingBudgets = await getUserBudgets(financialData.user.uid)
+      const existingBudgets = await getUserBudgets(user.uid)
       const existingBudgetMap = {}
       existingBudgets.forEach(budget => {
         existingBudgetMap[budget.category] = budget
@@ -96,7 +98,7 @@ const BudgetTool = ({ financialData, onClose, onDataUpdate }) => {
       // Save or update each budget
       for (const [category, amount] of validBudgets) {
         const budgetData = {
-          userId: financialData.user.uid,
+          userId: user.uid,
           category: category,
           amount: parseFloat(amount),
           period: 'monthly',
@@ -134,7 +136,7 @@ const BudgetTool = ({ financialData, onClose, onDataUpdate }) => {
   }
 
   const getCategorySpending = (category) => {
-    return financialData.transactions
+    return transactions
       ?.filter(t => t.type === 'expense' && t.category === category)
       ?.reduce((sum, t) => sum + t.amount, 0) || 0
   }
