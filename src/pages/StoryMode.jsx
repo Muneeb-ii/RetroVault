@@ -161,15 +161,37 @@ const playStoryAudio = async (story) => {
     }
     
     try {
+      // Use dashboard-calculated values for consistency
+      const storyData = {
+        transactions: transactions || [],
+        savings: financialData.savings || [],
+        balance: financialData.balance || 0,
+        totalIncome: financialData.totalIncome || 0,
+        totalExpenses: financialData.totalExpenses || 0,
+        totalSavings: financialData.totalSavings || 0,
+        aiInsight: financialData.geminiInsight || financialData.aiInsight
+      }
+      
+      console.log('🔍 [STORY MODE] Using dashboard data:', {
+        balance: storyData.balance,
+        totalIncome: storyData.totalIncome,
+        totalExpenses: storyData.totalExpenses,
+        totalSavings: storyData.totalSavings
+      })
+      
       const storyText = await generateFinancialStory(
-        transactions || [],
-        financialData.savings || [],
-        financialData.aiInsight,
-        financialData.balance
+        storyData.transactions,
+        storyData.savings,
+        storyData.aiInsight,
+        storyData.balance
       )
       setStory(storyText)
       
-      const storyMeta = generateStoryMetadata(transactions || [], financialData.savings || [], financialData.balance)
+      const storyMeta = generateStoryMetadata(
+        storyData.transactions, 
+        storyData.savings, 
+        storyData.balance
+      )
       setMetadata(storyMeta)
     } catch (error) {
       console.error('Error generating story:', error)

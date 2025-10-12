@@ -99,16 +99,15 @@ const TimeMachine = () => {
         t.type === 'expense' && t.amount > 0
       )
       
-      // Calculate totals with validation
-      const totalIncome = incomeTransactions.reduce((sum, t) => {
-        const amount = Math.abs(Number(t.amount) || 0)
-        return sum + amount
-      }, 0)
+      // Use dashboard-calculated values for consistency
+      const totalIncome = sanitizedData.totalIncome || 0
+      const totalExpenses = sanitizedData.totalExpenses || 0
       
-      const totalExpenses = expenseTransactions.reduce((sum, t) => {
-        const amount = Math.abs(Number(t.amount) || 0)
-        return sum + amount
-      }, 0)
+      console.log('🔍 [TIME MACHINE] Using dashboard data:', {
+        totalIncome,
+        totalExpenses,
+        balance: sanitizedData.balance
+      })
     
       // Calculate time period with better estimation
       const transactionDates = transactions
