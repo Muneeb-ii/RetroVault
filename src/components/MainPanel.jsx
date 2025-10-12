@@ -1,4 +1,5 @@
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts'
+import { safeTimestamp } from '../utils/timestampUtils'
 
 const MainPanel = ({ data, dataSource = 'Firestore' }) => {
   if (!data) {
@@ -39,7 +40,7 @@ const MainPanel = ({ data, dataSource = 'Firestore' }) => {
             Balance: ${data.balance.toLocaleString()}
           </div>
           <div className="text-sm text-gray-600 mb-2 retro-fade-in-delay-1">
-            Last updated: {data.lastUpdated}
+            Last updated: {safeTimestamp(data.lastUpdated)}
           </div>
           <div className="flex justify-center space-x-4 text-xs">
             <span className="text-green-600 retro-fade-in-delay-2">Income: ${totalIncome.toLocaleString()}</span>
@@ -148,7 +149,7 @@ const MainPanel = ({ data, dataSource = 'Firestore' }) => {
                 </span>
                 <div>
                   <div className="text-sm font-medium retro-text-reveal" style={{animationDelay: `${index * 0.1 + 0.3}s`}}>{transaction.description}</div>
-                  <div className="text-xs text-gray-600 retro-fade-in-delay-1" style={{animationDelay: `${index * 0.1 + 0.4}s`}}>{transaction.category} • {transaction.date}</div>
+                  <div className="text-xs text-gray-600 retro-fade-in-delay-1" style={{animationDelay: `${index * 0.1 + 0.4}s`}}>{transaction.category} • {safeTimestamp(transaction.date, 'Unknown date')}</div>
                 </div>
               </div>
               <div className={`text-sm font-bold retro-text-reveal ${

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { doc, updateDoc, getDoc, setDoc } from 'firebase/firestore'
 import { db } from '../../firebaseClient'
+import { safeTimestamp } from '../../utils/timestampUtils'
 
 const SettingsTool = ({ financialData, onClose, onDataUpdate }) => {
   const [settings, setSettings] = useState({
@@ -357,7 +358,7 @@ const SettingsTool = ({ financialData, onClose, onDataUpdate }) => {
           <div><strong>User:</strong> {financialData?.user?.name || 'Unknown'}</div>
           <div><strong>Email:</strong> {financialData?.user?.email || 'Unknown'}</div>
           <div><strong>Data Source:</strong> {financialData?.dataSource || 'Unknown'}</div>
-          <div><strong>Last Updated:</strong> {financialData?.lastUpdated || 'Never'}</div>
+          <div><strong>Last Updated:</strong> {safeTimestamp(financialData?.lastUpdated, 'Never')}</div>
           <div><strong>Transactions:</strong> {financialData?.transactions?.length || 0}</div>
           <div><strong>Accounts:</strong> {financialData?.accounts?.length || 0}</div>
         </div>

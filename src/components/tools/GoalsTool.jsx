@@ -1,6 +1,10 @@
 import { useState, useEffect } from 'react'
-import { collection, addDoc, updateDoc, deleteDoc, doc, getDocs, query, orderBy } from 'firebase/firestore'
-import { db } from '../../firebaseClient'
+import { 
+  createGoal,
+  getUserGoals,
+  updateGoal,
+  deleteGoal
+} from '../../api/unifiedFirestoreService'
 
 const GoalsTool = ({ financialData, onClose, onDataUpdate }) => {
   const [goals, setGoals] = useState([])
@@ -35,10 +39,7 @@ const GoalsTool = ({ financialData, onClose, onDataUpdate }) => {
     
     try {
       setIsLoading(true)
-      const goalsRef = collection(db, 'users', financialData.user.uid, 'goals')
-      const q = query(goalsRef, orderBy('createdAt', 'desc'))
-      const snapshot = await getDocs(q)
-      const goalsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
+      const goalsData = await getUserGoals(financialData.user.uid)
       setGoals(goalsData)
     } catch (error) {
       console.error('Error loading goals:', error)
@@ -86,12 +87,12 @@ const GoalsTool = ({ financialData, onClose, onDataUpdate }) => {
       }
 
       if (editingGoal) {
-        // Update existing goal
-        await updateDoc(doc(db, 'users', financialData.user.uid, 'goals', editingGoal.id), goalData)
+        // Update existing goal using unified service
+        await updateGoal(editingGoal.id, goalData)
         setMessage('✅ Goal updated successfully!')
       } else {
-        // Add new goal
-        await addDoc(collection(db, 'users', financialData.user.uid, 'goals'), goalData)
+        // Add new goal using unified service
+        await createGoal(goalData)
         setMessage('✅ Goal added successfully!')
       }
 

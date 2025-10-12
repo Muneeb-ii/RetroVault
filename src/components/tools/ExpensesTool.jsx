@@ -1,6 +1,12 @@
 import { useState, useEffect } from 'react'
-import { collection, addDoc, updateDoc, deleteDoc, doc, query, orderBy, limit, getDocs } from 'firebase/firestore'
-import { db } from '../../firebaseClient'
+import { 
+  createTransaction,
+  getUserTransactions,
+  updateTransaction,
+  deleteTransaction,
+  validateTransaction
+} from '../../api/unifiedFirestoreService'
+import { safeTimestamp } from '../../utils/timestampUtils'
 
 const ExpensesTool = ({ financialData, onClose, onDataUpdate }) => {
   const [transactions, setTransactions] = useState([])
@@ -31,10 +37,9 @@ const ExpensesTool = ({ financialData, onClose, onDataUpdate }) => {
     
     try {
       setIsLoading(true)
-      const transactionsRef = collection(db, 'users', financialData.user.uid, 'transactions')
-      const q = query(transactionsRef, orderBy('date', 'desc'), limit(50))
-      const snapshot = await getDocs(q)
-      const transactionData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }))
+      const transactionData = await getUserTransactions(financialData.user.uid, { 
+        limitCount: 50 
+      })
       setTransactions(transactionData)
     } catch (error) {
       console.error('Error loading transactions:', error)
@@ -51,52 +56,41 @@ const ExpensesTool = ({ financialData, onClose, onDataUpdate }) => {
       return
     }
     
-    // Validate form data
-    if (!newTransaction.description.trim()) {
-      setMessage('❌ Description is required')
-      return
-    }
-    if (!newTransaction.amount || parseFloat(newTransaction.amount) <= 0) {
-      setMessage('❌ Amount must be greater than 0')
-      return
-    }
-    if (!newTransaction.date) {
-      setMessage('❌ Date is required')
+    // Validate form data using unified service
+    const validation = validateTransaction({
+      description: newTransaction.description,
+      amount: parseFloat(newTransaction.amount),
+      date: newTransaction.date,
+      category: newTransaction.category,
+      type: newTransaction.type
+    })
+    
+    if (!validation.isValid) {
+      setMessage(`❌ ${validation.errors.join(', ')}`)
       return
     }
     
     try {
       setIsSaving(true)
       const transactionData = {
-        ...newTransaction,
-        amount: parseFloat(newTransaction.amount),
-        date: new Date(newTransaction.date).toISOString(),
+        userId: financialData.user.uid,
         accountId: financialData.accounts[0]?.id || 'default',
+        amount: parseFloat(newTransaction.amount),
+        type: newTransaction.type,
+        category: newTransaction.category,
+        description: newTransaction.description,
         merchant: newTransaction.description,
-        createdAt: new Date().toISOString()
+        date: new Date(newTransaction.date).toISOString()
       }
 
       if (editingTransaction) {
-        // Update existing transaction
-        await updateDoc(doc(db, 'users', financialData.user.uid, 'transactions', editingTransaction.id), transactionData)
+        // Update existing transaction using unified service
+        await updateTransaction(editingTransaction.id, transactionData)
         setMessage('✅ Transaction updated successfully!')
       } else {
-        // Add new transaction
-        await addDoc(collection(db, 'users', financialData.user.uid, 'transactions'), transactionData)
+        // Add new transaction using unified service
+        await createTransaction(transactionData)
         setMessage('✅ Transaction added successfully!')
-      }
-
-      // Update user balance
-      const balanceChange = newTransaction.type === 'income' ? 
-        parseFloat(newTransaction.amount) : -parseFloat(newTransaction.amount)
-      
-      // Update user balance in Firestore
-      if (balanceChange !== 0) {
-        const userRef = doc(db, 'users', financialData.user.uid)
-        await updateDoc(userRef, {
-          balance: (financialData.balance || 0) + balanceChange,
-          lastUpdated: new Date().toISOString()
-        })
       }
       
       // Reset form
@@ -136,7 +130,7 @@ const ExpensesTool = ({ financialData, onClose, onDataUpdate }) => {
     if (!confirm('Are you sure you want to delete this transaction?')) return
     
     try {
-      await deleteDoc(doc(db, 'users', financialData.user.uid, 'transactions', transactionId))
+      await deleteTransaction(transactionId)
       setMessage('✅ Transaction deleted successfully!')
       setTimeout(() => setMessage(''), 3000)
       onDataUpdate()
@@ -313,7 +307,7 @@ const ExpensesTool = ({ financialData, onClose, onDataUpdate }) => {
                     </span>
                   </div>
                   <div className="text-xs text-gray-600">
-                    {transaction.category} • {new Date(transaction.date).toLocaleDateString()}
+                    {transaction.category} • {safeTimestamp(transaction.date, 'Unknown date')}
                   </div>
                 </div>
                 

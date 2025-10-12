@@ -1,20 +1,66 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    // Users can read and write their own data
+    // ============================================================================
+    // UNIFIED FLAT STRUCTURE SECURITY RULES
+    // ============================================================================
+    
+    // Users can only access their own profile data
     match /users/{userId} {
       allow read, write: if request.auth != null && request.auth.uid == userId;
-      
-      // Allow users to read/write their own accounts
-      match /accounts/{accountId} {
-        allow read, write: if request.auth != null && request.auth.uid == userId;
-      }
-      
-      // Allow users to read/write their own transactions
-      match /transactions/{transactionId} {
-        allow read, write: if request.auth != null && request.auth.uid == userId;
-      }
     }
+    
+    // Accounts with userId field - users can only access their own accounts
+    match /accounts/{accountId} {
+      allow read, write: if request.auth != null && 
+        request.auth.uid == resource.data.userId;
+      allow create: if request.auth != null && 
+        request.auth.uid == request.resource.data.userId;
+    }
+    
+    // Transactions with userId field - users can only access their own transactions
+    match /transactions/{transactionId} {
+      allow read, write: if request.auth != null && 
+        request.auth.uid == resource.data.userId;
+      allow create: if request.auth != null && 
+        request.auth.uid == request.resource.data.userId;
+    }
+    
+    // Budgets with userId field - users can only access their own budgets
+    match /budgets/{budgetId} {
+      allow read, write: if request.auth != null && 
+        request.auth.uid == resource.data.userId;
+      allow create: if request.auth != null && 
+        request.auth.uid == request.resource.data.userId;
+    }
+    
+    // Goals with userId field - users can only access their own goals
+    match /goals/{goalId} {
+      allow read, write: if request.auth != null && 
+        request.auth.uid == resource.data.userId;
+      allow create: if request.auth != null && 
+        request.auth.uid == request.resource.data.userId;
+    }
+    
+    // Global categories - read-only for all authenticated users
+    match /categories/{categoryId} {
+      allow read: if request.auth != null;
+      // Only allow writes for admin users (you can implement admin logic here)
+      allow write: if request.auth != null && 
+        request.auth.token.admin == true;
+    }
+    
+    // Reports with userId field - users can only access their own reports
+    match /reports/{reportId} {
+      allow read, write: if request.auth != null && 
+        request.auth.uid == resource.data.userId;
+      allow create: if request.auth != null && 
+        request.auth.uid == request.resource.data.userId;
+    }
+    
+    // ============================================================================
+    // LEGACY SUPPORT - Sample profiles and test documents
+    // ============================================================================
     
     // Sample profiles are read-only for all authenticated users
     match /sampleProfiles/{profileId} {
@@ -29,6 +75,42 @@ service cloud.firestore {
     // Connection test documents
     match /connectionTest/{document} {
       allow read, write: if request.auth != null;
+    }
+    
+    // ============================================================================
+    // DATA VALIDATION RULES
+    // ============================================================================
+    
+    // Ensure transaction data integrity
+    match /transactions/{transactionId} {
+      allow create: if request.auth != null && 
+        request.auth.uid == request.resource.data.userId &&
+        request.resource.data.amount is number &&
+        request.resource.data.amount > 0 &&
+        request.resource.data.type in ['income', 'expense', 'transfer'] &&
+        request.resource.data.category is string &&
+        request.resource.data.description is string;
+    }
+    
+    // Ensure account data integrity
+    match /accounts/{accountId} {
+      allow create: if request.auth != null && 
+        request.auth.uid == request.resource.data.userId &&
+        request.resource.data.name is string &&
+        request.resource.data.type is string &&
+        request.resource.data.balance is number &&
+        request.resource.data.balance >= 0;
+    }
+    
+    // Ensure goal data integrity
+    match /goals/{goalId} {
+      allow create: if request.auth != null && 
+        request.auth.uid == request.resource.data.userId &&
+        request.resource.data.title is string &&
+        request.resource.data.targetAmount is number &&
+        request.resource.data.targetAmount > 0 &&
+        request.resource.data.currentAmount is number &&
+        request.resource.data.currentAmount >= 0;
     }
   }
 }

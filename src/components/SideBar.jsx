@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { useFinancialData } from '../contexts/FinancialDataContext'
 import ErrorBoundary from './ErrorBoundary'
+import { safeTimestamp } from '../utils/timestampUtils'
 import BudgetTool from './tools/BudgetTool'
 import ExpensesTool from './tools/ExpensesTool'
 import GoalsTool from './tools/GoalsTool'
@@ -76,7 +77,7 @@ const SideBar = () => {
           <div className="flex justify-between">
             <span className="retro-text-reveal" style={{animationDelay: '0.2s'}}>Last Sync:</span>
             <span className="retro-fade-in-delay-2">
-              {financialData?.lastUpdated ? new Date(financialData.lastUpdated).toLocaleTimeString() : 'Never'}
+              {safeTimestamp(financialData?.lastUpdated, 'Never')}
             </span>
           </div>
           <div className="flex justify-between">

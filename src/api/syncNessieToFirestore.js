@@ -1,12 +1,11 @@
 // Backend API route for syncing Nessie data to Firestore
+// Updated to use unified schema structure
 import { 
   db, 
   createUserDocument, 
   updateUserLastSync, 
   getUserData,
-  getSampleProfile,
-  accountsCollection,
-  transactionsCollection 
+  getSampleProfile
 } from '../firebaseAdmin.js'
 import { 
   getAccounts, 
@@ -119,7 +118,7 @@ const fetchNessieData = async () => {
 }
 
 /**
- * Store Nessie data in Firestore with user-specific consistency
+ * Store Nessie data in Firestore using unified schema
  */
 const storeNessieData = async (userId, userInfo, nessieData) => {
   try {
@@ -130,55 +129,130 @@ const storeNessieData = async (userId, userInfo, nessieData) => {
     const spendingBreakdown = calculateSpendingBreakdown(transactions)
     const balance = primaryAccount.balance || 0
     
-    // Create user document with consistency markers
-    await createUserDocument(userId, {
-      name: userInfo.name || 'Nessie User',
-      email: userInfo.email || '',
-      balance: balance,
-      dataSource: 'Nessie',
-      needsSeeding: false, // Mark as seeded
-      accountInfo: {
-        accountId: primaryAccount._id,
-        accountType: primaryAccount.type,
-        accountName: primaryAccount.nickname || 'Primary Account'
-      },
-      // Consistency markers
-      accountsCount: accounts.length,
-      transactionsCount: transactions.length,
-      lastSeeded: new Date().toISOString(),
-      dataConsistency: {
-        userId: userId,
-        createdAt: new Date().toISOString(),
-        lastSync: new Date().toISOString(),
-        isConsistent: true
+    // Calculate financial summary
+    let totalIncome = 0
+    let totalExpenses = 0
+    
+    transactions.forEach(transaction => {
+      if (transaction.type === 'income') {
+        totalIncome += transaction.amount
+      } else if (transaction.type === 'expense') {
+        totalExpenses += transaction.amount
       }
     })
     
-    // Store accounts
+    const totalSavings = totalIncome - totalExpenses
+    
+    // Create user document with unified schema
+    const userProfile = {
+      // Core profile data
+      profile: {
+        name: userInfo.name || 'Nessie User',
+        email: userInfo.email || '',
+        photoURL: userInfo.photoURL || null,
+        createdAt: new Date(),
+        lastLogin: new Date()
+      },
+      
+      // Financial summary (denormalized for performance)
+      financialSummary: {
+        totalBalance: balance,
+        totalIncome: totalIncome,
+        totalExpenses: totalExpenses,
+        totalSavings: totalSavings,
+        lastUpdated: new Date()
+      },
+      
+      // Data source and consistency tracking
+      dataSource: 'Nessie',
+      syncStatus: {
+        lastSync: new Date(),
+        isConsistent: true,
+        needsRefresh: false,
+        version: 1
+      },
+      
+      // User preferences and settings
+      preferences: {
+        currency: 'USD',
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        categories: [
+          'Food', 'Transport', 'Entertainment', 'Shopping', 
+          'Bills', 'Healthcare', 'Education', 'Travel', 'Other'
+        ],
+        notifications: {
+          budgetAlerts: true,
+          goalReminders: true,
+          weeklyReports: true
+        }
+      },
+      
+      // Metadata for data integrity
+      metadata: {
+        accountsCount: accounts.length,
+        transactionsCount: transactions.length,
+        lastDataUpdate: new Date(),
+        dataVersion: '2.0'
+      }
+    }
+    
+    // Create user document in unified structure
+    await db.collection('users').doc(userId).set(userProfile)
+    
+    // Store accounts in flat structure
+    const accountsBatch = db.batch()
     for (const account of accounts) {
-      await accountsCollection(userId).doc(account._id).set({
+      const accountRef = db.collection('accounts').doc()
+      const newAccount = {
+        userId: userId,
+        nessieId: account._id,
         name: account.nickname || account.type,
         type: account.type,
         balance: account.balance || 0,
-        createdAt: new Date(account.creation_date || Date.now())
-      })
+        isActive: true,
+        institution: 'Nessie Bank',
+        accountNumber: null,
+        routingNumber: null,
+        createdAt: new Date(account.creation_date || Date.now()),
+        lastUpdated: new Date(),
+        metadata: {
+          syncSource: 'nessie',
+          lastSync: new Date()
+        }
+      }
+      accountsBatch.set(accountRef, newAccount)
     }
+    await accountsBatch.commit()
     
-    // Store transactions
+    // Store transactions in flat structure
+    const transactionsBatch = db.batch()
     for (const transaction of transactions) {
-      await transactionsCollection(userId).doc(transaction.id).set({
+      const transactionRef = db.collection('transactions').doc()
+      const newTransaction = {
+        userId: userId,
+        accountId: transaction.accountId || 'default',
+        nessieId: transaction.id,
         amount: transaction.amount,
-        category: transaction.category,
-        description: transaction.description,
-        date: transaction.date,
         type: transaction.type,
+        category: transaction.category,
+        subcategory: null,
+        description: transaction.description,
         merchant: transaction.merchant,
-        accountId: transaction.accountId
-      })
+        date: transaction.date,
+        isRecurring: false,
+        tags: [],
+        metadata: {
+          location: null,
+          paymentMethod: null,
+          notes: null,
+          syncSource: 'nessie'
+        },
+        createdAt: new Date(),
+        lastUpdated: new Date()
+      }
+      transactionsBatch.set(transactionRef, newTransaction)
     }
-    
-    // Update last sync
-    await updateUserLastSync(userId)
+    await transactionsBatch.commit()
     
     console.log(`Successfully synced Nessie data for user ${userId}`)
     return {
@@ -250,31 +324,134 @@ const updateExistingUserData = async (userId) => {
 }
 
 /**
- * Clone sample profile to user
+ * Clone sample profile to user using unified schema
  */
 const cloneSampleProfile = async (userId, userInfo, sampleProfile) => {
   try {
-    // Create user document
-    await createUserDocument(userId, {
-      name: userInfo.name || 'Demo User',
-      email: userInfo.email || '',
-      balance: sampleProfile.balance || 0,
-      dataSource: 'Sample',
-      accountInfo: sampleProfile.accountInfo || {}
-    })
+    // Calculate financial summary from sample data
+    let totalIncome = 0
+    let totalExpenses = 0
     
-    // Clone accounts
-    if (sampleProfile.accounts) {
-      for (const account of sampleProfile.accounts) {
-        await accountsCollection(userId).doc(account.id).set(account)
+    if (sampleProfile.transactions) {
+      sampleProfile.transactions.forEach(transaction => {
+        if (transaction.type === 'income') {
+          totalIncome += transaction.amount
+        } else if (transaction.type === 'expense') {
+          totalExpenses += transaction.amount
+        }
+      })
+    }
+    
+    const totalSavings = totalIncome - totalExpenses
+    
+    // Create user document with unified schema
+    const userProfile = {
+      profile: {
+        name: userInfo.name || 'Demo User',
+        email: userInfo.email || '',
+        photoURL: userInfo.photoURL || null,
+        createdAt: new Date(),
+        lastLogin: new Date()
+      },
+      
+      financialSummary: {
+        totalBalance: sampleProfile.balance || 0,
+        totalIncome: totalIncome,
+        totalExpenses: totalExpenses,
+        totalSavings: totalSavings,
+        lastUpdated: new Date()
+      },
+      
+      dataSource: 'Sample',
+      syncStatus: {
+        lastSync: new Date(),
+        isConsistent: true,
+        needsRefresh: false,
+        version: 1
+      },
+      
+      preferences: {
+        currency: 'USD',
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        categories: [
+          'Food', 'Transport', 'Entertainment', 'Shopping', 
+          'Bills', 'Healthcare', 'Education', 'Travel', 'Other'
+        ],
+        notifications: {
+          budgetAlerts: true,
+          goalReminders: true,
+          weeklyReports: true
+        }
+      },
+      
+      metadata: {
+        accountsCount: sampleProfile.accounts?.length || 0,
+        transactionsCount: sampleProfile.transactions?.length || 0,
+        lastDataUpdate: new Date(),
+        dataVersion: '2.0'
       }
     }
     
-    // Clone transactions
-    if (sampleProfile.transactions) {
-      for (const transaction of sampleProfile.transactions) {
-        await transactionsCollection(userId).doc(transaction.id).set(transaction)
+    // Create user document in unified structure
+    await db.collection('users').doc(userId).set(userProfile)
+    
+    // Clone accounts in flat structure
+    if (sampleProfile.accounts) {
+      const accountsBatch = db.batch()
+      for (const account of sampleProfile.accounts) {
+        const accountRef = db.collection('accounts').doc()
+        const newAccount = {
+          userId: userId,
+          nessieId: account.id,
+          name: account.name,
+          type: account.type,
+          balance: account.balance || 0,
+          isActive: true,
+          institution: 'Sample Bank',
+          accountNumber: null,
+          routingNumber: null,
+          createdAt: new Date(),
+          lastUpdated: new Date(),
+          metadata: {
+            syncSource: 'sample',
+            lastSync: new Date()
+          }
+        }
+        accountsBatch.set(accountRef, newAccount)
       }
+      await accountsBatch.commit()
+    }
+    
+    // Clone transactions in flat structure
+    if (sampleProfile.transactions) {
+      const transactionsBatch = db.batch()
+      for (const transaction of sampleProfile.transactions) {
+        const transactionRef = db.collection('transactions').doc()
+        const newTransaction = {
+          userId: userId,
+          accountId: transaction.accountId || 'default',
+          nessieId: transaction.id,
+          amount: transaction.amount,
+          type: transaction.type,
+          category: transaction.category,
+          subcategory: null,
+          description: transaction.description,
+          merchant: transaction.merchant,
+          date: transaction.date,
+          isRecurring: false,
+          tags: [],
+          metadata: {
+            location: null,
+            paymentMethod: null,
+            notes: null,
+            syncSource: 'sample'
+          },
+          createdAt: new Date(),
+          lastUpdated: new Date()
+        }
+        transactionsBatch.set(transactionRef, newTransaction)
+      }
+      await transactionsBatch.commit()
     }
     
     console.log(`Cloned sample profile for user ${userId}`)
@@ -293,7 +470,7 @@ const cloneSampleProfile = async (userId, userInfo, sampleProfile) => {
 }
 
 /**
- * Create user with mock data as final fallback
+ * Create user with mock data as final fallback using unified schema
  */
 const createUserWithMockData = async (userId, userInfo) => {
   try {
@@ -301,37 +478,121 @@ const createUserWithMockData = async (userId, userInfo) => {
     const { generateMockData } = await import('../data/mockData.js')
     const mockData = generateMockData()
     
-    // Create user document
-    await createUserDocument(userId, {
-      name: userInfo.name || 'Demo User',
-      email: userInfo.email || '',
-      balance: mockData.balance,
-      dataSource: 'Mock',
-      accountInfo: {
-        accountId: 'mock-account',
-        accountType: 'Checking',
-        accountName: 'Demo Account'
+    // Calculate financial summary from mock data
+    let totalIncome = 0
+    let totalExpenses = 0
+    
+    mockData.transactions.forEach(transaction => {
+      if (transaction.type === 'income') {
+        totalIncome += transaction.amount
+      } else if (transaction.type === 'expense') {
+        totalExpenses += transaction.amount
       }
     })
     
-    // Create mock account
-    await accountsCollection(userId).doc('mock-account').set({
+    const totalSavings = totalIncome - totalExpenses
+    
+    // Create user document with unified schema
+    const userProfile = {
+      profile: {
+        name: userInfo.name || 'Demo User',
+        email: userInfo.email || '',
+        photoURL: userInfo.photoURL || null,
+        createdAt: new Date(),
+        lastLogin: new Date()
+      },
+      
+      financialSummary: {
+        totalBalance: mockData.balance,
+        totalIncome: totalIncome,
+        totalExpenses: totalExpenses,
+        totalSavings: totalSavings,
+        lastUpdated: new Date()
+      },
+      
+      dataSource: 'Mock',
+      syncStatus: {
+        lastSync: new Date(),
+        isConsistent: true,
+        needsRefresh: false,
+        version: 1
+      },
+      
+      preferences: {
+        currency: 'USD',
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        categories: [
+          'Food', 'Transport', 'Entertainment', 'Shopping', 
+          'Bills', 'Healthcare', 'Education', 'Travel', 'Other'
+        ],
+        notifications: {
+          budgetAlerts: true,
+          goalReminders: true,
+          weeklyReports: true
+        }
+      },
+      
+      metadata: {
+        accountsCount: 1,
+        transactionsCount: mockData.transactions.length,
+        lastDataUpdate: new Date(),
+        dataVersion: '2.0'
+      }
+    }
+    
+    // Create user document in unified structure
+    await db.collection('users').doc(userId).set(userProfile)
+    
+    // Create mock account in flat structure
+    const accountRef = db.collection('accounts').doc()
+    const mockAccount = {
+      userId: userId,
+      nessieId: 'mock-account',
       name: 'Demo Account',
       type: 'Checking',
       balance: mockData.balance,
-      createdAt: new Date()
-    })
-    
-    // Store mock transactions
-    for (const transaction of mockData.transactions) {
-      await transactionsCollection(userId).doc(transaction.id.toString()).set({
-        amount: transaction.amount,
-        category: transaction.category,
-        description: transaction.description,
-        date: transaction.date,
-        type: transaction.type
-      })
+      isActive: true,
+      institution: 'Demo Bank',
+      accountNumber: null,
+      routingNumber: null,
+      createdAt: new Date(),
+      lastUpdated: new Date(),
+      metadata: {
+        syncSource: 'mock',
+        lastSync: new Date()
+      }
     }
+    await accountRef.set(mockAccount)
+    
+    // Store mock transactions in flat structure
+    const transactionsBatch = db.batch()
+    for (const transaction of mockData.transactions) {
+      const transactionRef = db.collection('transactions').doc()
+      const newTransaction = {
+        userId: userId,
+        accountId: accountRef.id,
+        nessieId: transaction.id.toString(),
+        amount: transaction.amount,
+        type: transaction.type,
+        category: transaction.category,
+        subcategory: null,
+        description: transaction.description,
+        merchant: null,
+        date: transaction.date,
+        isRecurring: false,
+        tags: [],
+        metadata: {
+          location: null,
+          paymentMethod: null,
+          notes: null,
+          syncSource: 'mock'
+        },
+        createdAt: new Date(),
+        lastUpdated: new Date()
+      }
+      transactionsBatch.set(transactionRef, newTransaction)
+    }
+    await transactionsBatch.commit()
     
     console.log(`Created mock data for user ${userId}`)
     return {

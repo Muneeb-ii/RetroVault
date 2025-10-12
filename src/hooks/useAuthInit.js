@@ -38,13 +38,21 @@ export const useAuthInit = () => {
       const userDoc = await getDoc(userDocRef)
 
       if (userDoc.exists()) {
-        // User exists - returning user
-        console.log('👤 Returning user found, skipping Nessie sync')
-        navigate('/dashboard')
-        return { status: 'existing', user }
+        const userData = userDoc.data()
+        
+        // Check if user has unified data structure
+        if (userData.metadata?.dataVersion === '2.0') {
+          console.log('👤 Returning user found with unified structure, skipping sync')
+          navigate('/dashboard')
+          return { status: 'existing', user }
+        } else {
+          console.log('🔄 User has old data structure, will be migrated')
+          navigate('/dashboard')
+          return { status: 'existing', user }
+        }
       } else {
-        // New user - seed data from Nessie API
-        console.log('🆕 New user detected, seeding data from Nessie API...')
+        // New user - seed data from Nessie API using unified schema
+        console.log('🆕 New user detected, seeding data with unified schema...')
         
         const response = await fetch('/api/syncNessieToFirestore', {
           method: 'POST',
@@ -66,7 +74,7 @@ export const useAuthInit = () => {
         }
 
         const result = await response.json()
-        console.log('✅ Nessie data seeded successfully:', result)
+        console.log('✅ Data seeded successfully with unified schema:', result)
         
         navigate('/dashboard')
         return { status: 'seeded', user, result }

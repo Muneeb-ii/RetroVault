@@ -2,7 +2,14 @@
 import { createContext, useContext, useState, useEffect } from 'react'
 import { onAuthStateChanged } from 'firebase/auth'
 import { auth } from '../firebaseClient'
-import { getUserData, getUserTransactions, getUserAccounts } from '../firebaseClient'
+import { 
+  getUserProfile,
+  getUserAccounts,
+  getUserTransactions,
+  updateFinancialSummary,
+  listenToUserData,
+  listenToUserTransactions
+} from '../api/unifiedFirestoreService'
 
 const FinancialDataContext = createContext()
 
@@ -44,21 +51,21 @@ export const FinancialDataProvider = ({ children }) => {
       console.log('🔄 [CONTEXT] Loading user data for all tabs...')
       console.log('🆔 [CONTEXT] User ID:', userId)
       
-      // Load user document
-      const userData = await getUserData(userId)
-      console.log('📄 [CONTEXT] User data loaded:', userData ? 'Found' : 'Not found')
+      // Load user profile with financial summary
+      const userProfile = await getUserProfile(userId)
+      console.log('📄 [CONTEXT] User profile loaded:', userProfile ? 'Found' : 'Not found')
       
-      if (!userData) {
-        console.log('🆕 [CONTEXT] No user data found')
+      if (!userProfile) {
+        console.log('🆕 [CONTEXT] No user profile found')
         setFinancialData(null)
         setError('No financial data available. Please ensure your account is properly set up.')
         return
       }
 
-      // Load transactions and accounts
+      // Load transactions and accounts using unified service
       const [transactions, accounts] = await Promise.all([
-        getUserTransactions(userId),
-        getUserAccounts(userId)
+        getUserTransactions(userId, { limitCount: 100 }),
+        getUserAccounts(userId, { activeOnly: true })
       ])
 
       console.log('📊 [CONTEXT] Data loaded:', {
@@ -66,10 +73,10 @@ export const FinancialDataProvider = ({ children }) => {
         accountsCount: accounts.length
       })
 
-      // Transform Firestore data to shared format
+      // Transform unified data to shared format
       const transformedData = {
-        // Core data
-        balance: userData.balance || 0,
+        // Core data from unified structure
+        balance: userProfile.financialSummary?.totalBalance || 0,
         transactions: transactions,
         accounts: accounts,
         
@@ -78,20 +85,30 @@ export const FinancialDataProvider = ({ children }) => {
         spendingBreakdown: calculateSpendingBreakdown(transactions),
         weeklyBalance: generateWeeklyBalance(transactions),
         
-        // Metadata
+        // Metadata from unified structure
         aiInsight: `Your financial data (${accounts.length} accounts, ${transactions.length} transactions)`,
         aiGenerated: false,
-        lastUpdated: userData.dataConsistency?.lastSync || new Date().toLocaleString(),
-        accountInfo: userData.accountInfo || {},
-        dataSource: userData.dataSource || 'Firestore',
-        isConsistent: true,
+        lastUpdated: userProfile.syncStatus?.lastSync 
+          ? (userProfile.syncStatus.lastSync.toDate ? userProfile.syncStatus.lastSync.toDate().toLocaleString() : userProfile.syncStatus.lastSync.toString())
+          : new Date().toLocaleString(),
+        accountInfo: userProfile.metadata || {},
+        dataSource: userProfile.dataSource || 'Firestore',
+        isConsistent: userProfile.syncStatus?.isConsistent || true,
         
-        // User info
+        // User info from unified structure
         user: {
           uid: userId,
-          name: userData.name || 'User',
-          email: userData.email || '',
-          photoURL: userData.photoURL || null
+          name: userProfile.profile?.name || 'User',
+          email: userProfile.profile?.email || '',
+          photoURL: userProfile.profile?.photoURL || null
+        },
+        
+        // Financial summary from unified structure
+        financialSummary: userProfile.financialSummary || {
+          totalBalance: 0,
+          totalIncome: 0,
+          totalExpenses: 0,
+          totalSavings: 0
         }
       }
       
@@ -195,12 +212,30 @@ export const FinancialDataProvider = ({ children }) => {
     return colors[category] || '#95A5A6'
   }
 
+  // Add real-time data refresh functionality
+  const refreshData = async () => {
+    if (user) {
+      await loadUserData(user.uid)
+    }
+  }
+
+  // Add data update functionality for components
+  const updateData = async () => {
+    if (user) {
+      // Update financial summary when data changes
+      await updateFinancialSummary(user.uid)
+      await loadUserData(user.uid)
+    }
+  }
+
   const value = {
     user,
     financialData,
     isLoading,
     error,
     loadUserData,
+    refreshData,
+    updateData,
     // Helper functions
     calculateSavingsFromTransactions,
     calculateSpendingBreakdown,

@@ -111,25 +111,75 @@ export function useFirebaseAuth() {
       console.log('📄 [FIRESTORE] User document exists:', snap.exists())
       
       if (!snap.exists()) {
-        console.log('🆕 [FIRESTORE] New user detected, creating basic Firestore document...')
-        const userData = {
-          email: user.email,
-          name: user.displayName,
-          photoURL: user.photoURL,
-          createdAt: serverTimestamp(),
-          dataSource: "Pending", // Mark as pending - will be seeded by dashboard
-          balance: 0,
-          accountInfo: {},
-          needsSeeding: true // Flag to indicate data needs to be seeded
-        }
-        console.log('💾 [FIRESTORE] User data to store:', userData)
+        console.log('🆕 [FIRESTORE] New user detected, creating unified user profile...')
         
-        await setDoc(userDoc, userData)
-        console.log('✅ [FIRESTORE] User document created successfully')
-        console.log('📝 [FIRESTORE] Data seeding will be handled by dashboard')
+        // Create user profile with unified schema
+        const userProfile = {
+          // Core profile data
+          profile: {
+            name: user.displayName || 'User',
+            email: user.email || '',
+            photoURL: user.photoURL || null,
+            createdAt: serverTimestamp(),
+            lastLogin: serverTimestamp()
+          },
+          
+          // Financial summary (denormalized for performance)
+          financialSummary: {
+            totalBalance: 0,
+            totalIncome: 0,
+            totalExpenses: 0,
+            totalSavings: 0,
+            lastUpdated: serverTimestamp()
+          },
+          
+          // Data source and consistency tracking
+          dataSource: 'Pending', // Will be updated by API sync
+          syncStatus: {
+            lastSync: serverTimestamp(),
+            isConsistent: false,
+            needsRefresh: true,
+            version: 1
+          },
+          
+          // User preferences and settings
+          preferences: {
+            currency: 'USD',
+            timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+            categories: [
+              'Food', 'Transport', 'Entertainment', 'Shopping', 
+              'Bills', 'Healthcare', 'Education', 'Travel', 'Other'
+            ],
+            notifications: {
+              budgetAlerts: true,
+              goalReminders: true,
+              weeklyReports: true
+            }
+          },
+          
+          // Metadata for data integrity
+          metadata: {
+            accountsCount: 0,
+            transactionsCount: 0,
+            lastDataUpdate: serverTimestamp(),
+            dataVersion: '2.0'
+          }
+        }
+        
+        console.log('💾 [FIRESTORE] Creating unified user profile...')
+        await setDoc(userDoc, userProfile)
+        console.log('✅ [FIRESTORE] Unified user profile created successfully')
+        console.log('📝 [FIRESTORE] Data seeding will be handled by API sync')
       } else {
-        console.log('👤 [FIRESTORE] Existing user found, skipping data seeding')
+        console.log('👤 [FIRESTORE] Existing user found, checking data structure...')
         const existingData = snap.data()
+        
+        // Check if user has old data structure and needs migration
+        if (!existingData.metadata?.dataVersion || existingData.metadata.dataVersion !== '2.0') {
+          console.log('🔄 [FIRESTORE] User has old data structure, will be handled by migration')
+        } else {
+          console.log('✅ [FIRESTORE] User has unified data structure')
+        }
         console.log('📊 [FIRESTORE] Existing user data:', existingData)
       }
       

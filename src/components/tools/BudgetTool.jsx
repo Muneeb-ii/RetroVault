@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react'
-import { doc, updateDoc, getDoc, setDoc } from 'firebase/firestore'
-import { db } from '../../firebaseClient'
+import { 
+  createBudget,
+  getUserBudgets,
+  updateBudget
+} from '../../api/unifiedFirestoreService'
 
 const BudgetTool = ({ financialData, onClose, onDataUpdate }) => {
   const [budgets, setBudgets] = useState({})
@@ -22,9 +25,15 @@ const BudgetTool = ({ financialData, onClose, onDataUpdate }) => {
     
     try {
       setIsLoading(true)
-      const budgetDoc = await getDoc(doc(db, 'users', financialData.user.uid, 'settings', 'budgets'))
-      if (budgetDoc.exists()) {
-        setBudgets(budgetDoc.data())
+      const userBudgets = await getUserBudgets(financialData.user.uid)
+      
+      if (userBudgets.length > 0) {
+        // Convert array to object format for display
+        const budgetsObj = {}
+        userBudgets.forEach(budget => {
+          budgetsObj[budget.category] = budget.amount
+        })
+        setBudgets(budgetsObj)
       } else {
         // Initialize with default budgets based on current spending
         const defaultBudgets = {}
@@ -56,10 +65,19 @@ const BudgetTool = ({ financialData, onClose, onDataUpdate }) => {
     
     try {
       setIsSaving(true)
-      await setDoc(doc(db, 'users', financialData.user.uid, 'settings', 'budgets'), {
-        ...budgets,
-        lastUpdated: new Date().toISOString()
-      })
+      
+      // Save each budget using unified service
+      for (const [category, amount] of Object.entries(budgets)) {
+        if (amount > 0) {
+          await createBudget({
+            userId: financialData.user.uid,
+            category: category,
+            amount: amount,
+            period: 'monthly'
+          })
+        }
+      }
+      
       setMessage('✅ Budgets saved successfully!')
       setTimeout(() => setMessage(''), 3000)
       onDataUpdate()
