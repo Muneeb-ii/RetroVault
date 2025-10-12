@@ -1,218 +1,275 @@
 # RetroVault: The AI Time Machine for Your Finances
 
-A nostalgic reimagining of early-2000s personal finance software with modern AI capabilities.
+A comprehensive personal finance management platform that combines nostalgic Windows 98 aesthetics with modern AI-powered financial insights and advanced forecasting capabilities.
 
-## 🎯 Project Overview
+## 🎯 Overview
 
-RetroVault combines the nostalgic charm of Windows 98-era financial software with cutting-edge AI insights. Built for hackathons, this app provides a "financial time machine" experience using Capital One's Nessie API and Google Gemini AI.
+RetroVault is a full-stack financial management application that provides users with comprehensive tools for tracking expenses, analyzing spending patterns, and planning for the future. The platform features an AI-powered financial assistant, advanced time machine projections, and personalized financial storytelling.
 
-## 🚀 Features
+## ✨ Key Features
 
-- **Retro Dashboard**: Windows 98-style interface with modern functionality
-- **AI Insights**: Powered by Google Gemini for personalized financial advice
-- **Time Machine**: Navigate through past, present, and future financial scenarios
-- **Interactive Charts**: Beautiful visualizations using Recharts
-- **Responsive Design**: Works on desktop and mobile devices
+### **Financial Dashboard**
+- Real-time balance tracking and financial summaries
+- Interactive charts and visualizations for spending analysis
+- Weekly balance trends and savings tracking
+- Recent transactions with smart categorization
 
-## 🛠️ Tech Stack
+### **AI Financial Assistant (Eliza)**
+- Personalized financial advice based on your spending patterns
+- Multiple AI model support (Google Gemini, Claude, GPT-4)
+- Contextual insights and recommendations
+- Voice-enabled interactions with ElevenLabs integration
 
-- **Frontend**: React + Vite + TailwindCSS + 98.css
-- **Backend**: Node.js + Express (Vercel Serverless)
-- **Database**: Firebase Firestore
-- **Authentication**: Firebase Auth (Google Sign-In)
-- **APIs**: Capital One Nessie API + OpenRouter AI
-- **Charts**: Recharts for data visualization
-- **State Management**: Zustand
-- **Deployment**: Vercel
+### **Time Machine Projections**
+- Advanced Monte Carlo simulations for financial forecasting
+- Retirement readiness calculations
+- Scenario-based planning (Conservative, Moderate, Aggressive)
+- Interactive milestone tracking and goal setting
 
-## 🎨 Design Philosophy
+### **Story Mode**
+- AI-generated financial narratives based on your data
+- Personalized storytelling with voice narration
+- Financial journey visualization
+- Export capabilities for sharing insights
 
-- **Nostalgic UI**: Windows 98-inspired interface with CRT monitor aesthetics
-- **Modern UX**: Responsive design with smooth interactions
-- **Retro Colors**: Pastel blues, grays, and classic computer colors
-- **Pixel Perfect**: Attention to detail in typography and spacing
+### **Comprehensive Data Management**
+- Transaction categorization and analysis
+- Budget tracking and goal setting
+- Multi-account support
+- Data synchronization and backup
+
+## 🛠️ Technology Stack
+
+### **Frontend**
+- **React 18** with modern hooks and context API
+- **Vite** for fast development and building
+- **TailwindCSS** for responsive styling
+- **98.css** for authentic retro aesthetics
+- **Recharts** for interactive data visualizations
+
+### **Backend & Database**
+- **Firebase Firestore** for real-time data storage
+- **Firebase Authentication** with Google Sign-In
+- **Vercel Serverless Functions** for API endpoints
+- **Node.js** for backend processing
+
+### **AI & External APIs**
+- **Google Gemini 2.0** for financial insights
+- **OpenRouter** for multi-model AI support
+- **ElevenLabs** for voice synthesis
+- **Capital One Nessie API** for real financial data integration
+
+### **Deployment & Infrastructure**
+- **Vercel** for hosting and serverless functions
+- **Firebase** for authentication and database
+- **Environment-based configuration** for secure API management
 
 ## 🚀 Getting Started
 
-1. **Install Dependencies**
+### **Prerequisites**
+- Node.js 18+ and npm
+- Firebase project setup
+- API keys for external services (optional)
+
+### **Installation**
+
+1. **Clone the repository**
+   ```bash
+   git clone https://github.com/yourusername/retrovault.git
+   cd retrovault
+   ```
+
+2. **Install dependencies**
    ```bash
    npm install
    ```
 
-2. **Configure Environment Variables**
-   - Copy `.env.example` to `.env.local` and add your API keys:
+3. **Configure environment variables**
    ```bash
    cp .env.example .env.local
-   # Edit .env.local with your API keys
+   ```
+   
+   Add your API keys to `.env.local`:
+   ```env
+   # Firebase Configuration
+   VITE_FIREBASE_API_KEY=your_firebase_api_key
+   VITE_FIREBASE_AUTH_DOMAIN=your_project.firebaseapp.com
+   VITE_FIREBASE_PROJECT_ID=your_project_id
+   VITE_FIREBASE_STORAGE_BUCKET=your_project.appspot.com
+   VITE_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
+   VITE_FIREBASE_APP_ID=your_app_id
+   
+   # AI Services
+   VITE_OPENROUTER_API_KEY=your_openrouter_key
+   VITE_GOOGLE_GEMINI_API_KEY=your_gemini_key
+   VITE_ELEVENLABS_API_KEY=your_elevenlabs_key
+   
+   # Financial Data
+   VITE_NESSIE_API_KEY=your_nessie_key
    ```
 
-3. **Start Development Server**
+4. **Start development server**
    ```bash
    npm run dev
    ```
 
-4. **Open in Browser**
+5. **Open in browser**
    Navigate to `http://localhost:5173`
 
-## 🔥 Full-Stack Deployment
+## 🔧 Configuration
 
 ### **Firebase Setup**
 1. Create a Firebase project at [console.firebase.google.com](https://console.firebase.google.com)
-2. Enable Authentication (Google Sign-In)
-3. Enable Firestore Database
-4. Generate service account key for backend
-5. Get Firebase config for web app
+2. Enable Authentication with Google Sign-In
+3. Enable Firestore Database with appropriate security rules
+4. Generate service account credentials for backend functions
 
-### **Environment Variables**
-```bash
-# Frontend (.env.local)
-VITE_FIREBASE_API_KEY=your_firebase_api_key
-VITE_FIREBASE_AUTH_DOMAIN=your_project.firebaseapp.com
-VITE_FIREBASE_PROJECT_ID=your_project_id
-VITE_FIREBASE_STORAGE_BUCKET=your_project.appspot.com
-VITE_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
-VITE_FIREBASE_APP_ID=your_app_id
-VITE_OPENROUTER_API_KEY=your_openrouter_key
-VITE_NESSIE_API_KEY=your_nessie_key
+### **AI Services Configuration**
+- **OpenRouter**: Get API key from [openrouter.ai](https://openrouter.ai) for multi-model AI support
+- **Google Gemini**: Configure Gemini API for enhanced financial insights
+- **ElevenLabs**: Set up voice synthesis for audio features
 
-# Backend (Vercel Environment Variables)
-FIREBASE_PROJECT_ID=your_project_id
-FIREBASE_CLIENT_EMAIL=your_service_account_email
-FIREBASE_PRIVATE_KEY=your_private_key
-NESSIE_API_KEY=your_nessie_key
-OPENROUTER_API_KEY=your_openrouter_key
-```
-
-### **Deploy to Vercel**
-```bash
-npm run build
-vercel --prod
-```
-
-### **Populate Sample Data**
-```bash
-node scripts/deploy.js
-```
+### **Financial Data Integration**
+- **Capital One Nessie**: Optional integration for real financial data
+- **Mock Data**: Built-in sample data for testing and development
 
 ## 📁 Project Structure
 
 ```
 RetroVault/
 ├── src/
-│   ├── components/         # React components
-│   ├── pages/             # Page components
-│   ├── api/               # API services
-│   │   ├── aiService.js   # OpenRouter AI integration
-│   │   ├── nessieService.js # Capital One Nessie API
-│   │   ├── timeMachineService.js # Time Machine AI
-│   │   ├── storyService.js # Story Mode AI
-│   │   └── syncNessieToFirestore.js # Backend sync
-│   ├── store/             # Zustand state management
-│   ├── data/              # Mock data generators
-│   ├── scripts/           # Deployment scripts
-│   ├── firebaseAdmin.js   # Firebase Admin SDK
-│   ├── firebaseClient.js  # Firebase Client SDK
-│   └── index.css          # Global styles
-├── api/                   # Vercel serverless functions
-│   └── syncNessieToFirestore.js
-├── scripts/               # Deployment scripts
-├── firestore.rules        # Firestore security rules
-├── vercel.json            # Vercel configuration
-└── .env.example           # Environment variables template
+│   ├── components/           # Reusable UI components
+│   │   ├── tools/          # Specialized tool components
+│   │   ├── TopNav.jsx      # Navigation component
+│   │   ├── SideBar.jsx     # Main sidebar
+│   │   └── MainPanel.jsx   # Dashboard display
+│   ├── pages/              # Main application pages
+│   │   ├── RetroDashboard.jsx
+│   │   ├── TimeMachine.jsx
+│   │   ├── StoryMode.jsx
+│   │   └── Insights.jsx
+│   ├── contexts/           # React context providers
+│   │   └── UnifiedDataContext.jsx
+│   ├── api/                # API service layers
+│   │   ├── aiService.js
+│   │   ├── timeMachineService.js
+│   │   ├── storyService.js
+│   │   └── unifiedFirestoreService.js
+│   ├── services/           # Business logic services
+│   ├── utils/              # Utility functions
+│   └── assets/             # Static assets
+├── api/                    # Vercel serverless functions
+├── public/                 # Public assets
+└── scripts/               # Deployment and utility scripts
 ```
 
-## 🎯 Hackathon Ready
+## 🎨 Design System
 
-This project is designed to be hackathon-ready with:
-- ✅ Complete UI layout
-- ✅ Mock data integration
-- ✅ Responsive design
-- ✅ Retro aesthetics
-- ✅ Modular component structure
-- ✅ Ready for API integration
+### **Retro Aesthetic**
+- Windows 98-inspired interface design
+- CRT monitor visual effects and scanlines
+- Classic computer color palette
+- Pixel-perfect typography and spacing
 
-## 🤖 AI Integration
+### **Modern UX**
+- Responsive design for all device sizes
+- Smooth animations and transitions
+- Intuitive navigation and user flows
+- Accessibility considerations
 
-RetroVault includes dynamic AI insights powered by OpenRouter:
-
-### **Supported AI Models:**
-- **Google Gemini 1.5 Pro** (default)
-- **Claude 3.5 Sonnet**
-- **GPT-4o**
-- **Llama 3.1 8B**
-
-### **AI Features:**
-- **Dynamic Insights**: AI analyzes your financial data and provides personalized advice
-- **Model Selection**: Choose between different AI models in the top navigation
-- **Fallback System**: Graceful degradation to static insights if AI is unavailable
-- **Real-time Analysis**: Insights update when you refresh your financial data
-
-### **Setup API Integration:**
-
-#### **AI Integration (OpenRouter):**
-1. Get an API key from [OpenRouter](https://openrouter.ai/)
-2. Add it to your `.env.local` file:
-   ```
-   VITE_OPENROUTER_API_KEY=your_api_key_here
-   ```
-
-#### **Real Financial Data (Capital One Nessie):**
-1. Get an API key from [Capital One Developer](https://developer.capitalone.com/)
-2. Add it to your `.env.local` file:
-   ```
-   VITE_NESSIE_API_KEY=your_api_key_here
-   ```
-3. Restart the development server
-
-**Note:** The app works with mock data if no API keys are configured!
-
-## 💾 Real Financial Data Integration
-
-RetroVault integrates with Capital One's Nessie API for real financial data:
-
-### **Nessie API Features:**
-- **Real Account Data**: Fetches actual account balances and information
-- **Transaction History**: Shows real transactions from the last 30 days
-- **Smart Categorization**: Automatically categorizes transactions (Food, Transport, Entertainment, etc.)
-- **Data Source Indicator**: Shows whether you're viewing real or mock data
-- **Graceful Fallback**: Automatically falls back to mock data if API is unavailable
-
-### **Data Processing:**
-- **Transaction Analysis**: Real spending patterns and trends
-- **Savings Calculation**: Derived from actual income vs expenses
-- **Chart Generation**: All charts use real transaction data
-- **AI Insights**: AI analyzes your actual financial behavior
-
-## 🔮 Future Enhancements
-
-- [ ] Real-time data synchronization
-- [ ] Advanced financial forecasting
-- [ ] Interactive time travel features
-- [ ] Sound effects and animations
-- [ ] Custom AI prompt templates
-
-## 🎨 Color Palette
-
-- **Retro Blue**: #4A90E2
+### **Color Palette**
+- **Primary Blue**: #4A90E2
 - **Retro Gray**: #C0C0C0
-- **CRT Green**: #00FF00
+- **Success Green**: #00FF00
 - **Background**: Gradient from blue-900 to blue-700
 
-## 📱 Responsive Design
+## 🔒 Security & Privacy
 
-The app is fully responsive and works on:
-- Desktop (primary target)
-- Tablet
-- Mobile (with adapted layout)
+- **Firebase Security Rules** for data protection
+- **Environment-based API key management**
+- **User authentication** with Google OAuth
+- **Data encryption** in transit and at rest
+- **GDPR compliance** considerations
+
+## 📊 Performance Features
+
+- **Real-time data synchronization**
+- **Optimized database queries**
+- **Efficient state management**
+- **Lazy loading** for improved performance
+- **Caching strategies** for API responses
+
+## 🚀 Deployment
+
+### **Production Deployment**
+```bash
+npm run build
+vercel --prod
+```
+
+### **Environment Variables (Production)**
+Configure the following in your Vercel dashboard:
+- Firebase service account credentials
+- API keys for external services
+- Database connection strings
+
+## 🤖 AI Capabilities
+
+### **Financial Analysis**
+- Spending pattern recognition
+- Budget optimization suggestions
+- Investment opportunity identification
+- Risk assessment and recommendations
+
+### **Predictive Modeling**
+- Monte Carlo simulations
+- Retirement planning projections
+- Scenario-based forecasting
+- Goal achievement probability
+
+### **Natural Language Processing**
+- Conversational financial advice
+- Voice-enabled interactions
+- Personalized storytelling
+- Multi-language support
+
+## 📈 Analytics & Reporting
+
+- **Spending breakdowns** by category
+- **Income vs. expense** analysis
+- **Savings rate** calculations
+- **Financial health** scoring
+- **Trend analysis** and forecasting
+
+## 🔮 Future Roadmap
+
+- [ ] Advanced investment tracking
+- [ ] Cryptocurrency integration
+- [ ] Tax optimization features
+- [ ] Multi-currency support
+- [ ] Advanced AI model fine-tuning
+- [ ] Mobile application development
+- [ ] API for third-party integrations
 
 ## 🤝 Contributing
 
-This is a hackathon project! Feel free to:
-- Add new features
-- Improve the retro aesthetics
-- Integrate additional APIs
-- Enhance the AI capabilities
+We welcome contributions to RetroVault! Please see our contributing guidelines for:
+- Code style and standards
+- Testing requirements
+- Pull request process
+- Issue reporting
+
+## 📄 License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
+
+## 🆘 Support
+
+For support and questions:
+- Create an issue on GitHub
+- Check the documentation
+- Review the troubleshooting guide
 
 ---
 
-**Built with ❤️ for hackathons and retro computing enthusiasts**
+**RetroVault** - Where nostalgic design meets modern financial technology.
