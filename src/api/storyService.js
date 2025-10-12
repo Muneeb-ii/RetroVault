@@ -9,19 +9,24 @@ import { getFinancialInsights, OPENROUTER_API_URL } from './aiService'
  * @param {number} balance - Current balance
  * @returns {Promise<string>} Generated story narrative
  */
-export const generateFinancialStory = async (transactions, savings, aiInsight, balance) => {
+export const generateFinancialStory = async (transactions, savings, aiInsight, balance, preferredModel = null) => {
   try {
     // Analyze the data for story elements
     const storyData = analyzeFinancialData(transactions, savings, balance)
     
-  
     try {
-      // Try to get AI-generated story
+      // Try to get AI-generated story with consistent routing
       const insights = await getFinancialInsights(transactions, savings)
-        return generateStaticStory(storyData, balance, insights, transactions)
+      return await generateStaticStory(storyData, balance, insights, transactions, preferredModel)
     } catch (error) {
-      console.error('AI service unavailable, using static story:', error)
-  return generateStaticStory(storyData, balance, aiInsight, transactions)
+      console.error('AI service unavailable, using fallback story generation:', error)
+      // Try direct story generation with fallback routing
+      try {
+        return await generateStaticStory(storyData, balance, aiInsight, transactions, preferredModel)
+      } catch (storyError) {
+        console.error('Story generation failed, using static fallback:', storyError)
+        return generateFallbackStory(balance)
+      }
     }
 
   } catch (error) {
@@ -87,53 +92,129 @@ const getRecentAchievement = (transactions, savings, balance) => {
 /**
  * Generate static story when AI is unavailable
  */
-/**
- * Generate static story when AI is unavailable
- */
-const generateStaticStory = async (storyData, balance, aiInsight, transactions = [], model = import.meta.env.DEFAULT_AI_MODEL || "google/gemini-2.5-flash") => {
-  // Format transactions into a concise history string (date - type - category - amount)
-  const formattedTransactions = (transactions || []).slice(-50).map(t => {
-    const date = t.date ? new Date(t.date).toLocaleDateString() : 'unknown date'
-    const type = t.type || 'unknown'
-    const category = t.category || 'uncategorized'
-    const amount = typeof t.amount === 'number' ? `$${t.amount.toFixed(2)}` : String(t.amount)
-    return `- ${date} | ${type} | ${category} | ${amount}`
-  }).join('\n') || 'No transactions available.'
+const generateStaticStory = async (storyData, balance, aiInsight, transactions = [], preferredModel = null) => {
+  try {
+    const apiKey = import.meta.env.VITE_OPENROUTER_API_KEY
+    if (!apiKey || apiKey === 'your_openrouter_api_key_here') {
+      throw new Error('OpenRouter API key not configured')
+    }
 
-  const prompt = `Write a short, engaging 100-word story about a person's financial journey. Make it sound like a nostalgic simulation game narrative. Use the following data:\n\nFinancial Data:\n- Current Balance: $${balance.toLocaleString()}\n- Recent Insight: "${aiInsight}"\n- Top Spending Category: ${storyData.topCategory}\n- Savings Trend: ${storyData.savingsTrend}\n- Recent Achievement: ${storyData.recentAchievement}\n\nTransaction History (most recent 50):\n${formattedTransactions}\n\nWrite in second person ("You") and make it sound like a retro computer game story with vivid descriptions and details. Include specific details about their financial habits, achievements, and future potential. Keep it professional and nostalgic, like an old RPG game gameplay. Generate only the story and not text like "loading saved file" or "story:"`
-  const apiKey = import.meta.env.VITE_OPENROUTER_API_KEY
-  //const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions'
-  const response = await fetch(OPENROUTER_API_URL, {
+    // Format transactions into a concise history string (date - type - category - amount)
+    const formattedTransactions = (transactions || []).slice(-50).map(t => {
+      const date = t.date ? new Date(t.date).toLocaleDateString() : 'unknown date'
+      const type = t.type || 'unknown'
+      const category = t.category || 'uncategorized'
+      const amount = typeof t.amount === 'number' ? `$${t.amount.toFixed(2)}` : String(t.amount)
+      return `- ${date} | ${type} | ${category} | ${amount}`
+    }).join('\n') || 'No transactions available.'
+
+    const prompt = `Write a short, engaging 100-word story about a person's financial journey. Make it sound like a nostalgic simulation game narrative. Use the following data:\n\nFinancial Data:\n- Current Balance: $${balance.toLocaleString()}\n- Recent Insight: "${aiInsight}"\n- Top Spending Category: ${storyData.topCategory}\n- Savings Trend: ${storyData.savingsTrend}\n- Recent Achievement: ${storyData.recentAchievement}\n\nTransaction History (most recent 50):\n${formattedTransactions}\n\nWrite in second person ("You") and make it sound like a retro computer game story with vivid descriptions and details. Include specific details about their financial habits, achievements, and future potential. Keep it professional and nostalgic, like an old RPG game gameplay. Generate only the story and not text like "loading saved file" or "story:"`
+
+    // Define free models in order of preference (same as aiService.js)
+    const freeModels = [
+      'meta-llama/llama-3.1-8b-instruct',
+      'microsoft/phi-3-mini-128k-instruct',
+      'google/gemini-2.5-flash'
+    ]
+
+    // Use preferred model if provided, otherwise try free models first
+    const modelsToTry = preferredModel ? [preferredModel, ...freeModels] : freeModels
+
+    let lastError = null
+    for (const model of modelsToTry) {
+      try {
+        console.log(`Trying model for story generation: ${model}`)
+        const response = await fetch(OPENROUTER_API_URL, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${apiKey}`,
+            'Content-Type': 'application/json',
+            'HTTP-Referer': window.location.origin,
+            'X-Title': 'RetroVault Financial AI'
+          },
+          body: JSON.stringify({
+            model,
+            messages: [
+              { role: 'user', content: prompt }
+            ]
+          })
+        })
+
+        if (response.ok) {
+          console.log(`Success with model: ${model}`)
+          const data = await response.json()
+          const content = data.choices?.[0]?.message?.content
+          if (!content) throw new Error('No content received from AI model')
+          return content
+        } else {
+          const errorText = await response.text()
+          console.warn(`Model ${model} failed:`, response.status, errorText)
+          lastError = new Error(`Model ${model} failed: ${response.status}`)
+          continue
+        }
+      } catch (error) {
+        console.warn(`Model ${model} error:`, error)
+        lastError = error
+        continue
+      }
+    }
+
+    // If all OpenRouter models failed, try Google Gemini as fallback
+    try {
+      console.log('All OpenRouter models failed, attempting Google Gemini fallback for story...')
+      return await runPromptWithGemini(prompt)
+    } catch (geminiError) {
+      console.error('Google Gemini also failed:', geminiError)
+      throw lastError || new Error('All models failed')
+    }
+
+  } catch (error) {
+    console.error('generateStaticStory error:', error)
+    throw error
+  }
+}
+
+/**
+ * Run a prompt through Google Gemini as fallback (same as aiService.js)
+ */
+const runPromptWithGemini = async (prompt) => {
+  const geminiApiKey = import.meta.env.VITE_GOOGLE_GEMINI_API_KEY
+  
+  if (!geminiApiKey || geminiApiKey === 'your_google_gemini_api_key_here') {
+    throw new Error('Google Gemini API key not configured')
+  }
+
+  const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${geminiApiKey}`, {
     method: 'POST',
     headers: {
-      'Authorization': `Bearer ${apiKey}`,
       'Content-Type': 'application/json',
-      'HTTP-Referer': window.location.origin,
-      'X-Title': 'RetroVault Financial AI'
     },
     body: JSON.stringify({
-      model: model,
-      messages: [
-        {
-          role: 'user',
-          content: prompt
-        }
-      ],
+      contents: [{
+        parts: [{
+          text: prompt
+        }]
+      }],
+      generationConfig: {
+        temperature: 0.7,
+        maxOutputTokens: 1000,
+        topP: 0.8,
+        topK: 10
+      }
     })
   })
 
   if (!response.ok) {
-    throw new Error(`OpenRouter API error: ${response.status} ${response.statusText}`)
+    throw new Error(`Google Gemini API error: ${response.status}`)
   }
 
   const data = await response.json()
-  const content = data.choices?.[0]?.message?.content
+  const content = data.candidates?.[0]?.content?.parts?.[0]?.text
 
   if (!content) {
-    throw new Error('No content received from AI model')
+    throw new Error('No content received from Google Gemini')
   }
 
-  // Parse the insights from the response
   return content
 }
 
