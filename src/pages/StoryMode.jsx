@@ -98,7 +98,7 @@ const playStoryAudio = async (story) => {
     setIsAudioLoading(true)
     setAudioLoadingProgress(0)
     const start = Date.now()
-    const duration = 2000
+    const duration = 7000
     const intv = setInterval(() => {
       const elapsed = Date.now() - start
       const pct = Math.min(100, Math.round((elapsed / duration) * 100))

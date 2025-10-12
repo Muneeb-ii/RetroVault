@@ -211,7 +211,7 @@ const TimeMachine = () => {
 
       // Animate progress for 3 seconds
       const start = Date.now()
-      const duration = 3000
+      const duration = 5000
       const interval = setInterval(() => {
         const elapsed = Date.now() - start
         const pct = Math.min(100, Math.round((elapsed / duration) * 100))
