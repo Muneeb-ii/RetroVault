@@ -140,3 +140,4 @@ vite.config.ts.timestamp-*
 
 # Service account key
 serviceAccountKey.json
+.vercel

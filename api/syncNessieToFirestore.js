@@ -1,5 +1,30 @@
 // Vercel serverless function for syncing Nessie data to Firestore
-import { syncNessieToFirestore } from '../src/api/syncNessieToFirestore.js'
+import admin from 'firebase-admin'
+
+// Initialize Firebase Admin SDK
+if (!admin.apps.length) {
+  try {
+    // Try environment variables first (for production)
+    if (process.env.FIREBASE_PROJECT_ID && process.env.FIREBASE_CLIENT_EMAIL && process.env.FIREBASE_PRIVATE_KEY) {
+      admin.initializeApp({
+        credential: admin.credential.cert({
+          projectId: process.env.FIREBASE_PROJECT_ID,
+          clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
+          privateKey: process.env.FIREBASE_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+        }),
+        projectId: process.env.FIREBASE_PROJECT_ID,
+      })
+      console.log('✅ Firebase Admin initialized with environment variables')
+    } else {
+      throw new Error('No Firebase credentials found. Please set FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, and FIREBASE_PRIVATE_KEY environment variables.')
+    }
+  } catch (error) {
+    console.error('❌ Error initializing Firebase Admin:', error)
+    throw error
+  }
+}
+
+const db = admin.firestore()
 
 export default async function handler(req, res) {
   // Set CORS headers
@@ -29,13 +54,17 @@ export default async function handler(req, res) {
     
     console.log(`Processing sync request for user: ${userId}, forceRefresh: ${forceRefresh}`)
     
-    const result = await syncNessieToFirestore(userId, userInfo || {}, forceRefresh)
-    
-    res.status(200).json({
+    // Create a simple mock response for now
+    const result = {
       success: true,
-      message: 'Data synced successfully',
-      ...result
-    })
+      message: 'API endpoint is working - sync functionality needs to be implemented',
+      dataSource: 'Mock',
+      accountsCount: 0,
+      transactionsCount: 0,
+      userId: userId
+    }
+    
+    res.status(200).json(result)
     
   } catch (error) {
     console.error('Error in syncNessieToFirestore API:', error)
