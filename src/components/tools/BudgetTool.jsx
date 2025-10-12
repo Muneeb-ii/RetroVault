@@ -66,15 +66,31 @@ const BudgetTool = ({ financialData, onClose, onDataUpdate }) => {
     try {
       setIsSaving(true)
       
-      // Save each budget using unified service
+      // Get existing budgets to check for updates
+      const existingBudgets = await getUserBudgets(financialData.user.uid)
+      const existingBudgetMap = {}
+      existingBudgets.forEach(budget => {
+        existingBudgetMap[budget.category] = budget
+      })
+      
+      // Save or update each budget
       for (const [category, amount] of Object.entries(budgets)) {
         if (amount > 0) {
-          await createBudget({
+          const budgetData = {
             userId: financialData.user.uid,
             category: category,
             amount: amount,
-            period: 'monthly'
-          })
+            period: 'monthly',
+            isActive: true
+          }
+          
+          if (existingBudgetMap[category]) {
+            // Update existing budget
+            await updateBudget(existingBudgetMap[category].id, budgetData)
+          } else {
+            // Create new budget
+            await createBudget(budgetData)
+          }
         }
       }
       
@@ -98,7 +114,16 @@ const BudgetTool = ({ financialData, onClose, onDataUpdate }) => {
   const getBudgetStatus = (category) => {
     const spending = getCategorySpending(category)
     const budget = budgets[category] || 0
-    const percentage = budget > 0 ? (spending / budget) * 100 : 0
+    
+    // Handle zero budget case
+    if (budget === 0) {
+      if (spending > 0) {
+        return { status: 'no-budget', color: 'text-orange-600' }
+      }
+      return { status: 'no-budget', color: 'text-gray-600' }
+    }
+    
+    const percentage = (spending / budget) * 100
     
     if (percentage >= 100) return { status: 'over', color: 'text-red-600' }
     if (percentage >= 80) return { status: 'warning', color: 'text-yellow-600' }
@@ -144,7 +169,8 @@ const BudgetTool = ({ financialData, onClose, onDataUpdate }) => {
                 <div className="font-bold text-sm">{category}</div>
                 <div className={`text-xs ${status.color}`}>
                   {status.status === 'over' ? 'OVER BUDGET' : 
-                   status.status === 'warning' ? 'WARNING' : 'ON TRACK'}
+                   status.status === 'warning' ? 'WARNING' : 
+                   status.status === 'no-budget' ? 'NO BUDGET SET' : 'ON TRACK'}
                 </div>
               </div>
               
@@ -171,16 +197,23 @@ const BudgetTool = ({ financialData, onClose, onDataUpdate }) => {
 
               <div className="flex justify-between text-xs">
                 <span>Remaining: ${remaining.toFixed(2)}</span>
-                <span>Usage: {((spending / budget) * 100).toFixed(1)}%</span>
+                <span>Usage: {budget > 0 ? ((spending / budget) * 100).toFixed(1) + '%' : 'N/A'}</span>
               </div>
               
               {/* Progress Bar */}
               <div className="mt-2">
                 <div className="w-full bg-gray-200 h-2 border border-gray-400">
                   <div 
-                    className={`h-full ${status.status === 'over' ? 'bg-red-500' : 
-                               status.status === 'warning' ? 'bg-yellow-500' : 'bg-green-500'}`}
-                    style={{ width: `${Math.min(((spending / budget) * 100), 100)}%` }}
+                    className={`h-full ${
+                      status.status === 'over' ? 'bg-red-500' : 
+                      status.status === 'warning' ? 'bg-yellow-500' : 
+                      status.status === 'no-budget' ? 'bg-gray-400' : 'bg-green-500'
+                    }`}
+                    style={{ 
+                      width: budget > 0 
+                        ? `${Math.min(((spending / budget) * 100), 100)}%` 
+                        : '0%'
+                    }}
                   />
                 </div>
               </div>

@@ -460,7 +460,6 @@ export const getUserBudgets = async (userId) => {
     const q = query(
       collections.budgets(),
       where('userId', '==', userId),
-      where('isActive', '==', true),
       orderBy('category', 'asc')
     )
     
@@ -491,6 +490,21 @@ export const updateBudget = async (budgetId, budgetData) => {
     
   } catch (error) {
     console.error('❌ Error updating budget:', error)
+    throw error
+  }
+}
+
+/**
+ * Delete budget
+ */
+export const deleteBudget = async (budgetId) => {
+  try {
+    const budgetRef = doc(collections.budgets(), budgetId)
+    await deleteDoc(budgetRef)
+    console.log(`✅ Deleted budget: ${budgetId}`)
+    
+  } catch (error) {
+    console.error('❌ Error deleting budget:', error)
     throw error
   }
 }
