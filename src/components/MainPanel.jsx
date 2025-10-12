@@ -59,11 +59,11 @@ const MainPanel = ({ data, dataSource = 'Firestore' }) => {
   // Calculate totals from data with null checks
   const transactions = data.transactions || []
   const totalIncome = transactions
-    .filter(t => t.type === 'income')
+    .filter(t => t.type === 'income' || t.type === 'deposit')
     .reduce((sum, t) => sum + t.amount, 0)
   
   const totalExpenses = transactions
-    .filter(t => t.type === 'expense')
+    .filter(t => t.type === 'expense' || t.type === 'withdrawal')
     .reduce((sum, t) => sum + t.amount, 0)
   
   const recentTransactions = transactions.slice(0, 5)

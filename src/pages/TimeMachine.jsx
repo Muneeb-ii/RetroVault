@@ -49,139 +49,164 @@ const TimeMachine = () => {
   }, [savingsIncrease, selectedScenario, timeRange, currentAge, retirementAge, financialData])
 
   const calculateAdvancedProjections = () => {
-    if (!financialData) return
-    
-    // Step 1: Validate and sanitize financial data
-    const sanitizedData = sanitizeFinancialData(financialData)
-    const dataValidationResult = validateFinancialData(sanitizedData)
-    setDataValidation(dataValidationResult)
-    
-    if (!dataValidationResult.isValid) {
-      console.error('Data validation failed:', dataValidationResult.errors)
-      return
-    }
-    
-    const currentBalance = sanitizedData.balance
-    const scenario = FINANCIAL_SCENARIOS[selectedScenario]
-    
-    // Step 2: Calculate monthly savings with enhanced validation
-    const transactions = sanitizedData.transactions || []
-    
-    // Separate income and expenses with proper validation
-    const incomeTransactions = transactions.filter(t => 
-      t.type === 'income' && t.amount > 0
-    )
-    const expenseTransactions = transactions.filter(t => 
-      t.type === 'expense' && t.amount > 0
-    )
-    
-    // Calculate totals with validation
-    const totalIncome = incomeTransactions.reduce((sum, t) => {
-      const amount = Math.abs(Number(t.amount) || 0)
-      return sum + amount
-    }, 0)
-    
-    const totalExpenses = expenseTransactions.reduce((sum, t) => {
-      const amount = Math.abs(Number(t.amount) || 0)
-      return sum + amount
-    }, 0)
-    
-    // Calculate time period with better estimation
-    const transactionDates = transactions
-      .map(t => new Date(t.date))
-      .filter(date => !isNaN(date.getTime()))
-      .sort((a, b) => a - b)
-    
-    const monthsOfData = transactionDates.length > 0 
-      ? Math.max(1, (transactionDates[transactionDates.length - 1] - transactionDates[0]) / (1000 * 60 * 60 * 24 * 30))
-      : Math.max(1, Math.floor(transactions.length / 10))
-    
-    const currentMonthlyIncome = totalIncome / monthsOfData
-    const currentMonthlyExpenses = totalExpenses / monthsOfData
-
-    // Allow currentMonthlySavings to be negative (deficit). Savings should directly
-    // add to net worth: positive savings increase net worth each month, negative
-    // savings reduce net worth. Do not clamp to 0 here so the projection can show
-    // improvements when the user increases savings from a deficit.
-    const currentMonthlySavings = currentMonthlyIncome - currentMonthlyExpenses
-
-    let newMonthlySavings
-    if (currentMonthlySavings >= 0) {
-      // Positive savings: scale up/down by the percentage
-      newMonthlySavings = currentMonthlySavings * (1 + savingsIncrease / 100)
-    } else {
-      // Negative savings (deficit): a positive savingsIncrease should reduce the deficit
-      // Example: current = -100, savingsIncrease = 50 -> new = -100 * (1 - 0.5) = -50
-      newMonthlySavings = currentMonthlySavings * (1 - savingsIncrease / 100)
-    }
-    
-    // Step 3: Validate calculation parameters
-    const calculationParams = {
-      currentBalance,
-      monthlySavings: newMonthlySavings,
-      annualReturn: scenario.annualReturn,
-      years: timeRange,
-      inflation: scenario.inflation,
-      currentAge,
-      retirementAge
-    }
-    
-    const calculationValidationResult = validateCalculationParameters(calculationParams)
-    setCalculationValidation(calculationValidationResult)
-    
-    if (!calculationValidationResult.isValid) {
-      console.error('Calculation validation failed:', calculationValidationResult.errors)
+    if (!financialData) {
+      console.warn('No financial data available for projections')
       return
     }
     
     try {
-      // Step 4: Calculate projections with error handling
-      const projectionData = calculateProjectionsService(
-        currentBalance, 
-        newMonthlySavings, 
-        scenario.annualReturn, 
-        timeRange, 
-        scenario.inflation
+      // Step 1: Validate and sanitize financial data
+      const sanitizedData = sanitizeFinancialData(financialData)
+      if (!sanitizedData) {
+        throw new Error('Failed to sanitize financial data')
+      }
+      
+      const dataValidationResult = validateFinancialData(sanitizedData)
+      setDataValidation(dataValidationResult)
+      
+      if (!dataValidationResult.isValid) {
+        console.error('Data validation failed:', dataValidationResult.errors)
+        setDataValidation({
+          isValid: false,
+          errors: dataValidationResult.errors,
+          warnings: dataValidationResult.warnings
+        })
+        return
+      }
+      
+      const currentBalance = sanitizedData.balance
+      const scenario = FINANCIAL_SCENARIOS[selectedScenario]
+    
+      // Step 2: Calculate monthly savings with enhanced validation
+      const transactions = sanitizedData.transactions || []
+    
+      // Separate income and expenses with proper validation
+      const incomeTransactions = transactions.filter(t => 
+        t.type === 'income' && t.amount > 0
+      )
+      const expenseTransactions = transactions.filter(t => 
+        t.type === 'expense' && t.amount > 0
       )
       
-    // Attach computed savings values for UI display
-    setProjections(prev => ({ ...projectionData, currentMonthlySavings: Math.round(currentMonthlySavings), newMonthlySavings: Math.round(newMonthlySavings) }))
+      // Calculate totals with validation
+      const totalIncome = incomeTransactions.reduce((sum, t) => {
+        const amount = Math.abs(Number(t.amount) || 0)
+        return sum + amount
+      }, 0)
       
-    // Calculate milestones
-      const newMilestones = generateAdvancedMilestones(
-        currentBalance, 
-        newMonthlySavings, 
-        scenario.annualReturn, 
-        scenario.inflation
-      )
-      setMilestones(newMilestones)
+      const totalExpenses = expenseTransactions.reduce((sum, t) => {
+        const amount = Math.abs(Number(t.amount) || 0)
+        return sum + amount
+      }, 0)
+    
+      // Calculate time period with better estimation
+      const transactionDates = transactions
+        .map(t => new Date(t.date))
+        .filter(date => !isNaN(date.getTime()))
+        .sort((a, b) => a - b)
       
-      // Calculate retirement readiness
-      const retirement = calculateRetirementReadiness(
+      const monthsOfData = transactionDates.length > 0 
+        ? Math.max(1, (transactionDates[transactionDates.length - 1] - transactionDates[0]) / (1000 * 60 * 60 * 24 * 30))
+        : Math.max(1, Math.floor(transactions.length / 10))
+      
+      const currentMonthlyIncome = totalIncome / monthsOfData
+      const currentMonthlyExpenses = totalExpenses / monthsOfData
+
+      // Allow currentMonthlySavings to be negative (deficit). Savings should directly
+      // add to net worth: positive savings increase net worth each month, negative
+      // savings reduce net worth. Do not clamp to 0 here so the projection can show
+      // improvements when the user increases savings from a deficit.
+      const currentMonthlySavings = currentMonthlyIncome - currentMonthlyExpenses
+
+      let newMonthlySavings
+      if (currentMonthlySavings >= 0) {
+        // Positive savings: scale up/down by the percentage
+        newMonthlySavings = currentMonthlySavings * (1 + savingsIncrease / 100)
+      } else {
+        // Negative savings (deficit): a positive savingsIncrease should reduce the deficit
+        // Example: current = -100, savingsIncrease = 50 -> new = -100 * (1 - 0.5) = -50
+        newMonthlySavings = currentMonthlySavings * (1 - savingsIncrease / 100)
+      }
+      
+      // Step 3: Validate calculation parameters
+      const calculationParams = {
+        currentBalance,
+        monthlySavings: newMonthlySavings,
+        annualReturn: scenario.annualReturn,
+        years: timeRange,
+        inflation: scenario.inflation,
         currentAge,
-        retirementAge,
-        currentBalance,
-        newMonthlySavings,
-        scenario.annualReturn,
-        scenario.inflation
-      )
-      setRetirementData(retirement)
+        retirementAge
+      }
       
-      // Calculate Monte Carlo simulation
-      const monteCarlo = monteCarloSimulation(
-        currentBalance,
-        newMonthlySavings,
-        scenario.annualReturn,
-        scenario.annualReturn * 0.15, // 15% volatility
-        timeRange
-      )
-      setMonteCarloData(monteCarlo)
+      const calculationValidationResult = validateCalculationParameters(calculationParams)
+      setCalculationValidation(calculationValidationResult)
       
+      if (!calculationValidationResult.isValid) {
+        console.error('Calculation validation failed:', calculationValidationResult.errors)
+        return
+      }
+    
+      try {
+        // Step 4: Calculate projections with error handling
+        const projectionData = calculateProjectionsService(
+          currentBalance, 
+          newMonthlySavings, 
+          scenario.annualReturn, 
+          timeRange, 
+          scenario.inflation
+        )
+        
+        if (!projectionData || !projectionData.projections) {
+          throw new Error('Invalid projection data returned')
+        }
+        
+        // Attach computed savings values for UI display
+        setProjections(prev => ({ ...projectionData, currentMonthlySavings: Math.round(currentMonthlySavings), newMonthlySavings: Math.round(newMonthlySavings) }))
+        
+        // Calculate milestones
+        const newMilestones = generateAdvancedMilestones(
+          currentBalance, 
+          newMonthlySavings, 
+          scenario.annualReturn, 
+          scenario.inflation
+        )
+        setMilestones(newMilestones)
+        
+        // Calculate retirement readiness
+        const retirement = calculateRetirementReadiness(
+          currentAge,
+          retirementAge,
+          currentBalance,
+          newMonthlySavings,
+          scenario.annualReturn,
+          scenario.inflation
+        )
+        setRetirementData(retirement)
+        
+        // Calculate Monte Carlo simulation
+        const monteCarlo = monteCarloSimulation(
+          currentBalance,
+          newMonthlySavings,
+          scenario.annualReturn,
+          scenario.annualReturn * 0.15, // 15% volatility
+          timeRange
+        )
+        setMonteCarloData(monteCarlo)
+      
+      } catch (error) {
+        console.error('Error in calculations:', error)
+        setDataValidation({
+          isValid: false,
+          errors: ['Calculation error: ' + error.message],
+          warnings: []
+        })
+      }
     } catch (error) {
-      console.error('Error in calculations:', error)
+      console.error('Error in projection calculation:', error)
       setDataValidation({
         isValid: false,
-        errors: ['Calculation error: ' + error.message],
+        errors: ['Projection calculation failed: ' + error.message],
         warnings: []
       })
     }

@@ -365,21 +365,31 @@ export class DataSeedingService {
    * Store transactions in Firestore
    */
   async storeTransactions(userId, transactions) {
+    if (!transactions || transactions.length === 0) {
+      console.warn('⚠️ No transactions to store')
+      return
+    }
+
     const transactionData = transactions.map(transaction => ({
       userId,
       accountId: transaction.accountId || 'default',
       nessieId: transaction.id,
-      amount: transaction.amount,
+      amount: Math.abs(Number(transaction.amount) || 0), // Ensure positive amounts
       type: transaction.type,
-      category: transaction.category,
-      description: transaction.description,
-      merchant: transaction.merchant,
-      date: transaction.date,
+      category: transaction.category || 'Other',
+      description: transaction.description || 'Transaction',
+      merchant: transaction.merchant || 'Unknown',
+      date: transaction.date || new Date().toISOString().split('T')[0],
       syncSource: 'seeding'
     }))
 
-    await batchCreateTransactions(transactionData)
-    console.log(`✅ Stored ${transactions.length} transactions`)
+    try {
+      await batchCreateTransactions(transactionData)
+      console.log(`✅ Stored ${transactions.length} transactions`)
+    } catch (error) {
+      console.error('❌ Error storing transactions:', error)
+      throw error
+    }
   }
 
   /**

@@ -11,43 +11,37 @@ import { UnifiedDataProvider } from './contexts/UnifiedDataContext'
 function App() {
   return (
     <div className="min-h-screen page-bg-transparent">
-      <Routes>
-        {/* Public Landing Page */}
-        <Route path="/" element={<Landing />} />
+      <UnifiedDataProvider>
+        <Routes>
+          {/* Public Landing Page */}
+          <Route path="/" element={<Landing />} />
+          
+          {/* Authentication Page */}
+          <Route path="/auth" element={<AuthPage />} />
         
-        {/* Authentication Page */}
-        <Route path="/auth" element={<AuthPage />} />
-        
-        {/* Protected Dashboard Routes with Unified Data Context */}
-        <Route path="/dashboard" element={
-          <ProtectedRoute>
-            <UnifiedDataProvider>
+          {/* Protected Dashboard Routes */}
+          <Route path="/dashboard" element={
+            <ProtectedRoute>
               <RetroDashboard />
-            </UnifiedDataProvider>
-          </ProtectedRoute>
-        } />
-        <Route path="/time" element={
-          <ProtectedRoute>
-            <UnifiedDataProvider>
+            </ProtectedRoute>
+          } />
+          <Route path="/time" element={
+            <ProtectedRoute>
               <TimeMachine />
-            </UnifiedDataProvider>
-          </ProtectedRoute>
-        } />
-        <Route path="/insights" element={
-          <ProtectedRoute>
-            <UnifiedDataProvider>
+            </ProtectedRoute>
+          } />
+          <Route path="/insights" element={
+            <ProtectedRoute>
               <Insights />
-            </UnifiedDataProvider>
-          </ProtectedRoute>
-        } />
-        <Route path="/story" element={
-          <ProtectedRoute>
-            <UnifiedDataProvider>
+            </ProtectedRoute>
+          } />
+          <Route path="/story" element={
+            <ProtectedRoute>
               <StoryMode />
-            </UnifiedDataProvider>
-          </ProtectedRoute>
-        } />
-      </Routes>
+            </ProtectedRoute>
+          } />
+        </Routes>
+      </UnifiedDataProvider>
     </div>
   )
 }

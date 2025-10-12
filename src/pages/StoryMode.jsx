@@ -20,8 +20,10 @@ const StoryMode = () => {
 
 const playStoryAudio = async (story) => {
   console.log(story)
+  let audioElement = null
+  let audioUrl = null
+  
   try {
-    
      const audio = await elevenlabs.textToSpeech.convert("EXAVITQu4vr4xnSDxMaL", {
        text: story,
        modelId: "eleven_multilingual_v2",
@@ -32,18 +34,34 @@ const playStoryAudio = async (story) => {
        chunks.push(chunk);
      }
      const blob = new Blob(chunks, { type: 'audio/mpeg' });
-     const audioUrl = URL.createObjectURL(blob);
+     audioUrl = URL.createObjectURL(blob);
     
-     const audioElement = new Audio(audioUrl);
+     audioElement = new Audio(audioUrl);
+     
+     // Add cleanup listeners
+     const cleanup = () => {
+       if (audioUrl) {
+         URL.revokeObjectURL(audioUrl)
+         audioUrl = null
+       }
+       if (audioElement) {
+         audioElement.removeEventListener('ended', cleanup)
+         audioElement.removeEventListener('error', cleanup)
+         audioElement = null
+       }
+     }
+     
+     audioElement.addEventListener('ended', cleanup)
+     audioElement.addEventListener('error', cleanup)
+     
      await audioElement.play();
-    
-     // Optional: cleanup
-     audioElement.addEventListener('ended', () => {
-       URL.revokeObjectURL(audioUrl);
-     });
     
   } catch (error) {
     console.error('Error playing audio:', error);
+    // Cleanup on error
+    if (audioUrl) {
+      URL.revokeObjectURL(audioUrl)
+    }
   }
 };
   // Generate story when component mounts

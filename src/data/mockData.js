@@ -15,24 +15,36 @@ const getRandomAmount = (min, max) => {
   return Math.floor(Math.random() * (max - min + 1)) + min
 }
 
+// Generate random merchant
+const getRandomMerchant = () => {
+  const merchants = [
+    'Amazon', 'Target', 'Walmart', 'Starbucks', 'McDonald\'s', 'Shell', 'BP',
+    'Uber', 'Netflix', 'Spotify', 'Apple', 'Google', 'Microsoft', 'Whole Foods',
+    'CVS', 'Walgreens', 'Home Depot', 'Lowe\'s', 'Best Buy', 'Costco', 'Sam\'s Club'
+  ]
+  return merchants[Math.floor(Math.random() * merchants.length)]
+}
+
 // Generate transactions
 export const generateTransactions = () => {
   const transactions = []
   
-  // Generate 10 transactions
-  for (let i = 0; i < 10; i++) {
-    const isIncome = Math.random() < 0.3 // 30% chance of income
-    const amount = isIncome ? getRandomAmount(50, 2000) : getRandomAmount(10, 500)
+  // Generate 50 transactions for better financial analysis
+  for (let i = 0; i < 50; i++) {
+    const isIncome = Math.random() < 0.2 // 20% chance of income (more realistic)
+    const amount = isIncome ? getRandomAmount(500, 5000) : getRandomAmount(5, 300)
     
     transactions.push({
-      id: i + 1,
+      id: `mock-tx-${i + 1}`,
       date: getRandomDate(),
       category: isIncome ? incomeSources[Math.floor(Math.random() * incomeSources.length)] : categories[Math.floor(Math.random() * categories.length)],
       amount: amount,
       type: isIncome ? 'income' : 'expense',
       description: isIncome ? 
         `${incomeSources[Math.floor(Math.random() * incomeSources.length)]} payment` : 
-        `${categories[Math.floor(Math.random() * categories.length)].toLowerCase()} purchase`
+        `${categories[Math.floor(Math.random() * categories.length)].toLowerCase()} purchase`,
+      merchant: isIncome ? 'Employer' : getRandomMerchant(),
+      accountId: 'mock-checking-001'
     })
   }
   
@@ -162,8 +174,42 @@ export const generateAIInsight = (transactions, savings) => {
   return insights[Math.floor(Math.random() * insights.length)]
 }
 
+// Generate accounts
+export const generateAccounts = () => {
+  return [
+    {
+      id: 'mock-checking-001',
+      name: 'Primary Checking',
+      type: 'Checking',
+      balance: 2500.00,
+      institution: 'Mock Bank',
+      accountNumber: '****1234',
+      routingNumber: '123456789'
+    },
+    {
+      id: 'mock-savings-001',
+      name: 'Emergency Fund',
+      type: 'Savings',
+      balance: 5000.00,
+      institution: 'Mock Bank',
+      accountNumber: '****5678',
+      routingNumber: '123456789'
+    },
+    {
+      id: 'mock-credit-001',
+      name: 'Credit Card',
+      type: 'Credit Card',
+      balance: -800.50,
+      institution: 'Mock Credit Union',
+      accountNumber: '****9012',
+      routingNumber: '987654321'
+    }
+  ]
+}
+
 // Generate complete mock dataset
 export const generateMockData = () => {
+  const accounts = generateAccounts()
   const transactions = generateTransactions()
   const savings = generateSavings()
   const spendingBreakdown = generateSpendingBreakdown(transactions)
@@ -172,6 +218,7 @@ export const generateMockData = () => {
   const aiInsight = generateAIInsight(transactions, savings)
   
   return {
+    accounts,
     transactions,
     savings,
     spendingBreakdown,

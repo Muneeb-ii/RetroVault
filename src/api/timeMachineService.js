@@ -7,6 +7,10 @@ import { ElevenLabsClient, play } from '@elevenlabs/elevenlabs-js';
     const elevenlabs = new ElevenLabsClient({
     apiKey: import.meta.env.VITE_ELEVENLABS_API_KEY,
    });
+   
+   let audioElement = null
+   let audioUrl = null
+   
      try {
        
         const audio = await elevenlabs.textToSpeech.convert("EXAVITQu4vr4xnSDxMaL", {
@@ -19,18 +23,34 @@ import { ElevenLabsClient, play } from '@elevenlabs/elevenlabs-js';
           chunks.push(chunk);
         }
         const blob = new Blob(chunks, { type: 'audio/mpeg' });
-        const audioUrl = URL.createObjectURL(blob);
+        audioUrl = URL.createObjectURL(blob);
        
-        const audioElement = new Audio(audioUrl);
+        audioElement = new Audio(audioUrl);
+        
+        // Add cleanup listeners
+        const cleanup = () => {
+          if (audioUrl) {
+            URL.revokeObjectURL(audioUrl)
+            audioUrl = null
+          }
+          if (audioElement) {
+            audioElement.removeEventListener('ended', cleanup)
+            audioElement.removeEventListener('error', cleanup)
+            audioElement = null
+          }
+        }
+        
+        audioElement.addEventListener('ended', cleanup)
+        audioElement.addEventListener('error', cleanup)
+        
         await audioElement.play();
-       
-        // Optional: cleanup
-        audioElement.addEventListener('ended', () => {
-          URL.revokeObjectURL(audioUrl);
-        });
        
      } catch (error) {
        console.error('Error playing audio:', error);
+       // Cleanup on error
+       if (audioUrl) {
+         URL.revokeObjectURL(audioUrl)
+       }
      }
    };
 /**
@@ -247,6 +267,23 @@ export const FINANCIAL_SCENARIOS = {
  * @returns {Object} Comprehensive projection data
  */
 export const calculateAdvancedProjections = (principal, monthlyContribution, annualRate, years = 30, inflation = 0.025) => {
+  // Validate inputs
+  if (typeof principal !== 'number' || isNaN(principal) || principal < 0) {
+    throw new Error('Invalid principal amount')
+  }
+  if (typeof monthlyContribution !== 'number' || isNaN(monthlyContribution)) {
+    throw new Error('Invalid monthly contribution')
+  }
+  if (typeof annualRate !== 'number' || isNaN(annualRate) || annualRate < -1 || annualRate > 1) {
+    throw new Error('Invalid annual rate (must be between -100% and 100%)')
+  }
+  if (typeof years !== 'number' || isNaN(years) || years <= 0 || years > 100) {
+    throw new Error('Invalid years (must be between 1 and 100)')
+  }
+  if (typeof inflation !== 'number' || isNaN(inflation) || inflation < -0.5 || inflation > 0.5) {
+    throw new Error('Invalid inflation rate (must be between -50% and 50%)')
+  }
+
   const monthlyRate = annualRate / 12
   const monthlyInflation = inflation / 12
   const totalMonths = years * 12
@@ -263,13 +300,13 @@ export const calculateAdvancedProjections = (principal, monthlyContribution, ann
     // Calculate inflation-adjusted contribution
     const inflationAdjustedContribution = monthlyContribution * Math.pow(1 + monthlyInflation, month)
     
-    // Add contribution
+    // Add contribution first
     if (month > 0) {
       balance += inflationAdjustedContribution
       totalContributions += inflationAdjustedContribution
     }
     
-    // Apply compound interest
+    // Apply compound interest to the balance (including contributions)
     if (month > 0) {
       const interestEarned = balance * monthlyRate
       balance += interestEarned
@@ -510,8 +547,11 @@ export const monteCarloSimulation = (principal, monthlyContribution, meanReturn,
     const monthlyVolatility = volatility / Math.sqrt(12)
     
     for (let month = 0; month < years * 12; month++) {
-      // Generate random return
-      const randomReturn = (Math.random() - 0.5) * 2 * monthlyVolatility + monthlyReturn
+      // Generate random return using Box-Muller transform for proper normal distribution
+      const u1 = Math.random()
+      const u2 = Math.random()
+      const z0 = Math.sqrt(-2 * Math.log(u1)) * Math.cos(2 * Math.PI * u2)
+      const randomReturn = z0 * monthlyVolatility + monthlyReturn
       balance = balance * (1 + randomReturn) + monthlyContribution
     }
     

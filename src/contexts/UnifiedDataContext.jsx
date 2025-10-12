@@ -103,7 +103,7 @@ export const UnifiedDataProvider = ({ children }) => {
       // Load accounts and transactions in parallel
       const [userAccounts, userTransactions] = await Promise.all([
         getUserAccounts(userId, { activeOnly: true }),
-        getUserTransactions(userId, { limitCount: 100 })
+        getUserTransactions(userId, { limitCount: 1000 }) // Increased to ensure we get all seeded transactions
       ])
 
       // Update state
@@ -149,6 +149,14 @@ export const UnifiedDataProvider = ({ children }) => {
         // Load the newly seeded data
         await loadUserData(currentUser.uid, seedingResult.userProfile)
         
+        // Verify that we have transactions for calculations
+        const userTransactions = await getUserTransactions(currentUser.uid, { limitCount: 100 })
+        if (userTransactions.length === 0) {
+          console.warn('⚠️ [UNIFIED] No transactions found after seeding, this may affect calculations')
+        } else {
+          console.log(`✅ [UNIFIED] Found ${userTransactions.length} transactions for calculations`)
+        }
+        
         setLoadingMessage('Account setup complete!')
       } else {
         throw new Error(seedingResult.error || 'Data seeding failed')
@@ -176,7 +184,7 @@ export const UnifiedDataProvider = ({ children }) => {
       const [profile, userAccounts, userTransactions] = await Promise.all([
         getUserProfile(user.uid),
         getUserAccounts(user.uid, { activeOnly: true }),
-        getUserTransactions(user.uid, { limitCount: 100 })
+        getUserTransactions(user.uid, { limitCount: 1000 }) // Increased to ensure we get all transactions
       ])
       
       // Update state
@@ -226,12 +234,33 @@ export const UnifiedDataProvider = ({ children }) => {
    * Get computed financial data
    */
   const getFinancialData = () => {
-    if (!userProfile || !transactions.length) {
+    console.log('🔍 [FINANCIAL DATA] Getting financial data:', {
+      hasUserProfile: !!userProfile,
+      transactionsCount: transactions?.length || 0,
+      userProfileBalance: userProfile?.financialSummary?.totalBalance || 0
+    })
+    
+    if (!userProfile) {
+      console.log('🔍 [FINANCIAL DATA] No user profile, returning zero data')
       return {
         balance: 0,
         totalIncome: 0,
         totalExpenses: 0,
         totalSavings: 0,
+        savings: [],
+        spendingBreakdown: [],
+        weeklyBalance: []
+      }
+    }
+
+    // If we have a user profile but no transactions yet, return profile data
+    if (!transactions || transactions.length === 0) {
+      console.log('🔍 [FINANCIAL DATA] No transactions yet, using profile data')
+      return {
+        balance: userProfile.financialSummary?.totalBalance || 0,
+        totalIncome: userProfile.financialSummary?.totalIncome || 0,
+        totalExpenses: userProfile.financialSummary?.totalExpenses || 0,
+        totalSavings: userProfile.financialSummary?.totalSavings || 0,
         savings: [],
         spendingBreakdown: [],
         weeklyBalance: []
@@ -246,11 +275,22 @@ export const UnifiedDataProvider = ({ children }) => {
       t.type === 'expense' || t.type === 'withdrawal'
     )
     
-    const totalIncome = incomeTransactions.reduce((sum, t) => sum + (t.amount || 0), 0)
-    const totalExpenses = expenseTransactions.reduce((sum, t) => sum + Math.abs(t.amount || 0), 0)
+    // Standardize amount handling - ensure all amounts are positive for calculations
+    const totalIncome = incomeTransactions.reduce((sum, t) => {
+      const amount = Math.abs(Number(t.amount) || 0)
+      return sum + amount
+    }, 0)
+    
+    const totalExpenses = expenseTransactions.reduce((sum, t) => {
+      const amount = Math.abs(Number(t.amount) || 0)
+      return sum + amount
+    }, 0)
     
     const totalSavings = totalIncome - totalExpenses
-    const balance = userProfile.financialSummary?.totalBalance || 0
+    // Use calculated balance as single source of truth, fallback to profile balance
+    const calculatedBalance = totalSavings
+    const profileBalance = userProfile.financialSummary?.totalBalance || 0
+    const balance = calculatedBalance !== 0 ? calculatedBalance : profileBalance
 
     return {
       balance,
@@ -259,7 +299,7 @@ export const UnifiedDataProvider = ({ children }) => {
       totalSavings,
       savings: calculateSavingsFromTransactions(transactions),
       spendingBreakdown: calculateSpendingBreakdown(transactions),
-      weeklyBalance: generateWeeklyBalance(transactions)
+      weeklyBalance: generateWeeklyBalance(transactions, balance)
     }
   }
 
@@ -278,19 +318,27 @@ export const UnifiedDataProvider = ({ children }) => {
       }
       
       if (transaction.type === 'income' || transaction.type === 'deposit') {
-        monthlyData[monthKey].income += transaction.amount
+        monthlyData[monthKey].income += Math.abs(Number(transaction.amount) || 0)
       } else {
-        monthlyData[monthKey].expenses += Math.abs(transaction.amount)
+        monthlyData[monthKey].expenses += Math.abs(Number(transaction.amount) || 0)
       }
     })
     
-    return Object.entries(monthlyData)
-      .map(([month, data]) => ({
+    // Calculate cumulative savings over time
+    const sortedMonths = Object.entries(monthlyData)
+      .sort(([a], [b]) => a.localeCompare(b))
+    
+    let cumulativeSavings = 0
+    return sortedMonths.map(([month, data]) => {
+      const monthlySavings = data.income - data.expenses
+      cumulativeSavings += monthlySavings
+      
+      return {
         month: new Date(month + '-01').toLocaleString('default', { month: 'short' }),
-        amount: Math.max(0, data.income - data.expenses),
+        amount: Math.max(0, cumulativeSavings),
         year: new Date(month + '-01').getFullYear()
-      }))
-      .sort((a, b) => new Date(a.year, new Date(a.month + ' 1, ' + a.year).getMonth()) - new Date(b.year, new Date(b.month + ' 1, ' + b.year).getMonth()))
+      }
+    })
   }
 
   /**
@@ -306,7 +354,7 @@ export const UnifiedDataProvider = ({ children }) => {
     
     transactions.forEach(transaction => {
       if (transaction.type === 'expense' && breakdown.hasOwnProperty(transaction.category)) {
-        breakdown[transaction.category] += transaction.amount
+        breakdown[transaction.category] += Math.abs(Number(transaction.amount) || 0)
       }
     })
     
@@ -322,11 +370,14 @@ export const UnifiedDataProvider = ({ children }) => {
   /**
    * Generate weekly balance data
    */
-  const generateWeeklyBalance = (transactions) => {
+  const generateWeeklyBalance = (transactions, currentBalance = 0) => {
+    console.log('🔍 [WEEKLY BALANCE] Generating weekly balance with transactions:', transactions?.length || 0)
+    
     if (!transactions || !Array.isArray(transactions) || transactions.length === 0) {
+      console.log('🔍 [WEEKLY BALANCE] No transactions, returning zero data')
       return Array.from({ length: 7 }, (_, i) => ({
         day: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'][i],
-        balance: 0,
+        balance: currentBalance,
         income: 0,
         expenses: 0,
         netChange: 0,
@@ -337,12 +388,9 @@ export const UnifiedDataProvider = ({ children }) => {
     const weeklyData = []
     const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
     
-    let balance = transactions
-      .filter(t => t.type === 'income' || t.type === 'deposit')
-      .reduce((sum, t) => sum + (t.amount || 0), 0) -
-      transactions
-      .filter(t => t.type === 'expense' || t.type === 'withdrawal')
-      .reduce((sum, t) => sum + Math.abs(t.amount || 0), 0)
+    // Start with the actual current balance
+    let balance = currentBalance
+    console.log('🔍 [WEEKLY BALANCE] Starting with balance:', balance)
     
     days.forEach((day, index) => {
       const targetDate = new Date()
@@ -379,6 +427,7 @@ export const UnifiedDataProvider = ({ children }) => {
       })
     })
     
+    console.log('🔍 [WEEKLY BALANCE] Generated weekly data:', weeklyData)
     return weeklyData
   }
 

@@ -68,13 +68,17 @@ const generateSampleTransactions = () => {
   const transactions = []
   const today = new Date()
   
-  // Income transactions
+  // Income transactions - more comprehensive
   const incomeTransactions = [
     { amount: 3500, description: 'Salary - Tech Corp', category: 'Income', type: 'income', daysAgo: 0 },
     { amount: 3500, description: 'Salary - Tech Corp', category: 'Income', type: 'income', daysAgo: 30 },
     { amount: 3500, description: 'Salary - Tech Corp', category: 'Income', type: 'income', daysAgo: 60 },
+    { amount: 3500, description: 'Salary - Tech Corp', category: 'Income', type: 'income', daysAgo: 90 },
     { amount: 500, description: 'Freelance Project', category: 'Income', type: 'income', daysAgo: 15 },
-    { amount: 200, description: 'Cashback Reward', category: 'Income', type: 'income', daysAgo: 5 }
+    { amount: 200, description: 'Cashback Reward', category: 'Income', type: 'income', daysAgo: 5 },
+    { amount: 150, description: 'Investment Dividend', category: 'Income', type: 'income', daysAgo: 10 },
+    { amount: 300, description: 'Side Hustle', category: 'Income', type: 'income', daysAgo: 20 },
+    { amount: 100, description: 'Referral Bonus', category: 'Income', type: 'income', daysAgo: 25 }
   ]
   
   // Expense transactions
@@ -127,7 +131,24 @@ const generateSampleTransactions = () => {
     // Other
     { amount: 15.00, description: 'ATM Withdrawal', category: 'Other', type: 'expense', daysAgo: 3 },
     { amount: 25.00, description: 'Bank Fee', category: 'Other', type: 'expense', daysAgo: 8 },
-    { amount: 50.00, description: 'Charity Donation', category: 'Other', type: 'expense', daysAgo: 12 }
+    { amount: 50.00, description: 'Charity Donation', category: 'Other', type: 'expense', daysAgo: 12 },
+    
+    // Additional transactions for better analysis
+    { amount: 18.75, description: 'Coffee Shop', category: 'Food', type: 'expense', daysAgo: 11 },
+    { amount: 32.40, description: 'Grocery Store', category: 'Food', type: 'expense', daysAgo: 13 },
+    { amount: 22.50, description: 'Gas Station', category: 'Transport', type: 'expense', daysAgo: 14 },
+    { amount: 8.99, description: 'Streaming Service', category: 'Entertainment', type: 'expense', daysAgo: 16 },
+    { amount: 67.50, description: 'Online Purchase', category: 'Shopping', type: 'expense', daysAgo: 17 },
+    { amount: 35.00, description: 'Gym Membership', category: 'Healthcare', type: 'expense', daysAgo: 18 },
+    { amount: 28.90, description: 'Restaurant', category: 'Food', type: 'expense', daysAgo: 19 },
+    { amount: 45.00, description: 'Uber Ride', category: 'Transport', type: 'expense', daysAgo: 21 },
+    { amount: 12.50, description: 'Coffee Shop', category: 'Food', type: 'expense', daysAgo: 22 },
+    { amount: 89.99, description: 'Online Course', category: 'Education', type: 'expense', daysAgo: 23 },
+    { amount: 15.00, description: 'Parking Fee', category: 'Transport', type: 'expense', daysAgo: 24 },
+    { amount: 42.30, description: 'Grocery Store', category: 'Food', type: 'expense', daysAgo: 26 },
+    { amount: 55.00, description: 'Restaurant', category: 'Food', type: 'expense', daysAgo: 27 },
+    { amount: 19.99, description: 'App Subscription', category: 'Entertainment', type: 'expense', daysAgo: 28 },
+    { amount: 75.00, description: 'Clothing Store', category: 'Shopping', type: 'expense', daysAgo: 29 }
   ]
   
   // Combine and format all transactions

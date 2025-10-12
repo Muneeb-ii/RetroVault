@@ -135,12 +135,12 @@ export const updateFinancialSummary = async (userId) => {
     // Get all transactions for the user
     const transactions = await getUserTransactions(userId, { limit: 1000 })
     
-    // Calculate financial summary
+    // Calculate financial summary - handle all transaction types
     const summary = transactions.reduce((acc, transaction) => {
-      if (transaction.type === 'income') {
-        acc.totalIncome += transaction.amount
-      } else if (transaction.type === 'expense') {
-        acc.totalExpenses += transaction.amount
+      if (transaction.type === 'income' || transaction.type === 'deposit') {
+        acc.totalIncome += Math.abs(Number(transaction.amount) || 0)
+      } else if (transaction.type === 'expense' || transaction.type === 'withdrawal') {
+        acc.totalExpenses += Math.abs(Number(transaction.amount) || 0)
       }
       return acc
     }, { totalIncome: 0, totalExpenses: 0 })
@@ -338,11 +338,14 @@ export const getUserTransactions = async (userId, options = {}) => {
       dateTo = null
     } = options
     
+    // Validate limit to prevent excessive queries
+    const safeLimit = Math.min(limitCount, 1000)
+    
     let q = query(
       collections.transactions(),
       where('userId', '==', userId),
       orderBy('date', 'desc'),
-      limit(limitCount)
+      limit(safeLimit)
     )
     
     // Apply filters
@@ -641,10 +644,10 @@ export const batchCreateTransactions = async (transactions) => {
 export const batchUpdateFinancialSummary = async (userId, transactions) => {
   try {
     const summary = transactions.reduce((acc, transaction) => {
-      if (transaction.type === 'income') {
-        acc.totalIncome += transaction.amount
-      } else if (transaction.type === 'expense') {
-        acc.totalExpenses += transaction.amount
+      if (transaction.type === 'income' || transaction.type === 'deposit') {
+        acc.totalIncome += Math.abs(Number(transaction.amount) || 0)
+      } else if (transaction.type === 'expense' || transaction.type === 'withdrawal') {
+        acc.totalExpenses += Math.abs(Number(transaction.amount) || 0)
       }
       return acc
     }, { totalIncome: 0, totalExpenses: 0 })
