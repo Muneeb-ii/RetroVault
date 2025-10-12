@@ -50,7 +50,7 @@ const NavBar = () => {
         <div className="flex items-center justify-between">
           {/* Left: Brand */}
           <Link to="/" onClick={() => { try { playSound('click1') } catch (e) {} }} className="flex items-center space-x-2 text-lg font-bold text-gray-800 hover:text-blue-600 transition-colors">
-            <img src="/src/assets/images/favicon.png" alt="RetroVault" className="w-8 h-8" />
+            <img src="/favicon.png" alt="RetroVault" className="w-8 h-8" />
             <span>RetroVault</span>
           </Link>
 

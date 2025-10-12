@@ -25,7 +25,7 @@ const Hero = () => {
               {/* Retro ASCII Art Header */}
               <div className="mb-3 retro-fade-in">
                 <div className="mb-1 flex justify-center">
-                  <img src="/src/assets/images/favicon.png" alt="RetroVault" className="w-16 h-16" />
+                  <img src="/favicon.png" alt="RetroVault" className="w-16 h-16" />
                 </div>
                 <div className="text-2xl font-bold text-blue-600 mb-2 retro-text-reveal">RetroVault</div>
               </div>
