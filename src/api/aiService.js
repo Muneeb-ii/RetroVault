@@ -8,7 +8,7 @@ const OPENROUTER_API_URL = 'https://openrouter.ai/api/v1/chat/completions'
  * @param {string} model - AI model to use (default: google/gemini-1.5-pro)
  * @returns {Promise<Array<string>>} Array of 2 short insights
  */
-export const getFinancialInsights = async (transactions, savings, model = 'google/gemini-2.5-flash') => {
+export const getFinancialInsights = async (transactions, savings, model = 'meta-llama/llama-3.1-8b-instruct') => {
   try {
     // Get API key from environment
     const apiKey = import.meta.env.VITE_OPENROUTER_API_KEY
@@ -188,10 +188,12 @@ const getFallbackInsights = (transactions, savings) => {
  */
 export const getAvailableModels = () => {
   return [
-    { id: 'google/gemini-1.5-pro', name: 'Google Gemini 1.5 Pro' },
-    { id: 'anthropic/claude-3.5-sonnet', name: 'Claude 3.5 Sonnet' },
-    { id: 'openai/gpt-4o', name: 'GPT-4o' },
-    { id: 'meta-llama/llama-3.1-8b-instruct', name: 'Llama 3.1 8B' }
+    { id: 'meta-llama/llama-3.1-8b-instruct', name: 'Llama 3.1 8B', free: true },
+    { id: 'microsoft/phi-3-mini-128k-instruct', name: 'Phi-3 Mini', free: true },
+    { id: 'google/gemini-flash-1.5', name: 'Gemini Flash 1.5', free: true },
+    { id: 'google/gemini-1.5-pro', name: 'Google Gemini 1.5 Pro', free: false },
+    { id: 'anthropic/claude-3.5-sonnet', name: 'Claude 3.5 Sonnet', free: false },
+    { id: 'openai/gpt-4o', name: 'GPT-4o', free: false }
   ]
 }
 

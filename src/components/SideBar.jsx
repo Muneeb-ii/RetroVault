@@ -8,6 +8,7 @@ import GoalsTool from './tools/GoalsTool'
 import SettingsTool from './tools/SettingsTool'
 import ReportsTool from './tools/ReportsTool'
 import SyncTool from './tools/SyncTool'
+import ElizaTool from './tools/ElizaTool'
 
 const SideBar = () => {
   const { financialData, loadUserData } = useFinancialData()
@@ -20,13 +21,15 @@ const SideBar = () => {
     goals: GoalsTool,
     settings: SettingsTool,
     reports: ReportsTool,
-    sync: SyncTool
+    sync: SyncTool,
+    eliza: ElizaTool
   }
 
   const sidebarItems = [
     { icon: '💰', label: 'Budget', action: 'budget' },
-    { icon: '💳', label: 'Expenses', action: 'expenses' },
+    { icon: '💸', label: 'Transaction', action: 'expenses' },
     { icon: '🎯', label: 'Goals', action: 'goals' },
+    { icon: '🤖', label: 'Eliza AI', action: 'eliza' },
     { icon: '⚙️', label: 'Settings', action: 'settings' },
     { icon: '📊', label: 'Reports', action: 'reports' },
     { icon: '🔄', label: 'Sync', action: 'sync' }
