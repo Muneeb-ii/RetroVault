@@ -416,6 +416,23 @@ export const calculateRetirementReadiness = (currentAge, retirementAge, currentB
 export const generateTimeMachineForecast = async (projections, currentBalance, savingsIncrease, scenario = 'MODERATE') => {
   try {
     const scenarioData = FINANCIAL_SCENARIOS[scenario]
+    // Try to include milestone predictions so the AI forecast aligns with analytic milestones
+    const monthlySavings = (projections && (projections.newMonthlySavings ?? projections.currentMonthlySavings)) || 0
+    const milestones = generateAdvancedMilestones(currentBalance, monthlySavings, scenarioData.annualReturn, scenarioData.inflation)
+
+    let milestoneText = ''
+    if (Array.isArray(milestones) && milestones.length > 0) {
+      const top = milestones.slice(0, 5)
+      milestoneText = 'Milestone Predictions:\n'
+      milestoneText += top.map(m => {
+        const amt = typeof m.amount === 'number' ? `$${m.amount.toLocaleString()}` : m.amount
+        const contributions = m.totalContributions ? `$${m.totalContributions.toLocaleString()}` : 'N/A'
+        const interest = m.interestEarned ? `$${m.interestEarned.toLocaleString()}` : 'N/A'
+        return `- ${m.icon || ''} ${m.name}: ${amt} by ${m.targetDate || 'N/A'} (~${m.years || 'N/A'} yrs) — Achievable: ${m.achievable ? 'Yes' : 'No'}; Contributions: ${contributions}; Interest: ${interest}`
+      }).join('\n')
+      milestoneText += '\n\n'
+    }
+
     const prompt = `You are a futuristic financial advisor from the year 2030. Based on the following comprehensive financial data, provide an inspiring, specific forecast about the user's financial future. Be encouraging and include specific amounts, dates, and milestones.
 
 Financial Data:
@@ -426,8 +443,7 @@ Financial Data:
 - Projected Balance in 1 year: $${projections.summary?.finalBalance?.toLocaleString() || 'N/A'}
 - Total Contributions: $${projections.summary?.totalContributions?.toLocaleString() || 'N/A'}
 - Interest Earned: $${projections.summary?.totalInterest?.toLocaleString() || 'N/A'}
-
-Write a futuristic forecast (3-4 sentences) that sounds like it's from a time-traveling financial advisor. Include specific amounts, dates, and encouraging milestones. Make it sound exciting and achievable.`
+\n${milestoneText}Write a futuristic forecast (3-4 sentences) that sounds like it's from a time-traveling financial advisor. Include specific amounts, dates, and reference the milestone predictions above so the forecast remains consistent with those analytic milestones. Make it sound exciting and achievable.`
 
     try {
       // Send our carefully-crafted prompt to OpenRouter and return the model's content
