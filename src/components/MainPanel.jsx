@@ -162,17 +162,6 @@ const MainPanel = ({ data, dataSource = 'Firestore' }) => {
         </div>
       </div>
 
-      {/* Quick Actions */}
-      <div className="grid grid-cols-2 gap-4">
-        <button className="retro-button p-3 text-center hover:bg-gray-100 retro-fade-in-delay-1 retro-card-hover">
-          <div className="text-2xl mb-1">💸</div>
-          <div className="text-xs retro-text-reveal">Add Expense</div>
-        </button>
-        <button className="retro-button p-3 text-center hover:bg-gray-100 retro-fade-in-delay-2 retro-card-hover">
-          <div className="text-2xl mb-1">💰</div>
-          <div className="text-xs retro-text-reveal" style={{animationDelay: '0.4s'}}>Add Income</div>
-        </button>
-      </div>
     </div>
   )
 }

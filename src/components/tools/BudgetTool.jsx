@@ -2,7 +2,8 @@ import { useState, useEffect } from 'react'
 import { 
   createBudget,
   getUserBudgets,
-  updateBudget
+  updateBudget as updateBudgetInDB,
+  deleteBudget
 } from '../../api/unifiedFirestoreService'
 
 const BudgetTool = ({ financialData, onClose, onDataUpdate }) => {
@@ -61,10 +62,25 @@ const BudgetTool = ({ financialData, onClose, onDataUpdate }) => {
   }
 
   const saveBudgets = async () => {
-    if (!financialData?.user) return
+    if (!financialData?.user) {
+      setMessage('❌ User not authenticated')
+      return
+    }
     
     try {
       setIsSaving(true)
+      setMessage('')
+      
+      // Validate budgets before saving
+      const validBudgets = Object.entries(budgets).filter(([category, amount]) => {
+        const numAmount = parseFloat(amount)
+        return numAmount > 0 && !isNaN(numAmount)
+      })
+      
+      if (validBudgets.length === 0) {
+        setMessage('⚠️ Please set at least one budget amount greater than 0')
+        return
+      }
       
       // Get existing budgets to check for updates
       const existingBudgets = await getUserBudgets(financialData.user.uid)
@@ -73,33 +89,42 @@ const BudgetTool = ({ financialData, onClose, onDataUpdate }) => {
         existingBudgetMap[budget.category] = budget
       })
       
+      let savedCount = 0
+      let updatedCount = 0
+      
       // Save or update each budget
-      for (const [category, amount] of Object.entries(budgets)) {
-        if (amount > 0) {
-          const budgetData = {
-            userId: financialData.user.uid,
-            category: category,
-            amount: amount,
-            period: 'monthly',
-            isActive: true
-          }
-          
-          if (existingBudgetMap[category]) {
-            // Update existing budget
-            await updateBudget(existingBudgetMap[category].id, budgetData)
-          } else {
-            // Create new budget
-            await createBudget(budgetData)
-          }
+      for (const [category, amount] of validBudgets) {
+        const budgetData = {
+          userId: financialData.user.uid,
+          category: category,
+          amount: parseFloat(amount),
+          period: 'monthly',
+          isActive: true
+        }
+        
+        if (existingBudgetMap[category]) {
+          // Update existing budget
+          await updateBudgetInDB(existingBudgetMap[category].id, budgetData)
+          updatedCount++
+        } else {
+          // Create new budget
+          await createBudget(budgetData)
+          savedCount++
         }
       }
       
-      setMessage('✅ Budgets saved successfully!')
+      const message = savedCount > 0 && updatedCount > 0 
+        ? `✅ ${savedCount} budgets created, ${updatedCount} budgets updated!`
+        : savedCount > 0 
+        ? `✅ ${savedCount} budgets created successfully!`
+        : `✅ ${updatedCount} budgets updated successfully!`
+        
+      setMessage(message)
       setTimeout(() => setMessage(''), 3000)
       onDataUpdate()
     } catch (error) {
       console.error('Error saving budgets:', error)
-      setMessage('❌ Failed to save budgets')
+      setMessage('❌ Failed to save budgets: ' + error.message)
     } finally {
       setIsSaving(false)
     }
@@ -109,6 +134,17 @@ const BudgetTool = ({ financialData, onClose, onDataUpdate }) => {
     return financialData.transactions
       ?.filter(t => t.type === 'expense' && t.category === category)
       ?.reduce((sum, t) => sum + t.amount, 0) || 0
+  }
+
+  const clearAllBudgets = () => {
+    if (confirm('Are you sure you want to clear all budget amounts? This will reset all budgets to 0.')) {
+      const clearedBudgets = {}
+      categories.forEach(category => {
+        clearedBudgets[category] = 0
+      })
+      setBudgets(clearedBudgets)
+      setMessage('🔄 All budgets cleared. Click Save to apply changes.')
+    }
   }
 
   const getBudgetStatus = (category) => {
@@ -230,6 +266,13 @@ const BudgetTool = ({ financialData, onClose, onDataUpdate }) => {
           disabled={isSaving}
         >
           {isSaving ? '⏳ Saving...' : '💾 Save Budgets'}
+        </button>
+        <button
+          className="retro-button px-4 py-3 text-sm font-bold bg-orange-600 hover:bg-orange-700"
+          onClick={clearAllBudgets}
+          disabled={isSaving}
+        >
+          🗑️ Clear All
         </button>
         <button
           className="retro-button px-6 py-3 text-lg font-bold"
