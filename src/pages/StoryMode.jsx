@@ -268,19 +268,19 @@ const playStoryAudio = async (story) => {
                 )}
 
                 {/* Story Text */}
-                <div className="retro-chart">
-                  <div className="text-center font-bold mb-4 text-sm">YOUR FINANCIAL ADVENTURE</div>
+                <div className="retro-chart mb-8">
+                  <div className="text-center font-bold mb-6 text-sm">YOUR FINANCIAL ADVENTURE</div>
                   <div className="story-container">
-                    <div className="story-text">
+                    <div className="story-text leading-relaxed">
                       {story}
                     </div>
                   </div>
                 </div>
 
                 {/* Play Story Button */}
-                <div className="text-center">
+                <div className="flex justify-center items-center my-8">
                   <button
-                    className="retro-button px-6 py-3 text-lg font-bold"
+                    className="retro-button px-8 py-4 text-xl font-bold min-w-48 shadow-lg hover:shadow-xl transition-all duration-200"
                     onClick={playStory}
                     disabled={isPlaying}
                   >
@@ -290,21 +290,22 @@ const playStoryAudio = async (story) => {
 
                 {/* Audio Visualization */}
                 {isPlaying && (
-                  <div className="retro-chart">
+                  <div className="retro-chart mt-8 mb-8">
                     <div className="text-center font-bold mb-4 text-sm">AUDIO VISUALIZATION</div>
-                    <div className="audio-visualizer">
+                    <div className="audio-visualizer flex justify-center items-end space-x-1 h-16">
                       {[...Array(20)].map((_, i) => (
                         <div
                           key={i}
-                          className="audio-bar"
+                          className="audio-bar bg-blue-500 rounded-t"
                           style={{
                             height: `${Math.random() * 40 + 10}px`,
-                            animationDelay: `${i * 0.1}s`
+                            animationDelay: `${i * 0.1}s`,
+                            width: '8px'
                           }}
                         />
                       ))}
                     </div>
-                    <div className="text-center mt-2 text-xs text-gray-600">
+                    <div className="text-center mt-4 text-xs text-gray-600">
                       Narrating your financial journey...
                     </div>
                   </div>
@@ -313,7 +314,7 @@ const playStoryAudio = async (story) => {
             )}
 
             {/* Story Mode Info */}
-            <div className="retro-info text-center">
+            <div className="retro-info text-center mt-12">
               <div className="text-4xl mb-4">📚</div>
               <div className="text-lg mb-2">Interactive Financial Storytelling</div>
               <div className="text-sm text-gray-600">
