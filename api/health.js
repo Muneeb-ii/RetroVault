@@ -1,4 +1,4 @@
-// Simple test API route for Vercel
+// Simple health check API route
 export default async function handler(req, res) {
   // Set CORS headers
   res.setHeader('Access-Control-Allow-Origin', '*')
@@ -14,15 +14,13 @@ export default async function handler(req, res) {
   try {
     res.status(200).json({
       success: true,
-      message: 'API is working!',
+      message: 'API is healthy!',
       timestamp: new Date().toISOString(),
-      environment: process.env.NODE_ENV || 'development',
-      hasFirebaseProjectId: !!process.env.FIREBASE_PROJECT_ID,
-      hasFirebaseClientEmail: !!process.env.FIREBASE_CLIENT_EMAIL,
-      hasFirebasePrivateKey: !!process.env.FIREBASE_PRIVATE_KEY
+      method: req.method,
+      url: req.url
     })
   } catch (error) {
-    console.error('Error in test API:', error)
+    console.error('Error in health API:', error)
     res.status(500).json({
       success: false,
       error: error.message || 'Internal server error'

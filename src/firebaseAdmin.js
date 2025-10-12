@@ -16,6 +16,11 @@ if (!admin.apps.length) {
       })
       console.log('✅ Firebase Admin initialized with environment variables')
     } else {
+      console.error('❌ Missing Firebase credentials:', {
+        hasProjectId: !!process.env.FIREBASE_PROJECT_ID,
+        hasClientEmail: !!process.env.FIREBASE_CLIENT_EMAIL,
+        hasPrivateKey: !!process.env.FIREBASE_PRIVATE_KEY
+      })
       throw new Error('Firebase credentials not found. Please set FIREBASE_PROJECT_ID, FIREBASE_CLIENT_EMAIL, and FIREBASE_PRIVATE_KEY environment variables.')
     }
   } catch (error) {
