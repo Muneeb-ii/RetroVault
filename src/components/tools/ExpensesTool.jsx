@@ -131,12 +131,12 @@ const ExpensesTool = ({ financialData, onClose, onDataUpdate }) => {
     
     try {
       await deleteTransaction(transactionId)
-      setMessage('✅ Transaction deleted successfully!')
+      setMessage('Transaction deleted successfully!')
       setTimeout(() => setMessage(''), 3000)
       onDataUpdate()
     } catch (error) {
       console.error('Error deleting transaction:', error)
-      setMessage('❌ Failed to delete transaction')
+      setMessage('Failed to delete transaction')
     }
   }
 
@@ -158,7 +158,7 @@ const ExpensesTool = ({ financialData, onClose, onDataUpdate }) => {
   if (isLoading) {
     return (
       <div className="text-center p-8">
-        <div className="text-lg font-bold mb-4">Loading transactions... 💾</div>
+        <div className="text-lg font-bold mb-4">Loading transactions...</div>
         <div className="text-sm text-gray-600">Please wait while we fetch your expense data</div>
       </div>
     )
@@ -322,13 +322,13 @@ const ExpensesTool = ({ financialData, onClose, onDataUpdate }) => {
                       className="retro-button text-xs px-2 py-1"
                       onClick={() => handleEdit(transaction)}
                     >
-                      ✏️
+                      Edit
                     </button>
                     <button
                       className="retro-button text-xs px-2 py-1"
                       onClick={() => handleDelete(transaction.id)}
                     >
-                      🗑️
+                      Delete
                     </button>
                   </div>
                 </div>
@@ -344,7 +344,7 @@ const ExpensesTool = ({ financialData, onClose, onDataUpdate }) => {
           className="retro-button px-6 py-3 text-lg font-bold"
           onClick={onClose}
         >
-          ✕ Close
+          Close
         </button>
       </div>
 
@@ -358,7 +358,7 @@ const ExpensesTool = ({ financialData, onClose, onDataUpdate }) => {
       {/* Expense Tips */}
       <div className="retro-info mt-6">
         <div className="text-center">
-          <div className="text-lg font-bold mb-2">💡 Expense Tips</div>
+          <div className="text-lg font-bold mb-2">Expense Tips</div>
           <div className="text-sm text-gray-600 space-y-1">
             <div>• Record transactions immediately to avoid forgetting</div>
             <div>• Use specific categories for better tracking</div>

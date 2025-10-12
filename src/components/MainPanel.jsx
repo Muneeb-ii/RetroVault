@@ -46,16 +46,6 @@ const MainPanel = ({ data, dataSource = 'Firestore' }) => {
             <span className="text-green-600 retro-fade-in-delay-2">Income: ${totalIncome.toLocaleString()}</span>
             <span className="text-red-600 retro-fade-in-delay-3">Expenses: ${totalExpenses.toLocaleString()}</span>
           </div>
-          {/* Data Source Indicator */}
-          <div className="mt-2 text-xs retro-fade-in-delay-1">
-            {dataSource === 'Firestore' ? (
-              <span className="text-green-600 font-bold retro-glow">💾 Data Source: Firestore Database</span>
-            ) : dataSource === 'Nessie' ? (
-              <span className="text-blue-600 font-bold retro-glow">💾 Data Source: Capital One Nessie API</span>
-            ) : (
-              <span className="text-orange-600 font-bold retro-glow">🧪 Data Source: Mock Mode</span>
-            )}
-          </div>
           {dataSource === 'Nessie' && data.accountInfo && (
             <div className="mt-1 text-xs text-gray-500 retro-fade-in-delay-2">
               Account: {data.accountInfo.accountName} ({data.accountInfo.accountType})
@@ -120,14 +110,13 @@ const MainPanel = ({ data, dataSource = 'Firestore' }) => {
       {/* AI Insight */}
       <div className="retro-info bg-gradient-to-r from-blue-50 to-green-50 retro-fade-in-delay-1 retro-card-hover">
         <div className="flex items-start space-x-3">
-          <div className="text-2xl">🤖</div>
           <div className="flex-1">
             <div className="flex items-center justify-between mb-1">
               <div className="font-bold text-sm retro-text-reveal">
                 {data.aiGenerated ? 'AI INSIGHT' : 'GEMINI INSIGHT'}
               </div>
               {data.aiGenerated && (
-                <div className="text-xs text-green-600 font-bold retro-glow">✨ AI Generated</div>
+                <div className="text-xs text-green-600 font-bold">AI Generated</div>
               )}
             </div>
             <div className="text-sm retro-fade-in-delay-2">
@@ -144,9 +133,6 @@ const MainPanel = ({ data, dataSource = 'Firestore' }) => {
           {recentTransactions.map((transaction, index) => (
             <div key={index} className="flex justify-between items-center p-2 bg-gray-50 border border-gray-300 retro-transaction-slide retro-card-hover" style={{animationDelay: `${index * 0.1}s`}}>
               <div className="flex items-center space-x-2">
-                <span className="text-lg">
-                  {transaction.type === 'income' ? '💰' : '💸'}
-                </span>
                 <div>
                   <div className="text-sm font-medium retro-text-reveal" style={{animationDelay: `${index * 0.1 + 0.3}s`}}>{transaction.description}</div>
                   <div className="text-xs text-gray-600 retro-fade-in-delay-1" style={{animationDelay: `${index * 0.1 + 0.4}s`}}>{transaction.category} • {safeTimestamp(transaction.date, 'Unknown date')}</div>

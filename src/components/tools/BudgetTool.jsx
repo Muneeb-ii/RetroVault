@@ -265,20 +265,20 @@ const BudgetTool = ({ financialData, onClose, onDataUpdate }) => {
           onClick={saveBudgets}
           disabled={isSaving}
         >
-          {isSaving ? '⏳ Saving...' : '💾 Save Budgets'}
+          {isSaving ? 'Saving...' : 'Save Budgets'}
         </button>
         <button
           className="retro-button px-4 py-3 text-sm font-bold bg-orange-600 hover:bg-orange-700"
           onClick={clearAllBudgets}
           disabled={isSaving}
         >
-          🗑️ Clear All
+          Clear All
         </button>
         <button
           className="retro-button px-6 py-3 text-lg font-bold"
           onClick={onClose}
         >
-          ✕ Close
+          Close
         </button>
       </div>
 

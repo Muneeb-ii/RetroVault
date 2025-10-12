@@ -104,16 +104,15 @@ const RetroDashboard = () => {
       <div className="retro-window mb-4 p-4 retro-fade-in">
         <div className="flex justify-between items-center">
           <div>
-            <div className="text-sm font-bold retro-text-reveal">👤 {user?.displayName || 'User'}</div>
+            <div className="text-sm font-bold retro-text-reveal">{user?.displayName || 'User'}</div>
             <div className="text-xs text-gray-600 retro-fade-in-delay-1">{user?.email || 'user@example.com'}</div>
-            <div className="text-xs text-green-600 retro-fade-in-delay-2 retro-glow">✅ Data loaded from Firestore</div>
           </div>
           <div className="flex space-x-2">
             <button
               className="retro-button px-4 py-2 text-sm retro-card-hover"
               onClick={handleSignOut}
             >
-              🚪 Sign Out
+              Sign Out
             </button>
           </div>
         </div>
@@ -128,7 +127,7 @@ const RetroDashboard = () => {
         <div className="flex-1">
           <div className="retro-window p-4 retro-window-animate">
             <div className="text-center font-bold text-lg mb-4 text-retro-dark retro-text-reveal">
-              📊 FINANCIAL DASHBOARD
+              FINANCIAL DASHBOARD
             </div>
             {financialData && (
               <MainPanel 

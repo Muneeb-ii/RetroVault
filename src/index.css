@@ -10,6 +10,27 @@ body {
   min-height: 100vh;
   margin: 0;
   padding: 0;
+  position: relative;
+}
+
+/* Subtle retro desktop wallpaper pattern */
+body::before {
+  content: '';
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: 
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(255,255,255,0.02) 2px,
+      rgba(255,255,255,0.02) 4px
+    );
+  pointer-events: none;
+  z-index: -1;
 }
 
 /* CRT monitor effect */
@@ -117,6 +138,25 @@ body {
   box-shadow: 2px 2px 0px #000000;
 }
 
+/* Subtle scanlines for windows */
+.retro-window::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 1px,
+    rgba(0,0,0,0.03) 1px,
+    rgba(0,0,0,0.03) 2px
+  );
+  pointer-events: none;
+  z-index: 1;
+}
+
 /* Retro input styling */
 .retro-input {
   background: #ffffff;
@@ -141,14 +181,14 @@ body {
 .retro-chart {
   background: #ffffff;
   border: 2px inset #c0c0c0;
-  padding: 8px;
+  padding: 6px;
 }
 
 /* Retro info box */
 .retro-info {
   background: #ffffff;
   border: 2px inset #c0c0c0;
-  padding: 12px;
+  padding: 8px;
   font-weight: bold;
 }
 
