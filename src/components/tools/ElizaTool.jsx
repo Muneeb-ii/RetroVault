@@ -1,11 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react'
 import { useUnifiedData } from '../../contexts/UnifiedDataContext'
 import { getFinancialInsights, getAvailableModels } from '../../api/aiService'
-import { calculateFinancialInsights, formatDataForAI } from '../../utils/financialDataHelpers'
+import { formatDataForAI } from '../../utils/financialDataHelpers'
 import { ElevenLabsClient } from '@elevenlabs/elevenlabs-js'
 import { play as playSound } from '../../utils/soundPlayer'
 
-const ElizaTool = ({ financialData, onClose, onDataUpdate }) => {
+const ElizaTool = ({ financialData, transactions, accounts, user: userProp, onClose, onDataUpdate }) => {
   const [messages, setMessages] = useState([])
   const [inputMessage, setInputMessage] = useState('')
   const [isTyping, setIsTyping] = useState(false)
@@ -125,10 +125,27 @@ const ElizaTool = ({ financialData, onClose, onDataUpdate }) => {
 
   const generateContextualResponse = async (userMessage) => {
     try {
-      // Calculate comprehensive financial insights
-      const insights = await calculateFinancialInsights(financialData)
+      // Use the pre-calculated financial data from the dashboard
+      const insights = {
+        currentBalance: financialData?.balance || 0,
+        totalIncome: financialData?.totalIncome || 0,
+        totalExpenses: financialData?.totalExpenses || 0,
+        netBalance: (financialData?.totalIncome || 0) - (financialData?.totalExpenses || 0),
+        transactionCount: transactions?.length || 0,
+        recentTransactions: financialData?.recentTransactions || [],
+        spendingBreakdown: financialData?.spendingBreakdown || [],
+        savings: financialData?.savings || [],
+        weeklyBalance: financialData?.weeklyBalance || []
+      }
       
-      if (!insights) {
+      console.log('🔍 [ELIZA] Using dashboard financial data:', {
+        balance: insights.currentBalance,
+        totalIncome: insights.totalIncome,
+        totalExpenses: insights.totalExpenses,
+        netBalance: insights.netBalance
+      })
+      
+      if (!insights.currentBalance && !insights.totalIncome && !insights.totalExpenses) {
         return "I don't have access to your financial data yet. Please ensure your account is properly connected and try again."
       }
 
@@ -211,7 +228,12 @@ const ElizaTool = ({ financialData, onClose, onDataUpdate }) => {
     }
 
     // Format comprehensive financial data for AI
-    const formattedData = formatDataForAI(insights, financialData)
+    const formattedData = formatDataForAI(insights, {
+      ...financialData,
+      transactions: transactions || [],
+      accounts: accounts || [],
+      user: userProp
+    })
 
     // Build conversation context
     const chatContext = conversationHistory
@@ -336,7 +358,12 @@ Respond as Eliza with specific, data-driven advice:`
     }
 
     // Format comprehensive financial data for AI
-    const formattedData = formatDataForAI(insights, financialData)
+    const formattedData = formatDataForAI(insights, {
+      ...financialData,
+      transactions: transactions || [],
+      accounts: accounts || [],
+      user: userProp
+    })
 
     // Build conversation context
     const chatContext = conversationHistory
@@ -409,15 +436,22 @@ Respond as Eliza with specific, data-driven advice:`
 
   const generateFallbackResponse = (userMessage, financialData) => {
     const balance = financialData?.balance || 0
-    const totalIncome = financialData?.transactions?.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0) || 0
-    const totalExpenses = financialData?.transactions?.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0) || 0
-    const transactionCount = financialData?.transactions?.length || 0
+    const totalIncome = financialData?.totalIncome || 0
+    const totalExpenses = financialData?.totalExpenses || 0
+    const transactionCount = transactions?.length || 0
+    
+    console.log('🔍 [ELIZA FALLBACK] Using dashboard data:', {
+      balance,
+      totalIncome,
+      totalExpenses,
+      transactionCount
+    })
     const netBalance = totalIncome - totalExpenses
     const savingsRate = totalIncome > 0 ? ((totalIncome - totalExpenses) / totalIncome) * 100 : 0
 
     // Calculate spending breakdown
     const spendingBreakdown = {}
-    financialData?.transactions?.filter(t => t.type === 'expense').forEach(t => {
+    transactions?.filter(t => t.type === 'expense').forEach(t => {
       spendingBreakdown[t.category] = (spendingBreakdown[t.category] || 0) + t.amount
     })
     const topCategory = Object.keys(spendingBreakdown).reduce((a, b) => 
@@ -427,14 +461,14 @@ Respond as Eliza with specific, data-driven advice:`
     if (userMessage.toLowerCase().includes('balance') || userMessage.toLowerCase().includes('money')) {
       return `💰 Your current balance is $${balance.toLocaleString()}. Your net position is $${netBalance.toLocaleString()} (income - expenses). ${netBalance > 0 ? 'Great job maintaining positive cash flow!' : 'Consider reviewing your spending to improve your financial position.'}`
     } else if (userMessage.toLowerCase().includes('income') || userMessage.toLowerCase().includes('earn')) {
-      return `📈 Your total income is $${totalIncome.toLocaleString()}. This shows your earning capacity. ${totalIncome > 0 ? `Your average income per transaction is $${(totalIncome / (financialData?.transactions?.filter(t => t.type === 'income').length || 1)).toFixed(2)}.` : 'No income transactions found.'}`
+      return `📈 Your total income is $${totalIncome.toLocaleString()}. This shows your earning capacity. ${totalIncome > 0 ? `Your average income per transaction is $${(totalIncome / (transactions?.filter(t => t.type === 'income').length || 1)).toFixed(2)}.` : 'No income transactions found.'}`
     } else if (userMessage.toLowerCase().includes('expense') || userMessage.toLowerCase().includes('spend')) {
       return `💸 Your total expenses are $${totalExpenses.toLocaleString()}. Your top spending category is ${topCategory} ($${(spendingBreakdown[topCategory] || 0).toLocaleString()}). ${totalExpenses > 0 ? `Daily average: $${(totalExpenses / 30).toFixed(2)}` : 'No expense transactions found.'}`
     } else if (userMessage.toLowerCase().includes('health') || userMessage.toLowerCase().includes('score')) {
       const healthScore = balance > 0 ? Math.min(100, Math.max(30, 50 + (netBalance / Math.max(totalIncome, 1)) * 50)) : 20
       return `🏥 Your financial health score is approximately ${Math.round(healthScore)}/100. Based on your balance of $${balance.toLocaleString()}, net position of $${netBalance.toLocaleString()}, and savings rate of ${savingsRate.toFixed(1)}%. ${healthScore < 50 ? 'Consider building an emergency fund and reducing expenses.' : 'You\'re doing well! Keep up the good financial habits.'}`
     } else if (userMessage.toLowerCase().includes('transaction') || userMessage.toLowerCase().includes('recent')) {
-      const recentTransactions = financialData?.transactions?.slice(0, 3) || []
+      const recentTransactions = transactions?.slice(0, 3) || []
       const recentSummary = recentTransactions.map(t => `${t.type === 'income' ? '💰' : '💸'} $${t.amount} (${t.category})`).join(', ')
       return `📋 You have ${transactionCount} transactions. Recent activity: ${recentSummary || 'No recent transactions'}. Your transaction frequency is ${transactionCount > 20 ? 'high' : transactionCount > 5 ? 'moderate' : 'low'}.`
     } else if (userMessage.toLowerCase().includes('save') || userMessage.toLowerCase().includes('saving')) {
